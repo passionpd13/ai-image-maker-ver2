@@ -262,7 +262,7 @@ def create_zip_buffer(source_dir):
     return buffer
 
 # ==========================================
-# [함수] 2. 프롬프트 생성 (웹툰 집중선 축소/배경 강화 + 실사 모드 유지)
+# [함수] 2. 프롬프트 생성 (분할 화면 금지 추가)
 # ==========================================
 def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, genre_mode="info", target_language="Korean"):
     scene_num = index + 1
@@ -340,7 +340,6 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         """
         
     elif genre_mode == "webtoon":
-        # [수정] 배경/상황 강조 및 집중선 축소 지침 반영
         full_instruction = f"""
     [역할]
     당신은 네이버 웹툰 스타일의 **'인기 웹툰 메인 작화가'**입니다.
@@ -368,6 +367,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         """
 
     elif genre_mode == "news":
+        # [수정] 실사 모드에 '분할 화면 절대 금지' 지침 추가
         full_instruction = f"""
     [역할]
     당신은 뉴스 보도 및 다큐멘터리 제작을 위한 **'실사 자료화면(Stock Footage) 전문 디렉터'**입니다.
@@ -380,15 +380,18 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     1. **완벽한 실사(Photorealism Only):**
        - **절대 그림, 일러스트, 3D 렌더링, 만화 느낌 금지.**
        - 실제 DSLR 카메라로 촬영한 듯한 **'뉴스 보도 사진'** 혹은 **'다큐멘터리 스틸컷'**이어야 합니다.
-    2. **자료화면 연출(Stock Footage Style):**
+    2. **[매우 중요 - 분할 화면 절대 금지]:**
+       - 화면을 여러 개로 나누는 **'콜라주(Collage)'나 '분할 화면(Split Screen)' 연출을 절대 금지**합니다.
+       - 무조건 **'단일 화면(Single Shot)'**으로 하나의 장면에만 집중하십시오.
+    3. **자료화면 연출(Stock Footage Style):**
        - 앵커가 앉아있는 스튜디오 모습이 **아닙니다.**
        - 대본의 내용을 설명하는 **현장 스케치, 인서트 컷, 사물 클로즈업, 풍경** 등을 실사로 묘사하십시오.
-    3. **추상적 개념의 시각화:**
+    4. **추상적 개념의 시각화:**
        - 예: '부동산 폭락' -> (X) 집이 무너지는 만화 (O) '매매' 스티커가 붙은 아파트 단지의 쓸쓸한 전경 또는 부동산 중개소의 텅 빈 유리창.
        - 예: '저출산' -> (X) 우는 아기 천사 (O) 텅 빈 놀이터의 그네가 흔들리는 모습.
-    4. **텍스트 처리:** {lang_guide} {lang_example}
+    5. **텍스트 처리:** {lang_guide} {lang_example}
        - 텍스트는 인위적으로 띄우지 말고, 거리의 간판, 신문 헤드라인, 스마트폰 화면, 서류 내용처럼 **실제 사물에 합성**된 것처럼 자연스럽게 묘사하십시오.
-    5. **조명 및 톤앤매너:**
+    6. **조명 및 톤앤매너:**
        - 뉴스 보도에 적합한 **선명하고 사실적인 조명(Natural & Sharp Lighting)**.
        - 과도한 예술적 필터보다는 사실 전달에 집중한 톤.
 
@@ -561,7 +564,6 @@ with st.sidebar:
 전쟁, 기근 등의 묘사는 상징적이고 은유적으로 표현. 너무 고어틱한 연출은 하지 않는다.
 배경 묘사에 디테일을 살려 시대적 분위기를 강조. 무조건 얼굴이 둥근 2D 스틱맨 연출."""
 
-    # [수정됨] 웹툰 프리셋: 집중선 자제 및 배경 디테일 강조
     PRESET_WEBTOON = """한국 인기 웹툰 스타일의 고퀄리티 2D 일러스트레이션 (Korean Webtoon Style).
 선명한 펜선과 화려한 채색. 집중선(Speed lines)은 정말 중요한 순간에만 가끔 사용.
 캐릭터는 8등신 웹툰 주인공 스타일. 캐릭터 주변의 '상황'과 '배경(장소)'을 아주 구체적이고 밀도 있게 묘사.
