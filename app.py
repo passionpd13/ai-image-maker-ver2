@@ -357,7 +357,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     3. **캐릭터 연기:** - 표정을 매우 다이나믹하게(Dynamic Expressions) 묘사하십시오. (예: 극적인 당황, 분노, 환희 등)
        - 헐리우드 액션처럼 크고 시원시원한 포즈.
     4. **카메라 앵글 (Dynamic Angles):** - **하이 앵글(위에서 아래로), 로우 앵글(아래에서 위로), 광각 렌즈(Fish-eye)** 효과를 사용하여 긴박감과 몰입감을 주십시오.
-    5. **만화적 배경 효과 (Manhwa FX):** - 상황에 따라 **속도선(Speed Lines), 집중선(Focus Lines), 후광 효과**를 배경에 적극적으로 사용하여 감정을 증폭시키십시오.
+    5. **만화적 배경 효과 (Manhwa FX):** - 상황에 따라 만화적 배경에 적극적으로 사용하여 감정을 증폭시키십시오.
     6. **텍스트 처리:** {lang_guide} {lang_example}
        - 웹툰 말풍선 느낌이나 배경 오브젝트(간판, 스마트폰)에 자연스럽게 녹여내십시오.
     7. **구성:** - 16:9 비율의 한 장의 일러스트지만, 웹툰의 한 컷처럼 연출하십시오. 분할 화면은 지양하고 한 화면에 집중하십시오.
@@ -776,3 +776,4 @@ if st.session_state['generated_results']:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
 
                 except: pass
+
