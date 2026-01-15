@@ -377,6 +377,8 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     [스타일 가이드] {style_instruction}
 
     [필수 연출 지침]
+    - **분량:** 최소 7문장 이상으로 상세하게 묘사.
+
     1. **완벽한 실사(Photorealism Only):**
        - **절대 그림, 일러스트, 3D 렌더링, 만화 느낌 금지.**
        - 실제 DSLR 카메라로 촬영한 듯한 **'뉴스 보도 사진'** 혹은 **'다큐멘터리 스틸컷'**이어야 합니다.
@@ -400,6 +402,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     - "Photorealistic, 8k resolution, cinematic lighting, depth of field" 등의 퀄리티 키워드 포함.
     - 인물 묘사 시 'Korean' 혹은 구체적인 인종/나이대를 명시하여 사실성 부여.
     - **한글**로만 출력하십시오.
+    - 대본에 어울리는 하나자의 장면을 연출한다.(필수)
         """
 
     else:
@@ -574,7 +577,8 @@ with st.sidebar:
 그림이나 만화 느낌이 전혀 없는, 실제 DSLR 카메라로 촬영한 듯한 4K 실사(Real Photo) 퀄리티.
 뉴스 스튜디오가 아닌, 대본 내용을 설명하는 사실적인 '현장 스케치', '인서트 컷', '사물 클로즈업'.
 인물은 실제 한국 사람(Korean)처럼, 배경은 실제 장소처럼 사실적으로 묘사.
-추상적인 내용은 은유적인 실사 자료화면 느낌으로 연출. (16:9, Cinematic Lighting)"""
+추상적인 내용은 은유적인 실사 자료화면 느낌으로 연출. (16:9, Cinematic Lighting)
+대본에 어울리는 하나의 화면으로 연출한다."""
 
     if 'style_prompt_area' not in st.session_state:
         st.session_state['style_prompt_area'] = PRESET_INFO
@@ -819,3 +823,4 @@ if st.session_state['generated_results']:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
 
                 except: pass
+
