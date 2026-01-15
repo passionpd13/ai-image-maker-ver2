@@ -352,9 +352,9 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
 
     [필수 연출 지침]
     1. **작화 스타일:** 한국 웹툰(K-Webtoon) 특유의 **선명한 외곽선(Sharp Outlines)**과 **화려한 채색(Vibrant Coloring)**을 사용하십시오.
-    2. **캐릭터 디자인 (중요):** **절대 스틱맨(Stickman)으로 그리지 마십시오.** - 8등신 혹은 정상적인 인체 비례를 가진 **'매력적인 웹툰 주인공(Anime/Manhwa Style Character)'**으로 묘사하십시오.
+    2. **캐릭터 디자인 (중요):** **절대 스틱맨(Stickman)으로 그리지 마십시오.** - 8등신 혹은 정상적인 인체 비례를 가진 **'매력적인 웹툰 주인공들(Anime/Manhwa Style Character)'**으로 묘사하십시오.
        - 트렌디한 헤어스타일, 구체적인 이목구비(큰 눈, 오똑한 코), 세련된 의상을 착용해야 합니다.
-    3. **캐릭터 연기:** - 표정을 매우 다이나믹하게(Dynamic Expressions) 묘사하십시오. (예: 극적인 당황, 분노, 환희 등)
+    3. **캐릭터 연기:** - 대본 상황에 어울리는 행동과 표정을 매우 다이나믹하게(Dynamic Expressions) 묘사하십시오. (예: 극적인 당황, 분노, 환희 등)
        - 헐리우드 액션처럼 크고 시원시원한 포즈.
     4. **카메라 앵글 (Dynamic Angles):** - **하이 앵글(위에서 아래로), 로우 앵글(아래에서 위로), 광각 렌즈(Fish-eye)** 효과를 사용하여 긴박감과 몰입감을 주십시오.
     5. **만화적 배경 효과 (Manhwa FX):** - 상황에 따라 만화적 배경에 적극적으로 사용하여 감정을 증폭시키십시오.
@@ -364,7 +364,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
 
     [임무]
     제공된 대본을 바탕으로 이미지 생성 프롬프트를 작성하십시오. (한글 출력)
-    - "속도선이 배경에 깔리며...", "로우 앵글로 웅장하게...", "미소년/미소녀 스타일의 캐릭터가..." 등 웹툰 연출 용어를 포함하여 묘사하십시오.
+    - "로우 앵글로 웅장하게...", "미소년/미소녀 스타일의 캐릭터가..." 등 웹툰 연출 용어를 포함하여 묘사하십시오.
         """
 
     else:
@@ -532,10 +532,10 @@ with st.sidebar:
     # [수정됨] 스틱맨 금지, 고퀄리티 캐릭터 강조 (웹툰 모드)
     PRESET_WEBTOON = """한국 인기 웹툰 스타일의 고퀄리티 2D 일러스트레이션 (Korean Webtoon Style).
 선명하고 깔끔한 펜선(Sharp Inking)과 웹툰 특유의 화려한 채색(Vibrant Colors).
-캐릭터는 스틱맨이 아닌, **'매력적인 외모의 8등신 웹툰 주인공'** 스타일로 묘사.
-트렌디한 헤어스타일과 패션, 그리고 만화적인 표정(반짝이는 눈, 빗금 등)을 디테일하게 표현.
+캐릭터들은 스틱맨이 아닌, **'매력적인 외모의 8등신 웹툰 주인공'** 스타일로 묘사.
+트렌디한 헤어스타일과 패션, 그리고 만화적인 표정(반짝이는 눈 등)을 디테일하게 표현.
 역동적인 카메라 앵글(로우 앵글, 하이 앵글)과 만화적 배경 배경 같은 만화적 효과를 배경에 적극 사용.
-배경은 디테일한 2D 웹툰 배경 스타일. 전체적으로 '네이버 웹툰' 썸네일처럼 시선을 확 끄는 작화. (16:9)"""
+배경은 디테일한 2D 웹툰 배경 몰입감 있고 디테일한 스타일. 전체적으로 '네이버 웹툰' 썸네일처럼 시선을 확 끄는 작화. (16:9)"""
 
     if 'style_prompt_area' not in st.session_state:
         st.session_state['style_prompt_area'] = PRESET_INFO
@@ -776,5 +776,6 @@ if st.session_state['generated_results']:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
 
                 except: pass
+
 
 
