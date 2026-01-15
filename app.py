@@ -401,7 +401,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     - **한글**로만 출력하십시오.
         """
 
-elif genre_mode == "일본 만화화":
+    elif genre_mode == "일본 만화화":
         # [UPDATED] 현대적인 리얼리즘 드라마 + 언어 설정 완벽 적용
         full_instruction = f"""
     [역할]
@@ -833,6 +833,7 @@ if st.session_state['generated_results']:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
 
                 except: pass
+
 
 
 
