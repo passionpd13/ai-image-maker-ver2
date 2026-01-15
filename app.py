@@ -579,8 +579,6 @@ with st.sidebar:
     # [UPDATED] 일본 만화 프리셋 (디테일 강조)
     PRESET_MANGA = """[정보 전달형 고퀄리티 애니메이션]
 단순한 풍경화나 감성 짤이 아님. 대본의 내용을 설명하는 '확실한 상황(Situation)'을 연출.
-예: '부동산 폭락' -> 텅 빈 도시에서 무너지는 집 모형을 들고 절망하는 캐릭터.
-예: '성공의 열쇠' -> 거대한 황금 열쇠를 향해 달려가는 역동적인 캐릭터.
 작화는 '주술회전', '최애의 아이' 같은 최신 트렌디한 일본 애니메이션 스타일 유지.
 캐릭터와 배경은 실제 현실 비율과 동일하게 정밀 묘사.
 핵심 키워드 1~2개 정도는 화면에 만화적 연출로 포함 가능.
@@ -833,6 +831,7 @@ if st.session_state['generated_results']:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
 
                 except: pass
+
 
 
 
