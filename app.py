@@ -17,7 +17,7 @@ from google.genai import types
 # [설정] 페이지 기본 설정
 # ==========================================
 st.set_page_config(
-    page_title="열정피디 AI 이미지 생성기 VER.2",
+    page_title="열정피디 AI 이미지 생성기 VER.2 (Final)",
     layout="wide",
     page_icon="🎨",
     initial_sidebar_state="expanded"
@@ -28,42 +28,41 @@ if 'user_id' not in st.session_state:
     st.session_state['user_id'] = str(uuid.uuid4())
 
 # ==========================================
-# [디자인] 다크모드 & 가독성 완벽 패치 (헤더/상태창/Expander)
+# [디자인] 다크모드 & 가독성 완벽 패치
 # ==========================================
 st.markdown("""
     <style>
-    /* 1. 상단 헤더 (Deploy 버튼 있는 줄) 배경색 */
+    /* 1. 상단 헤더 */
     header[data-testid="stHeader"] {
         background-color: #0E1117 !important;
         z-index: 1 !important;
     }
 
-    /* 2. 콘텐츠 영역 상단 여백 대폭 확대 (겹침 방지) */
+    /* 2. 콘텐츠 영역 여백 */
     .block-container {
         padding-top: 6rem !important; 
         padding-bottom: 5rem !important;
     }
 
-    /* 3. 전체 배경 및 폰트 설정 */
+    /* 3. 전체 배경 및 폰트 */
     .stApp {
         background-color: #0E1117;
         color: #FFFFFF !important;
         font-family: 'Pretendard', sans-serif;
     }
 
-    /* 텍스트 가독성 강화 (흰색 강제) */
+    /* 텍스트 가독성 강화 */
     p, div, label, span, li, h1, h2, h3, h4, h5, h6 {
         color: #FFFFFF !important;
     }
     
-    /* 강조 텍스트 그림자 */
     h1, h2 {
         text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
     }
 
     /* 4. 배너 스타일 */
     .student-banner {
-        background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);
+        background: linear-gradient(90deg, #00C6FF 0%, #0072FF 100%);
         color: white !important;
         padding: 30px 20px;
         border-radius: 15px;
@@ -75,15 +74,14 @@ st.markdown("""
         letter-spacing: 1px;
     }
 
-    /* 5. 입력창 라벨 스타일 */
+    /* 5. 입력창 스타일 */
     .stTextInput label p, .stTextArea label p, .stSelectbox label p, .stRadio label p {
         font-size: 1.2rem !important;
         font-weight: 700 !important;
-        color: #FFD700 !important; /* 금색 강조 */
+        color: #FFD700 !important;
         margin-bottom: 8px !important;
     }
 
-    /* 입력창 내부 스타일 */
     .stTextInput input, .stTextArea textarea {
         background-color: #1F2128 !important;
         color: #FFFFFF !important;
@@ -92,11 +90,11 @@ st.markdown("""
         font-size: 1.1rem !important;
     }
     .stTextInput input:focus, .stTextArea textarea:focus {
-        border-color: #2575fc !important;
-        box-shadow: 0 0 8px rgba(37, 117, 252, 0.5);
+        border-color: #0072FF !important;
+        box-shadow: 0 0 8px rgba(0, 114, 255, 0.5);
     }
 
-    /* 6. Selectbox (언어 선택창) 글씨 보이게 수정 */
+    /* 6. Selectbox 스타일 */
     div[data-testid="stSelectbox"] > div > div {
         background-color: #1F2128 !important;
         color: #FFFFFF !important;
@@ -137,7 +135,6 @@ st.markdown("""
         box-shadow: 0 5px 15px rgba(255, 75, 43, 0.4);
     }
 
-    /* 다운로드 버튼 스타일 */
     [data-testid="stDownloadButton"] button {
         background-color: #2C2F38 !important;
         border: 1px solid #555 !important;
@@ -148,28 +145,21 @@ st.markdown("""
         color: #00BFFF !important;
     }
 
-    /* [긴급 수정] 8. Expander (프롬프트 수정 & 확인) 스타일 완벽 고정 */
-    /* Expander 컨테이너 */
+    /* 8. Expander 스타일 */
     div[data-testid="stExpander"] details {
         background-color: #1F2128 !important;
         border: 1px solid #4A4A4A !important;
         border-radius: 8px !important;
         color: #FFFFFF !important;
     }
-
-    /* 제목 줄 (Summary) - 마우스 뗐을 때(기본) */
     div[data-testid="stExpander"] details > summary {
-        background-color: #1F2128 !important; /* 배경 어둡게 강제 */
-        color: #FFFFFF !important;             /* 글씨 흰색 강제 */
+        background-color: #1F2128 !important;
+        color: #FFFFFF !important;
     }
-
-    /* 제목 줄 - 마우스 올렸을 때(Hover) */
     div[data-testid="stExpander"] details > summary:hover {
         background-color: #2C2F38 !important;
-        color: #FFD700 !important;             /* 금색 */
+        color: #FFD700 !important;
     }
-
-    /* 제목 줄 내부 텍스트 및 아이콘 */
     div[data-testid="stExpander"] details > summary span {
         color: inherit !important;
     }
@@ -179,14 +169,12 @@ st.markdown("""
     div[data-testid="stExpander"] details > summary:hover svg {
         fill: #FFD700 !important;
     }
-
-    /* Expander 내부 콘텐츠 영역 배경 */
     div[data-testid="stExpander"] details > div {
         background-color: #1F2128 !important;
         color: #FFFFFF !important;
     }
     
-    /* 9. Status Widget (작업 진행 중) 글씨 가독성 완벽 해결 */
+    /* 9. Status Widget 스타일 */
     div[data-testid="stStatusWidget"] {
         background-color: #1F2128 !important;
         border: 1px solid #4A4A4A !important;
@@ -203,7 +191,7 @@ st.markdown("""
         color: #FFFFFF !important;
     }
 
-    /* 사이드바 스타일 */
+    /* 사이드바 */
     [data-testid="stSidebar"] {
         background-color: #12141C;
         border-right: 1px solid #2C2F38;
@@ -211,7 +199,7 @@ st.markdown("""
     </style>
 
     <div class="student-banner">
-        🎨 열정피디 AI 이미지 생성기 VER.2
+        🎨 열정피디 AI 이미지 생성기 (Final)
     </div>
 """, unsafe_allow_html=True)
 
@@ -219,18 +207,12 @@ st.markdown("""
 BASE_PATH = "./web_result_files"
 
 # ==========================================
-# [함수] 1. 유틸리티 (대본 분할, 파일명 등)
+# [함수] 1. 유틸리티
 # ==========================================
 def split_script_by_time(script, chars_per_chunk=100):
-    """
-    대본을 문장 단위로 끊어서 적절한 길이로 병합하되,
-    너무 짧은 문장(예: 인사말)이 혼자 덩그러니 남지 않도록 최소 길이를 보장합니다.
-    """
     temp_sentences = script.replace(".", ".|").replace("?", "?|").replace("!", "!|").split("|")
     chunks = []
     current_chunk = ""
-    
-    # 최소 보장 글자 수
     MIN_LENGTH = 30 
 
     for sentence in temp_sentences:
@@ -245,7 +227,6 @@ def split_script_by_time(script, chars_per_chunk=100):
         if len(temp_combined) < chars_per_chunk:
             current_chunk = temp_combined
         else:
-            # 기존 덩어리가 너무 짧으면 이번 문장까지 포함
             if len(current_chunk) < MIN_LENGTH:
                 current_chunk = temp_combined
             else:
@@ -261,7 +242,6 @@ def split_script_by_time(script, chars_per_chunk=100):
     return chunks
 
 def make_filename(scene_num, text_chunk):
-    """파일 이름 생성 (특수문자 제거)"""
     clean_line = text_chunk.replace("\n", " ").strip()
     clean_line = re.sub(r'[\\/:*?"<>|]', "", clean_line)
     words = clean_line.split()
@@ -272,7 +252,6 @@ def make_filename(scene_num, text_chunk):
     return f"S{scene_num:03d}_{summary}.png"
 
 def create_zip_buffer(source_dir):
-    """폴더 압축"""
     buffer = BytesIO()
     with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
         for root, dirs, files in os.walk(source_dir):
@@ -283,7 +262,7 @@ def create_zip_buffer(source_dir):
     return buffer
 
 # ==========================================
-# [함수] 2. 프롬프트 생성 (사용자 지정 코드 100% 준수)
+# [함수] 2. 프롬프트 생성 (사용자 원본 100% 준수)
 # ==========================================
 def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, genre_mode="info", target_language="Korean"):
     scene_num = index + 1
@@ -305,6 +284,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
 
     # 2. 장르별 프롬프트 분기
     if genre_mode == "history":
+        # [복원됨] 사용자 요청 원본 프롬프트 (100% 유지)
         full_instruction = f"""
     [역할]
     당신은 **세계사의 결정적인 순간들(한국사, 서양사, 동양사 등)**을 한국 시청자에게 전달하는 '시대극 애니메이션 감독'입니다.
@@ -359,8 +339,36 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     - **무조건 한국어(한글)**로만 작성하십시오.
     - 부가적인 설명 없이 **오직 프롬프트 텍스트만** 출력하십시오.
         """
+        
+    elif genre_mode == "webtoon":
+        # [NEW] 한국 웹툰 모드 (스틱맨 아님, 고퀄리티 캐릭터)
+        full_instruction = f"""
+    [역할]
+    당신은 네이버 웹툰 스타일의 **'인기 웹툰 메인 작화가'**입니다.
+    독자들이 1초 만에 이해하고 클릭하고 싶게 만드는 **'트렌디하고 역동적인 웹툰 컷'**을 그려야 합니다.
+
+    [전체 영상 주제] "{video_title}"
+    [그림 스타일 가이드] {style_instruction}
+
+    [필수 연출 지침]
+    1. **작화 스타일:** 한국 웹툰(K-Webtoon) 특유의 **선명한 외곽선(Sharp Outlines)**과 **화려한 채색(Vibrant Coloring)**을 사용하십시오.
+    2. **캐릭터 디자인 (중요):** **절대 스틱맨(Stickman)으로 그리지 마십시오.** - 8등신 혹은 정상적인 인체 비례를 가진 **'매력적인 웹툰 주인공(Anime/Manhwa Style Character)'**으로 묘사하십시오.
+       - 트렌디한 헤어스타일, 구체적인 이목구비(큰 눈, 오똑한 코), 세련된 의상을 착용해야 합니다.
+    3. **캐릭터 연기:** - 표정을 매우 다이나믹하게(Dynamic Expressions) 묘사하십시오. (예: 극적인 당황, 분노, 환희 등)
+       - 헐리우드 액션처럼 크고 시원시원한 포즈.
+    4. **카메라 앵글 (Dynamic Angles):** - **하이 앵글(위에서 아래로), 로우 앵글(아래에서 위로), 광각 렌즈(Fish-eye)** 효과를 사용하여 긴박감과 몰입감을 주십시오.
+    5. **만화적 배경 효과 (Manhwa FX):** - 상황에 따라 **속도선(Speed Lines), 집중선(Focus Lines), 후광 효과**를 배경에 적극적으로 사용하여 감정을 증폭시키십시오.
+    6. **텍스트 처리:** {lang_guide} {lang_example}
+       - 웹툰 말풍선 느낌이나 배경 오브젝트(간판, 스마트폰)에 자연스럽게 녹여내십시오.
+    7. **구성:** - 16:9 비율의 한 장의 일러스트지만, 웹툰의 한 컷처럼 연출하십시오. 분할 화면은 지양하고 한 화면에 집중하십시오.
+
+    [임무]
+    제공된 대본을 바탕으로 이미지 생성 프롬프트를 작성하십시오. (한글 출력)
+    - "속도선이 배경에 깔리며...", "로우 앵글로 웅장하게...", "미소년/미소녀 스타일의 캐릭터가..." 등 웹툰 연출 용어를 포함하여 묘사하십시오.
+        """
+
     else:
-        # [모드 1] 밝은 정보/이슈
+        # [모드 1] 밝은 정보/이슈 (원본 유지)
         full_instruction = f"""
     [역할]
     당신은 복잡한 상황을 아주 쉽고 직관적인 그림으로 표현하는 '비주얼 커뮤니케이션 전문가'이자 '교육용 일러스트레이터'입니다.
@@ -404,7 +412,6 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
             try:
                 time.sleep(random.uniform(0.2, 0.5))
                 
-                # 안전 필터 설정은 유지
                 response = client.models.generate_content(
                     model=model_name,
                     contents=full_instruction + f'\n\n[대본 내용]\n"{text_chunk}"',
@@ -425,10 +432,9 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
                     return (scene_num, result)
 
             except Exception as e:
-                error_msg = str(e)
                 time.sleep(1)
 
-    return (scene_num, f"주제 '{video_title}'에 어울리는 배경 일러스트. (Safety Fallback)")
+    return (scene_num, f"주제 '{video_title}'에 어울리는 배경 일러스트 (Fallback).")
 
 # ==========================================
 # [함수] 3. 이미지 생성
@@ -436,7 +442,6 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
 def generate_image(client, prompt, filename, output_dir, selected_model_name, style_instruction):
     full_path = os.path.join(output_dir, filename)
     
-    # 스타일 지침과 프롬프트 결합
     final_prompt = f"{style_instruction}\n\n[장면 묘사]: {prompt}"
     max_retries = 3
 
@@ -495,7 +500,6 @@ with st.sidebar:
     
     # 1. 모델 선택
     st.subheader("🖼️ 모델 선택")
-    # 라벨을 보이지 않게 숨김 처리 (label_visibility="collapsed")
     model_choice = st.radio(
         "모델 선택", 
         ("나노바나나 프로 (Gemini 3)", "나노바나나 (Gemini 2.5)"), 
@@ -525,20 +529,29 @@ with st.sidebar:
 전쟁, 기근 등의 묘사는 상징적이고 은유적으로 표현. 너무 고어틱한 연출은 하지 않는다.
 배경 묘사에 디테일을 살려 시대적 분위기를 강조. 무조건 얼굴이 둥근 2D 스틱맨 연출."""
 
+    # [수정됨] 스틱맨 금지, 고퀄리티 캐릭터 강조 (웹툰 모드)
+    PRESET_WEBTOON = """한국 인기 웹툰 스타일의 고퀄리티 2D 일러스트레이션 (Korean Webtoon Style).
+선명하고 깔끔한 펜선(Sharp Inking)과 웹툰 특유의 화려한 채색(Vibrant Colors).
+캐릭터는 스틱맨이 아닌, **'매력적인 외모의 8등신 웹툰 주인공'** 스타일로 묘사.
+트렌디한 헤어스타일과 패션, 그리고 만화적인 표정(반짝이는 눈, 빗금 등)을 디테일하게 표현.
+역동적인 카메라 앵글(로우 앵글, 하이 앵글)과 속도선(Speed Lines), 집중선(Focus Lines) 같은 만화적 효과를 배경에 적극 사용.
+배경은 디테일한 2D 웹툰 배경 스타일. 전체적으로 '네이버 웹툰' 썸네일처럼 시선을 확 끄는 작화. (16:9)"""
+
     if 'style_prompt_area' not in st.session_state:
         st.session_state['style_prompt_area'] = PRESET_INFO
 
     def update_style_text():
         selection = st.session_state.genre_radio
-        if selection == "밝은 정보/이슈 (Bright & Flat)":
+        if "밝은 정보" in selection:
             st.session_state['style_prompt_area'] = PRESET_INFO
-        else:
+        elif "역사/다큐" in selection:
             st.session_state['style_prompt_area'] = PRESET_HISTORY
+        else:
+            st.session_state['style_prompt_area'] = PRESET_WEBTOON
 
-    # 라벨 숨김
     genre_select = st.radio(
         "장르 선택", 
-        ("밝은 정보/이슈 (Bright & Flat)", "역사/다큐 (Cinematic & Immersive)"), 
+        ("밝은 정보/이슈 (Bright & Flat)", "역사/다큐 (Cinematic & Immersive)", "한국 웹툰 (K-Webtoon Style)"), 
         index=0,
         key="genre_radio",
         on_change=update_style_text,
@@ -547,14 +560,15 @@ with st.sidebar:
 
     if "밝은 정보" in genre_select:
         SELECTED_GENRE_MODE = "info"
-    else:
+    elif "역사/다큐" in genre_select:
         SELECTED_GENRE_MODE = "history"
+    else:
+        SELECTED_GENRE_MODE = "webtoon"
 
     st.markdown("---")
 
     # 3. 이미지 텍스트 언어 선택
     st.subheader("🌐 이미지 텍스트 언어")
-    # 라벨 숨김
     target_language = st.selectbox(
         "이미지 텍스트 언어",
         ("Korean", "English", "Japanese"),
@@ -565,7 +579,6 @@ with st.sidebar:
     st.markdown("---")
 
     st.subheader("🖌️ 그림체 지침 (수정 가능)")
-    # 라벨 숨김
     style_instruction = st.text_area(
         "스타일 지침", 
         key="style_prompt_area",
@@ -636,13 +649,13 @@ if start_btn:
         chunks = split_script_by_time(script_input, chars_per_chunk=chars_limit)
         total_scenes = len(chunks)
         status_box.write(f"✅ {total_scenes}개 장면으로 분할 완료.")
-
+        
         current_video_title = st.session_state.get('video_title', "").strip()
         if not current_video_title:
             current_video_title = "전반적인 대본 분위기에 어울리는 배경"
 
         # 2. 프롬프트 생성 (병렬)
-        status_box.write(f"📝 프롬프트 작성 중... (Mode: {genre_select}, Lang: {target_language})")
+        status_box.write(f"📝 프롬프트 작성 중... (Mode: {SELECTED_GENRE_MODE}, Lang: {target_language})")
         prompts = []
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -674,7 +687,7 @@ if start_btn:
                 orig_text = chunks[idx]
                 fname = make_filename(s_num, orig_text)
                 time.sleep(0.05)
-
+                
                 future = executor.submit(
                     generate_image,
                     client, prompt_text, fname, USER_DIR,
@@ -689,7 +702,7 @@ if start_btn:
                 path = future.result()
                 if path:
                     results.append({
-                        "scene": s_num, "path": path, "filename": fname,
+                        "scene": s_num, "path": path, "filename": fname, 
                         "script": orig_text, "prompt": p_text
                     })
                 completed_cnt += 1
@@ -717,14 +730,12 @@ if st.session_state['generated_results']:
         with st.container(border=True):
             cols = st.columns([1, 2])
             
-            # [오른쪽: 정보 및 수정] 먼저 선언하여 변수 확보
+            # [오른쪽: 정보 및 수정]
             with cols[1]:
                 st.markdown(f"### Scene {item['scene']:02d}")
                 st.markdown(f"**대본:**\n\n{item['script']}")
                 
                 with st.expander("📝 프롬프트 수정 & 확인", expanded=False):
-                    # [NEW] 프롬프트를 수정할 수 있는 Text Area
-                    # key를 index 기반으로 생성하여 각 장면별로 독립적 관리
                     prompt_key = f"prompt_edit_{index}"
                     edited_prompt = st.text_area(
                         "프롬프트 내용을 수정하고 왼쪽의 [이미지 다시 생성] 버튼을 누르세요.",
@@ -741,16 +752,11 @@ if st.session_state['generated_results']:
                 if st.button(f"🔄 이미지 다시 생성", key=f"regen_img_{index}", use_container_width=True):
                     if not api_key: st.error("API Key 필요")
                     else:
-                        # [핵심 로직 변경]
-                        # 기존처럼 generate_prompt를 호출하는 것이 아니라,
-                        # 위 text_area에서 사용자가 수정했을 수도 있는 'edited_prompt'를 가져옵니다.
-                        # st.session_state[prompt_key]에 최신 값이 들어있습니다.
                         current_prompt_text = st.session_state.get(prompt_key, item['prompt'])
 
                         with st.spinner(f"Scene {item['scene']} 재생성 중..."):
                             client = genai.Client(api_key=api_key)
                             
-                            # 수정된 프롬프트로 바로 이미지 생성 요청
                             new_path = generate_image(
                                 client, 
                                 current_prompt_text, 
@@ -761,9 +767,7 @@ if st.session_state['generated_results']:
                             )
                             
                             if new_path:
-                                # 결과 업데이트
                                 st.session_state['generated_results'][index]['path'] = new_path
-                                # 프롬프트도 최신 상태로 유지
                                 st.session_state['generated_results'][index]['prompt'] = current_prompt_text
                                 st.rerun()
                 
