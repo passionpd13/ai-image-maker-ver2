@@ -534,7 +534,7 @@ with st.sidebar:
 선명하고 깔끔한 펜선(Sharp Inking)과 웹툰 특유의 화려한 채색(Vibrant Colors).
 캐릭터는 스틱맨이 아닌, **'매력적인 외모의 8등신 웹툰 주인공'** 스타일로 묘사.
 트렌디한 헤어스타일과 패션, 그리고 만화적인 표정(반짝이는 눈, 빗금 등)을 디테일하게 표현.
-역동적인 카메라 앵글(로우 앵글, 하이 앵글)과 속도선(Speed Lines), 집중선(Focus Lines) 같은 만화적 효과를 배경에 적극 사용.
+역동적인 카메라 앵글(로우 앵글, 하이 앵글)과 만화적 배경 배경 같은 만화적 효과를 배경에 적극 사용.
 배경은 디테일한 2D 웹툰 배경 스타일. 전체적으로 '네이버 웹툰' 썸네일처럼 시선을 확 끄는 작화. (16:9)"""
 
     if 'style_prompt_area' not in st.session_state:
@@ -776,4 +776,5 @@ if st.session_state['generated_results']:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
 
                 except: pass
+
 
