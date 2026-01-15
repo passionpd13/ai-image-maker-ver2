@@ -262,7 +262,7 @@ def create_zip_buffer(source_dir):
     return buffer
 
 # ==========================================
-# [함수] 2. 프롬프트 생성 (사용자 원본 100% 준수)
+# [함수] 2. 프롬프트 생성 (웹툰 집중선 축소/배경 강화 + 실사 모드 유지)
 # ==========================================
 def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, genre_mode="info", target_language="Korean"):
     scene_num = index + 1
@@ -284,7 +284,6 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
 
     # 2. 장르별 프롬프트 분기
     if genre_mode == "history":
-        # [복원됨] 사용자 요청 원본 프롬프트 (100% 유지)
         full_instruction = f"""
     [역할]
     당신은 **세계사의 결정적인 순간들(한국사, 서양사, 동양사 등)**을 한국 시청자에게 전달하는 '시대극 애니메이션 감독'입니다.
@@ -341,7 +340,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         """
         
     elif genre_mode == "webtoon":
-        # [NEW] 한국 웹툰 모드 (스틱맨 아님, 고퀄리티 캐릭터)
+        # [수정] 배경/상황 강조 및 집중선 축소 지침 반영
         full_instruction = f"""
     [역할]
     당신은 네이버 웹툰 스타일의 **'인기 웹툰 메인 작화가'**입니다.
@@ -352,23 +351,56 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
 
     [필수 연출 지침]
     1. **작화 스타일:** 한국 웹툰(K-Webtoon) 특유의 **선명한 외곽선(Sharp Outlines)**과 **화려한 채색(Vibrant Coloring)**을 사용하십시오.
-    2. **캐릭터 디자인 (중요):** **절대 스틱맨(Stickman)으로 그리지 마십시오.** - 8등신 혹은 정상적인 인체 비례를 가진 **'매력적인 웹툰 주인공들(Anime/Manhwa Style Character)'**으로 묘사하십시오.
-       - 트렌디한 헤어스타일, 구체적인 이목구비(큰 눈, 오똑한 코), 세련된 의상을 착용해야 합니다.
-    3. **캐릭터 연기:** - 대본 상황에 어울리는 행동과 표정을 매우 다이나믹하게(Dynamic Expressions) 묘사하십시오. (예: 극적인 당황, 분노, 환희 등)
-       - 헐리우드 액션처럼 크고 시원시원한 포즈.
-    4. **카메라 앵글 (Dynamic Angles):** - **하이 앵글(위에서 아래로), 로우 앵글(아래에서 위로), 광각 렌즈(Fish-eye)** 효과를 사용하여 긴박감과 몰입감을 주십시오.
-    5. **만화적 배경 효과 (Manhwa FX):** - 상황에 따라 만화적 배경에 적극적으로 사용하여 감정을 증폭시키십시오.
+    2. **캐릭터 디자인:** **스틱맨 절대 금지.** 8등신 비율의 **'매력적인 웹툰 주인공(Anime/Manhwa Style)'**으로 묘사하십시오.
+    3. **[핵심 - 배경 및 상황 강화]:**
+       - 캐릭터 얼굴만 크게 그리지 말고, 캐릭터가 어디에 있는지, 주변에 무엇이 있는지 **'배경과 상황(Context & Background)'을 매우 구체적으로 묘사**하십시오.
+       - 예: 방 안이라면 가구와 조명, 거리라면 건물과 행인들, 사무실이라면 책상 위의 서류까지 디테일하게 그리십시오.
+    4. **[핵심 - 효과 절제]:**
+       - **집중선(Speed lines)이나 과도한 이펙트는 남발하지 마십시오.** (정말 충격적인 장면에서만 가끔 사용)
+       - 대신 **공간감(Depth of Field)**과 **현실적인 배경 디테일**로 상황을 설명하십시오.
+    5. **카메라 앵글:** 하이 앵글, 로우 앵글, 광각 렌즈 등을 사용하되, 배경이 잘 보이도록 구도를 잡으십시오.
     6. **텍스트 처리:** {lang_guide} {lang_example}
        - 웹툰 말풍선 느낌이나 배경 오브젝트(간판, 스마트폰)에 자연스럽게 녹여내십시오.
-    7. **구성:** - 16:9 비율의 한 장의 일러스트지만, 웹툰의 한 컷처럼 연출하십시오. 분할 화면은 지양하고 한 화면에 집중하십시오.
 
     [임무]
     제공된 대본을 바탕으로 이미지 생성 프롬프트를 작성하십시오. (한글 출력)
-    - "로우 앵글로 웅장하게...", "미소년/미소녀 스타일의 캐릭터가..." 등 웹툰 연출 용어를 포함하여 묘사하십시오.
+    - "집중선이 배경에 깔리며..." 같은 표현은 자제하고, **"디테일한 사무실 배경을 뒤로 하고...", "비 내리는 거리 한복판에서..."** 처럼 공간 묘사를 우선하십시오.
+        """
+
+    elif genre_mode == "news":
+        full_instruction = f"""
+    [역할]
+    당신은 뉴스 보도 및 다큐멘터리 제작을 위한 **'실사 자료화면(Stock Footage) 전문 디렉터'**입니다.
+    대본 내용을 시각적으로 뒷받침하는 **'고품질 실사 사진(Hyper-Realistic Photo)'**을 기획해야 합니다.
+
+    [전체 영상 주제] "{video_title}"
+    [스타일 가이드] {style_instruction}
+
+    [필수 연출 지침]
+    1. **완벽한 실사(Photorealism Only):**
+       - **절대 그림, 일러스트, 3D 렌더링, 만화 느낌 금지.**
+       - 실제 DSLR 카메라로 촬영한 듯한 **'뉴스 보도 사진'** 혹은 **'다큐멘터리 스틸컷'**이어야 합니다.
+    2. **자료화면 연출(Stock Footage Style):**
+       - 앵커가 앉아있는 스튜디오 모습이 **아닙니다.**
+       - 대본의 내용을 설명하는 **현장 스케치, 인서트 컷, 사물 클로즈업, 풍경** 등을 실사로 묘사하십시오.
+    3. **추상적 개념의 시각화:**
+       - 예: '부동산 폭락' -> (X) 집이 무너지는 만화 (O) '매매' 스티커가 붙은 아파트 단지의 쓸쓸한 전경 또는 부동산 중개소의 텅 빈 유리창.
+       - 예: '저출산' -> (X) 우는 아기 천사 (O) 텅 빈 놀이터의 그네가 흔들리는 모습.
+    4. **텍스트 처리:** {lang_guide} {lang_example}
+       - 텍스트는 인위적으로 띄우지 말고, 거리의 간판, 신문 헤드라인, 스마트폰 화면, 서류 내용처럼 **실제 사물에 합성**된 것처럼 자연스럽게 묘사하십시오.
+    5. **조명 및 톤앤매너:**
+       - 뉴스 보도에 적합한 **선명하고 사실적인 조명(Natural & Sharp Lighting)**.
+       - 과도한 예술적 필터보다는 사실 전달에 집중한 톤.
+
+    [임무]
+    대본을 분석하여 AI가 생성할 수 있는 **구체적인 실사 사진 프롬프트**를 작성하십시오.
+    - "Photorealistic, 8k resolution, cinematic lighting, depth of field" 등의 퀄리티 키워드 포함.
+    - 인물 묘사 시 'Korean' 혹은 구체적인 인종/나이대를 명시하여 사실성 부여.
+    - **한글**로만 출력하십시오.
         """
 
     else:
-        # [모드 1] 밝은 정보/이슈 (원본 유지)
+        # [모드 1] 밝은 정보/이슈
         full_instruction = f"""
     [역할]
     당신은 복잡한 상황을 아주 쉽고 직관적인 그림으로 표현하는 '비주얼 커뮤니케이션 전문가'이자 '교육용 일러스트레이터'입니다.
@@ -529,13 +561,18 @@ with st.sidebar:
 전쟁, 기근 등의 묘사는 상징적이고 은유적으로 표현. 너무 고어틱한 연출은 하지 않는다.
 배경 묘사에 디테일을 살려 시대적 분위기를 강조. 무조건 얼굴이 둥근 2D 스틱맨 연출."""
 
-    # [수정됨] 스틱맨 금지, 고퀄리티 캐릭터 강조 (웹툰 모드)
+    # [수정됨] 웹툰 프리셋: 집중선 자제 및 배경 디테일 강조
     PRESET_WEBTOON = """한국 인기 웹툰 스타일의 고퀄리티 2D 일러스트레이션 (Korean Webtoon Style).
-선명하고 깔끔한 펜선(Sharp Inking)과 웹툰 특유의 화려한 채색(Vibrant Colors).
-캐릭터들은 스틱맨이 아닌, **'매력적인 외모의 8등신 웹툰 주인공'** 스타일로 묘사.
-트렌디한 헤어스타일과 패션, 그리고 만화적인 표정(반짝이는 눈 등)을 디테일하게 표현.
-역동적인 카메라 앵글(로우 앵글, 하이 앵글)과 만화적 배경 배경 같은 만화적 효과를 배경에 적극 사용.
-배경은 디테일한 2D 웹툰 배경 몰입감 있고 디테일한 스타일. 전체적으로 '네이버 웹툰' 썸네일처럼 시선을 확 끄는 작화. (16:9)"""
+선명한 펜선과 화려한 채색. 집중선(Speed lines)은 정말 중요한 순간에만 가끔 사용.
+캐릭터는 8등신 웹툰 주인공 스타일. 캐릭터 주변의 '상황'과 '배경(장소)'을 아주 구체적이고 밀도 있게 묘사.
+단순 인물 컷보다는 주변 사물과 배경이 함께 보이는 구도 선호. 
+전체적으로 배경 디테일이 살아있는 네이버 웹툰 썸네일 스타일. (16:9)"""
+
+    PRESET_NEWS = """뉴스 보도용 '고화질 실사 자료화면(Photorealistic Stock Footage)'.
+그림이나 만화 느낌이 전혀 없는, 실제 DSLR 카메라로 촬영한 듯한 4K 실사(Real Photo) 퀄리티.
+뉴스 스튜디오가 아닌, 대본 내용을 설명하는 사실적인 '현장 스케치', '인서트 컷', '사물 클로즈업'.
+인물은 실제 한국 사람(Korean)처럼, 배경은 실제 장소처럼 사실적으로 묘사.
+추상적인 내용은 은유적인 실사 자료화면 느낌으로 연출. (16:9, Cinematic Lighting)"""
 
     if 'style_prompt_area' not in st.session_state:
         st.session_state['style_prompt_area'] = PRESET_INFO
@@ -546,12 +583,14 @@ with st.sidebar:
             st.session_state['style_prompt_area'] = PRESET_INFO
         elif "역사/다큐" in selection:
             st.session_state['style_prompt_area'] = PRESET_HISTORY
-        else:
+        elif "웹툰" in selection:
             st.session_state['style_prompt_area'] = PRESET_WEBTOON
+        else:
+            st.session_state['style_prompt_area'] = PRESET_NEWS
 
     genre_select = st.radio(
         "장르 선택", 
-        ("밝은 정보/이슈 (Bright & Flat)", "역사/다큐 (Cinematic & Immersive)", "한국 웹툰 (K-Webtoon Style)"), 
+        ("밝은 정보/이슈 (Bright & Flat)", "역사/다큐 (Cinematic & Immersive)", "한국 웹툰 (K-Webtoon Style)", "뉴스/실사 자료화면 (Realistic Footage)"), 
         index=0,
         key="genre_radio",
         on_change=update_style_text,
@@ -562,8 +601,10 @@ with st.sidebar:
         SELECTED_GENRE_MODE = "info"
     elif "역사/다큐" in genre_select:
         SELECTED_GENRE_MODE = "history"
-    else:
+    elif "웹툰" in genre_select:
         SELECTED_GENRE_MODE = "webtoon"
+    else:
+        SELECTED_GENRE_MODE = "news"
 
     st.markdown("---")
 
@@ -776,6 +817,3 @@ if st.session_state['generated_results']:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
 
                 except: pass
-
-
-
