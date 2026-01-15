@@ -578,9 +578,11 @@ with st.sidebar:
 
     # [UPDATED] 일본 만화 프리셋 (디테일 강조)
     PRESET_MANGA = """일본 대작 애니메이션 스타일 (High-Budget Anime Style).
-서정적인 느낌보다는 '정보량이 많고 치밀한' 고밀도 배경 작화 (High Detail Backgrounds).
-캐릭터의 표정과 행동을 '순간 포착'하듯 역동적으로 묘사.
-대본의 지문을 하나도 놓치지 않고 시각화하는 '철저한 디테일' 위주.
+실제 고예산 애니메이션의 '한 장면(Screenshot)'처럼 연출.
+신카이 마코토나 교토 애니메이션 스타일의 '감성적이고 미려한 조명(Cinematic Lighting)' 강조.
+캐릭터의 감정선과 드라마틱한 상황 연출에 집중.
+대본의 핵심을 기반으로 시각화하는 '철저한 디테일' 위주.
+자막이나 설명 텍스트를 허공에 띄우지 말 것. (배경 속 간판 등으로만 자연스럽게 처리)
 분활화면이 아니라 대본에 어울리는 내용을 하나의 화면으로 연출. (16:9)"""
 
     if 'style_prompt_area' not in st.session_state:
@@ -830,6 +832,7 @@ if st.session_state['generated_results']:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
 
                 except: pass
+
 
 
 
