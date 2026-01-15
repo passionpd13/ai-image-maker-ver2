@@ -393,6 +393,8 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     6. **조명 및 톤앤매너:**
        - 뉴스 보도에 적합한 **선명하고 사실적인 조명(Natural & Sharp Lighting)**.
        - 과도한 예술적 필터보다는 사실 전달에 집중한 톤.
+    7. **인물 연출:**
+        - 대본에 어울리는 인물들의 행동 연출.
 
     [임무]
     대본을 분석하여 AI가 생성할 수 있는 **구체적인 실사 사진 프롬프트**를 작성하십시오.
@@ -601,7 +603,8 @@ with st.sidebar:
 그림이나 만화 느낌이 전혀 없는, 실제 DSLR 카메라로 촬영한 듯한 4K 실사(Real Photo) 퀄리티.
 뉴스 스튜디오가 아닌, 대본 내용을 설명하는 사실적인 '현장 스케치', '인서트 컷', '사물 클로즈업'.
 인물은 실제 한국 사람(Korean)처럼, 배경은 실제 장소처럼 사실적으로 묘사.
-추상적인 내용은 은유적인 실사 자료화면 느낌으로 연출. (16:9, Cinematic Lighting)"""
+추상적인 내용은 은유적인 실사 자료화면 느낌으로 연출. (16:9, Cinematic Lighting).
+인물 등장시 대본에 어울리는 인물들의 행동 또는 감정 연출."""
 
     # [UPDATED] 일본 만화 프리셋 (디테일 강조)
     PRESET_MANGA = """일본 대작 애니메이션 스타일 (High-Budget Anime Style).
@@ -856,3 +859,4 @@ if st.session_state['generated_results']:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
 
                 except: pass
+
