@@ -262,7 +262,7 @@ def create_zip_buffer(source_dir):
     return buffer
 
 # ==========================================
-# [함수] 2. 프롬프트 생성 (분할 화면 금지 추가)
+# [함수] 2. 프롬프트 생성
 # ==========================================
 def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, genre_mode="info", target_language="Korean"):
     scene_num = index + 1
@@ -367,7 +367,6 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         """
 
     elif genre_mode == "news":
-        # [수정] 실사 모드에 '분할 화면 절대 금지' 지침 추가
         full_instruction = f"""
     [역할]
     당신은 뉴스 보도 및 다큐멘터리 제작을 위한 **'실사 자료화면(Stock Footage) 전문 디렉터'**입니다.
@@ -377,8 +376,6 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     [스타일 가이드] {style_instruction}
 
     [필수 연출 지침]
-    - **분량:** 최소 7문장 이상으로 상세하게 묘사.
-
     1. **완벽한 실사(Photorealism Only):**
        - **절대 그림, 일러스트, 3D 렌더링, 만화 느낌 금지.**
        - 실제 DSLR 카메라로 촬영한 듯한 **'뉴스 보도 사진'** 혹은 **'다큐멘터리 스틸컷'**이어야 합니다.
@@ -402,7 +399,34 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     - "Photorealistic, 8k resolution, cinematic lighting, depth of field" 등의 퀄리티 키워드 포함.
     - 인물 묘사 시 'Korean' 혹은 구체적인 인종/나이대를 명시하여 사실성 부여.
     - **한글**로만 출력하십시오.
-    - 대본에 어울리는 하나자의 장면을 연출한다.(필수)
+        """
+
+    elif genre_mode == "manga":
+        # [UPDATED] 일본 만화/애니메이션 모드 (디테일 & 감정/행동 강조)
+        full_instruction = f"""
+    [역할]
+    당신은 **작화 퀄리티가 극도로 높은 '대작 애니메이션'의 총괄 작화 감독**입니다.
+    단순히 예쁜 그림이 아니라, **대본의 상황, 행동, 감정을 '소름 돋을 정도로 구체적이고 디테일하게' 묘사**해야 합니다.
+
+    [전체 영상 주제] "{video_title}"
+    [스타일 가이드] {style_instruction}
+
+    [필수 연출 지침]
+    1. **작화 스타일 (High Detail):**
+       - **서정적이고 몽환적인 느낌 금지.** 대신 **선명하고, 날카롭고, 정보량이 많은(High Information Density)** 작화를 추구하십시오.
+       - 배경은 흐릿하게 처리하지 말고, 간판의 글씨, 책상의 소품, 벽의 질감까지 **집요할 정도로 디테일하게** 묘사하십시오. (예: 'MAPPA', 'Ufotable' 제작사의 고퀄리티 작화 스타일)
+    2. **행동 및 감정 묘사 (Action & Emotion):**
+       - 대본에 묘사된 캐릭터의 행동을 **'순간 포착'** 하듯 역동적으로 그리십시오.
+       - **표정 연기:** 눈썹의 각도, 입 모양, 눈동자의 흔들림까지 구체적으로 지시하여 캐릭터의 심리를 완벽하게 표현하십시오.
+    3. **대본 충실도 (Script Fidelity):**
+       - 대본에 있는 작은 지문 하나도 놓치지 말고 시각화하십시오.
+       - "컵을 떨군다"는 대본이라면, 컵이 손에서 떠나 공중에 있는 순간과 튀어 오르는 물방울까지 묘사하십시오.
+    4. **텍스트 처리:** {lang_guide} {lang_example}
+
+    [임무]
+    대본을 분석하여 AI가 그릴 수 있는 **최상급 퀄리티의 애니메이션 프롬프트**를 작성하십시오.
+    - "Masterpiece, best quality, ultra-detailed, intricate background, dynamic pose, expressive face" 등의 키워드가 반영되도록 하십시오.
+    - **한글**로만 출력하십시오.
         """
 
     else:
@@ -577,8 +601,13 @@ with st.sidebar:
 그림이나 만화 느낌이 전혀 없는, 실제 DSLR 카메라로 촬영한 듯한 4K 실사(Real Photo) 퀄리티.
 뉴스 스튜디오가 아닌, 대본 내용을 설명하는 사실적인 '현장 스케치', '인서트 컷', '사물 클로즈업'.
 인물은 실제 한국 사람(Korean)처럼, 배경은 실제 장소처럼 사실적으로 묘사.
-추상적인 내용은 은유적인 실사 자료화면 느낌으로 연출. (16:9, Cinematic Lighting)
-대본에 어울리는 하나의 화면으로 연출한다."""
+추상적인 내용은 은유적인 실사 자료화면 느낌으로 연출. (16:9, Cinematic Lighting)"""
+
+    # [UPDATED] 일본 만화 프리셋 (디테일 강조)
+    PRESET_MANGA = """일본 대작 애니메이션 스타일 (High-Budget Anime Style).
+서정적인 느낌보다는 '정보량이 많고 치밀한' 고밀도 배경 작화 (High Detail Backgrounds).
+캐릭터의 표정과 행동을 '순간 포착'하듯 역동적으로 묘사.
+대본의 지문을 하나도 놓치지 않고 시각화하는 '철저한 디테일' 위주. (16:9)"""
 
     if 'style_prompt_area' not in st.session_state:
         st.session_state['style_prompt_area'] = PRESET_INFO
@@ -591,12 +620,14 @@ with st.sidebar:
             st.session_state['style_prompt_area'] = PRESET_HISTORY
         elif "웹툰" in selection:
             st.session_state['style_prompt_area'] = PRESET_WEBTOON
+        elif "일본 만화" in selection:
+            st.session_state['style_prompt_area'] = PRESET_MANGA
         else:
             st.session_state['style_prompt_area'] = PRESET_NEWS
 
     genre_select = st.radio(
         "장르 선택", 
-        ("밝은 정보/이슈 (Bright & Flat)", "역사/다큐 (Cinematic & Immersive)", "한국 웹툰 (K-Webtoon Style)", "뉴스/실사 자료화면 (Realistic Footage)"), 
+        ("밝은 정보/이슈 (Bright & Flat)", "역사/다큐 (Cinematic & Immersive)", "한국 웹툰 (K-Webtoon Style)", "일본 만화 (Japanese Manga/Anime)", "뉴스/실사 자료화면 (Realistic Footage)"), 
         index=0,
         key="genre_radio",
         on_change=update_style_text,
@@ -609,6 +640,8 @@ with st.sidebar:
         SELECTED_GENRE_MODE = "history"
     elif "웹툰" in genre_select:
         SELECTED_GENRE_MODE = "webtoon"
+    elif "일본 만화" in genre_select:
+        SELECTED_GENRE_MODE = "manga"
     else:
         SELECTED_GENRE_MODE = "news"
 
@@ -823,4 +856,3 @@ if st.session_state['generated_results']:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
 
                 except: pass
-
