@@ -600,13 +600,13 @@ with st.sidebar:
 단순 인물 컷보다는 주변 사물과 배경이 함께 보이는 구도 선호. 
 전체적으로 배경 디테일이 살아있는 네이버 웹툰 썸네일 스타일. (16:9)"""
 
-    PRESET_NEWS = """뉴스 보도용 '고화질 실사 자료화면(Photorealistic Stock Footage)'.
+    PRESET_NEWS = """'고화질 실사 자료화면(Photorealistic Stock Footage)'.
 그림이나 만화 느낌이 전혀 없는, 실제 DSLR 카메라로 촬영한 듯한 4K 실사(Real Photo) 퀄리티.
 뉴스 스튜디오가 아닌, 대본 내용을 설명하는 사실적인 '현장 스케치', '인서트 컷', '사물 클로즈업'.
 인물은 실제 한국 사람(Korean)처럼, 배경은 실제 장소처럼 사실적으로 묘사.
 추상적인 내용은 은유적인 실사 자료화면 느낌으로 연출. (16:9, Cinematic Lighting).
-인물 등장시 대본에 어울리는 인물들의 행동 또는 감정 연출.
-절대 분활화면으로 연출하지 말고 하나의 화면으로 연출한다."""
+인물들 등장시 대본에 어울리는 인물들의 행동 또는 감정 연출.
+대본에 어울리는 내용을 기반으로 분활화면으로 연출하지 말고 하나의 화면으로 연출한다."""
 
     # [UPDATED] 일본 만화 프리셋 (디테일 강조)
     PRESET_MANGA = """일본 대작 애니메이션 스타일 (High-Budget Anime Style).
@@ -861,5 +861,6 @@ if st.session_state['generated_results']:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
 
                 except: pass
+
 
 
