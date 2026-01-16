@@ -249,13 +249,20 @@ def split_script_by_time(script, chars_per_chunk=100):
     return chunks
 
 def make_filename(scene_num, text_chunk):
+    # 1. 줄바꿈을 공백으로 변경 및 앞뒤 공백 제거
     clean_line = text_chunk.replace("\n", " ").strip()
+    
+    # 2. 파일명에 사용할 수 없는 특수문자 제거 (\ / : * ? " < > |)
     clean_line = re.sub(r'[\\/:*?"<>|]', "", clean_line)
-    words = clean_line.split()
-    if len(words) <= 6:
-        summary = " ".join(words)
+    
+    # [수정됨] 단어(split) 기준이 아니라 '글자 수' 기준으로 변경
+    # 일본어처럼 띄어쓰기가 없는 언어 대응을 위해 앞 9글자, 뒤 9글자로 제한
+    if len(clean_line) <= 20:
+        summary = clean_line
     else:
-        summary = f"{' '.join(words[:3])}...{' '.join(words[-3:])}"
+        # 앞 9글자 ... 뒤 9글자
+        summary = f"{clean_line[:9]}...{clean_line[-9:]}"
+        
     return f"S{scene_num:03d}_{summary}.png"
 
 def create_zip_buffer(source_dir):
@@ -889,6 +896,7 @@ if st.session_state['generated_results']:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
 
                 except: pass
+
 
 
 
