@@ -425,6 +425,10 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
        - 대본에 있는 작은 지문 하나도 놓치지 말고 시각화하십시오.
        - "컵을 떨군다"는 대본이라면, 컵이 손에서 떠나 공중에 있는 순간과 튀어 오르는 물방울까지 묘사하십시오.
     4. **텍스트 처리:** {lang_guide} {lang_example}
+     
+    [작성 요구사항]
+    - **분량:** 최소 7문장 이상으로 상세하게 묘사.
+    - 절대 분활화면 연출하지 않는다. 전체 대본 내용에 어울리는 하나의 장면으로 묘사.
 
     [임무]
     대본을 분석하여 AI가 그릴 수 있는 **최상급 퀄리티의 애니메이션 프롬프트**를 작성하십시오.
@@ -612,7 +616,8 @@ with st.sidebar:
     PRESET_MANGA = """일본 대작 애니메이션 스타일 (High-Budget Anime Style).
 서정적인 느낌보다는 '정보량이 많고 치밀한' 고밀도 배경 작화 (High Detail Backgrounds).
 캐릭터의 표정과 행동을 '순간 포착'하듯 역동적으로 묘사.
-대본의 지문을 하나도 놓치지 않고 시각화하는 '철저한 디테일' 위주. (16:9)"""
+대본의 지문을 하나도 놓치지 않고 시각화하는 '철저한 디테일' 위주. (16:9)
+전체 대본에 어울리는 하나의 장면으로 연출."""
 
     if 'style_prompt_area' not in st.session_state:
         st.session_state['style_prompt_area'] = PRESET_INFO
@@ -861,6 +866,7 @@ if st.session_state['generated_results']:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
 
                 except: pass
+
 
 
 
