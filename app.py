@@ -211,8 +211,6 @@ BASE_PATH = "./web_result_files"
 # ==========================================
 def split_script_by_time(script, chars_per_chunk=100):
     # [수정됨] 일본어 구두점(。, ？, ！)도 인식하도록 변경
-    # 기존: temp_sentences = script.replace(".", ".|").replace("?", "?|").replace("!", "!|").split("|")
-    
     temp_sentences = script.replace(".", ".|").replace("?", "?|").replace("!", "!|") \
                            .replace("。", "。|").replace("？", "？|").replace("！", "！|").split("|")
                            
@@ -225,8 +223,6 @@ def split_script_by_time(script, chars_per_chunk=100):
         if not sentence: continue
         
         if current_chunk:
-            # 일본어는 띄어쓰기가 적으므로 상황에 따라 공백 처리가 다를 수 있지만, 
-            # 일반적인 처리를 위해 공백을 유지합니다.
             temp_combined = current_chunk + " " + sentence
         else:
             temp_combined = sentence
@@ -249,18 +245,12 @@ def split_script_by_time(script, chars_per_chunk=100):
     return chunks
 
 def make_filename(scene_num, text_chunk):
-    # 1. 줄바꿈을 공백으로 변경 및 앞뒤 공백 제거
     clean_line = text_chunk.replace("\n", " ").strip()
-    
-    # 2. 파일명에 사용할 수 없는 특수문자 제거 (\ / : * ? " < > |)
     clean_line = re.sub(r'[\\/:*?"<>|]', "", clean_line)
     
-    # [수정됨] 단어(split) 기준이 아니라 '글자 수' 기준으로 변경
-    # 일본어처럼 띄어쓰기가 없는 언어 대응을 위해 앞 9글자, 뒤 9글자로 제한
     if len(clean_line) <= 20:
         summary = clean_line
     else:
-        # 앞 9글자 ... 뒤 9글자
         summary = f"{clean_line[:9]}...{clean_line[-9:]}"
         
     return f"S{scene_num:03d}_{summary}.png"
@@ -419,7 +409,6 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         """
 
     elif genre_mode == "manga":
-        # [UPDATED] 일본 만화/애니메이션 모드 (디테일 & 감정/행동 강조)
         full_instruction = f"""
     [역할]
     당신은 **작화 퀄리티가 극도로 높은 '대작 지브리풍 애니메이션'의 총괄 작화 감독**입니다.
@@ -439,7 +428,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
        - 대본에 있는 작은 지문 하나도 놓치지 말고 시각화하십시오.
        - "컵을 떨군다"는 대본이라면, 컵이 손에서 떠나 공중에 있는 순간과 튀어 오르는 물방울까지 묘사하십시오.
     4. **텍스트 처리:** {lang_guide} {lang_example}
-     
+      
     [작성 요구사항]
     - **분량:** 최소 7문장 이상으로 상세하게 묘사.
     - 절대 분활화면 연출하지 않는다. 전체 대본 내용에 어울리는 하나의 장면으로 묘사.
@@ -447,6 +436,41 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     [임무]
     대본을 분석하여 AI가 그릴 수 있는 **최상급 지브리풍 퀄리티의 애니메이션 프롬프트**를 작성하십시오.
     - "Masterpiece, best quality, ultra-detailed, intricate background, dynamic pose, expressive face" 등의 키워드가 반영되도록 하십시오.
+    - **한글**로만 출력하십시오.
+        """
+
+    elif genre_mode == "paint_explainer":
+        # [NEW] The Paint Explainer 스타일 (흰 배경 + 스틱맨 + 단순함)
+        full_instruction = f"""
+    [역할]
+    당신은 유튜브 'The Paint Explainer' 채널 스타일의 **'초심플 스틱맨 일러스트레이터'**입니다.
+    복잡한 세상의 이야기를 **'흰색 배경 위, 검은색 선으로 된 졸라맨(Stickman)'**으로 아주 단순하고 직관적으로 설명해야 합니다.
+
+    [전체 영상 주제] "{video_title}"
+    [스타일 가이드] {style_instruction}
+
+    [필수 연출 지침]
+    1. **[핵심 - 배경] 배경은 무조건 '완전한 흰색(Pure White Background)'**입니다.
+       - 배경에 풍경, 하늘, 그라데이션, 종이 질감 등을 절대 넣지 마십시오. 그냥 하얀 여백입니다.
+    2. **[핵심 - 캐릭터] 완벽한 '졸라맨(Stick Figure)' 스타일:**
+       - 머리는 동그라미(Circle head).
+       - 몸통과 팔다리는 **단순한 검은 막대기 선(Stick limbs)**.
+       - 옷은 그리지 않거나 아주 단순하게 색깔만 입힙니다.
+       - 표정은 점 눈(. .)과 선 입(__)으로 단순하지만 상황을 웃기거나 명확하게 전달해야 합니다.
+    3. **[작화 스타일] MS 그림판(MS Paint) 감성:**
+       - 고퀄리티 예술 작품이 아닙니다. 마우스로 대충 그린 듯한(Rough sketch, scribbles) 느낌을 살리십시오.
+       - 그림자는 그리지 않습니다(No shading). 완전한 평면(Flat)입니다.
+    4. **[색상 사용]:**
+       - 기본은 **흑백(Black lines on White)**입니다.
+       - 강조하고 싶은 국기, 돈, 특정 사물에만 **원색(Primary Colors)**을 사용하여 시선을 끄십시오.
+    5. **[텍스트 처리]:** {lang_guide} {lang_example}
+       - 삐뚤빼뚤한 손글씨 느낌으로 연출하십시오.
+    6. **[구도]:**
+       - 분할 화면 금지. 하나의 화면에 캐릭터와 상황을 심플하게 배치.
+
+    [임무]
+    대본을 분석하여 AI가 그릴 수 있는 **'The Paint Explainer 스타일'의 프롬프트**를 작성하십시오.
+    - "Minimalist stick figure, crude ms paint style, pure white background, simple line drawing" 등의 키워드가 반영되도록 하십시오.
     - **한글**로만 출력하십시오.
         """
 
@@ -520,9 +544,6 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     return (scene_num, f"주제 '{video_title}'에 어울리는 배경 일러스트 (Fallback).")
 
 # ==========================================
-# [함수] 3. 이미지 생성
-# ==========================================
-# ==========================================
 # [함수] 3. 이미지 생성 (수정됨: 오류 디버깅 추가)
 # ==========================================
 def generate_image(client, prompt, filename, output_dir, selected_model_name, style_instruction):
@@ -530,10 +551,6 @@ def generate_image(client, prompt, filename, output_dir, selected_model_name, st
     
     # [수정] 프롬프트가 너무 길면 잘릴 수 있으므로, 핵심만 전달
     final_prompt = f"{style_instruction}\n\n[장면 묘사]: {prompt}"
-    
-    # 모델명 강제 보정 (유효하지 않은 모델명일 경우 Imagen 3로 변경 추천)
-    # Gemini 3나 2.5는 아직 공개되지 않았거나 베타일 수 있습니다.
-    # 만약 오류가 계속된다면 아래 모델명을 'imagen-3.0-generate-001'로 변경해보세요.
     
     safety_settings = [
         types.SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_ONLY_HIGH"),
@@ -642,12 +659,19 @@ with st.sidebar:
 인물들 등장시 대본에 어울리는 인물들의 행동 또는 감정 연출.
 대본에 어울리는 내용을 기반으로 분활화면으로 연출하지 말고 하나의 화면으로 연출한다."""
 
-    # [UPDATED] 일본 만화 프리셋 (디테일 강조)
     PRESET_MANGA = """일본 대작 애니메이션 스타일 (High-Budget Anime Style).
 서정적인 느낌보다는 '정보량이 많고 치밀한' 고밀도 배경 작화 (High Detail Backgrounds).
 캐릭터의 표정과 행동을 '순간 포착'하듯 역동적으로 묘사.
 대본의 지문을 하나도 놓치지 않고 시각화하는 '철저한 디테일' 위주. (16:9)
 전체 대본에 어울리는 하나의 장면으로 연출."""
+
+    # [NEW] 페인트 익스플레이너 프리셋
+    PRESET_PAINT = """'The Paint Explainer' 유튜브 채널 스타일 (Minimalist Stickman).
+완전한 흰색 배경(Pure White Background). 배경 묘사 없음.
+검은색 선으로 이루어진 단순한 졸라맨(Stick Figure) 캐릭터. (둥근 머리, 막대기 팔다리).
+MS 그림판(MS Paint)으로 대충 그린 듯한 키치하고 단순한 느낌.
+채색은 최소화하고 특정 사물(국기, 돈 등)에만 원색 포인트 컬러 사용.
+복잡한 예술적 기교나 명암(Shading) 절대 금지. 단순하고 직관적인 설명화."""
 
     if 'style_prompt_area' not in st.session_state:
         st.session_state['style_prompt_area'] = PRESET_INFO
@@ -662,12 +686,21 @@ with st.sidebar:
             st.session_state['style_prompt_area'] = PRESET_WEBTOON
         elif "일본 만화" in selection:
             st.session_state['style_prompt_area'] = PRESET_MANGA
+        elif "화이트보드" in selection: # [NEW] 추가된 모드 연결
+            st.session_state['style_prompt_area'] = PRESET_PAINT
         else:
             st.session_state['style_prompt_area'] = PRESET_NEWS
 
     genre_select = st.radio(
         "장르 선택", 
-        ("밝은 정보/이슈 (Bright & Flat)", "역사/다큐 (Cinematic & Immersive)", "한국 웹툰 (K-Webtoon Style)", "일본 만화 (Japanese Manga/Anime)", "뉴스/실사 자료화면 (Realistic Footage)"), 
+        (
+            "밝은 정보/이슈 (Bright & Flat)", 
+            "역사/다큐 (Cinematic & Immersive)", 
+            "한국 웹툰 (K-Webtoon Style)", 
+            "일본 만화 (Japanese Manga/Anime)", 
+            "뉴스/실사 자료화면 (Realistic Footage)",
+            "화이트보드/스틱맨 (The Paint Explainer Style)" # [NEW] 옵션 추가
+        ), 
         index=0,
         key="genre_radio",
         on_change=update_style_text,
@@ -682,6 +715,8 @@ with st.sidebar:
         SELECTED_GENRE_MODE = "webtoon"
     elif "일본 만화" in genre_select:
         SELECTED_GENRE_MODE = "manga"
+    elif "화이트보드" in genre_select: # [NEW] 모드 변수 매핑
+        SELECTED_GENRE_MODE = "paint_explainer"
     else:
         SELECTED_GENRE_MODE = "news"
 
@@ -896,11 +931,3 @@ if st.session_state['generated_results']:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
 
                 except: pass
-
-
-
-
-
-
-
-
