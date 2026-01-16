@@ -210,7 +210,12 @@ BASE_PATH = "./web_result_files"
 # [함수] 1. 유틸리티
 # ==========================================
 def split_script_by_time(script, chars_per_chunk=100):
-    temp_sentences = script.replace(".", ".|").replace("?", "?|").replace("!", "!|").split("|")
+    # [수정됨] 일본어 구두점(。, ？, ！)도 인식하도록 변경
+    # 기존: temp_sentences = script.replace(".", ".|").replace("?", "?|").replace("!", "!|").split("|")
+    
+    temp_sentences = script.replace(".", ".|").replace("?", "?|").replace("!", "!|") \
+                           .replace("。", "。|").replace("？", "？|").replace("！", "！|").split("|")
+                           
     chunks = []
     current_chunk = ""
     MIN_LENGTH = 30 
@@ -220,6 +225,8 @@ def split_script_by_time(script, chars_per_chunk=100):
         if not sentence: continue
         
         if current_chunk:
+            # 일본어는 띄어쓰기가 적으므로 상황에 따라 공백 처리가 다를 수 있지만, 
+            # 일반적인 처리를 위해 공백을 유지합니다.
             temp_combined = current_chunk + " " + sentence
         else:
             temp_combined = sentence
@@ -866,6 +873,7 @@ if st.session_state['generated_results']:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
 
                 except: pass
+
 
 
 
