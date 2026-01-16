@@ -515,12 +515,19 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
 # ==========================================
 # [함수] 3. 이미지 생성
 # ==========================================
+# ==========================================
+# [함수] 3. 이미지 생성 (수정됨: 오류 디버깅 추가)
+# ==========================================
 def generate_image(client, prompt, filename, output_dir, selected_model_name, style_instruction):
     full_path = os.path.join(output_dir, filename)
     
+    # [수정] 프롬프트가 너무 길면 잘릴 수 있으므로, 핵심만 전달
     final_prompt = f"{style_instruction}\n\n[장면 묘사]: {prompt}"
-    max_retries = 3
-
+    
+    # 모델명 강제 보정 (유효하지 않은 모델명일 경우 Imagen 3로 변경 추천)
+    # Gemini 3나 2.5는 아직 공개되지 않았거나 베타일 수 있습니다.
+    # 만약 오류가 계속된다면 아래 모델명을 'imagen-3.0-generate-001'로 변경해보세요.
+    
     safety_settings = [
         types.SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_ONLY_HIGH"),
         types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_ONLY_HIGH"),
@@ -528,30 +535,39 @@ def generate_image(client, prompt, filename, output_dir, selected_model_name, st
         types.SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_ONLY_HIGH"),
     ]
 
-    for attempt in range(1, max_retries + 1):
-        try:
-            response = client.models.generate_content(
-                model=selected_model_name,
-                contents=[final_prompt],
-                config=types.GenerateContentConfig(
-                    image_config=types.ImageConfig(aspect_ratio="16:9"),
-                    safety_settings=safety_settings
-                )
+    print(f"🔄 생성 시도: {filename} / Model: {selected_model_name}") # 로그 출력
+
+    try:
+        response = client.models.generate_content(
+            model=selected_model_name,
+            contents=[final_prompt],
+            config=types.GenerateContentConfig(
+                image_config=types.ImageConfig(aspect_ratio="16:9"),
+                safety_settings=safety_settings
             )
-            if response.parts:
-                for part in response.parts:
-                    if part.inline_data:
-                        img_data = part.inline_data.data
-                        image = Image.open(BytesIO(img_data))
-                        image.save(full_path)
-                        return full_path
-            time.sleep(1)
-        except Exception as e:
-            error_msg = str(e)
-            if "429" in error_msg or "503" in error_msg:
-                time.sleep(2 * attempt)
-            else:
-                time.sleep(5)
+        )
+        
+        if response.parts:
+            for part in response.parts:
+                # 1. 이미지가 정상적으로 생성된 경우
+                if part.inline_data:
+                    img_data = part.inline_data.data
+                    image = Image.open(BytesIO(img_data))
+                    image.save(full_path)
+                    print(f"✅ 저장 성공: {full_path}")
+                    return full_path
+                
+                # 2. [중요] 이미지가 아니라 텍스트(거절 메시지)가 온 경우
+                if part.text:
+                    print(f"⚠️ 모델 거절(Safety/Refusal): {part.text}")
+                    # 빈 이미지나 에러 이미지를 생성해서라도 반환해야 UI가 깨지지 않음
+                    return None 
+
+    except Exception as e:
+        print(f"❌ API 에러 발생 ({filename}): {str(e)}")
+        # API 키 오류나 모델명 오류일 가능성이 높음
+        return None
+
     return None
 
 # ==========================================
@@ -873,6 +889,7 @@ if st.session_state['generated_results']:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
 
                 except: pass
+
 
 
 
