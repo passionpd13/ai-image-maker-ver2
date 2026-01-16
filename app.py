@@ -422,7 +422,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         # [UPDATED] 일본 만화/애니메이션 모드 (디테일 & 감정/행동 강조)
         full_instruction = f"""
     [역할]
-    당신은 **작화 퀄리티가 극도로 높은 '대작 애니메이션'의 총괄 작화 감독**입니다.
+    당신은 **작화 퀄리티가 극도로 높은 '대작 지브리풍 애니메이션'의 총괄 작화 감독**입니다.
     단순히 예쁜 그림이 아니라, **대본의 상황, 행동, 감정을 '소름 돋을 정도로 구체적이고 디테일하게' 묘사**해야 합니다.
 
     [전체 영상 주제] "{video_title}"
@@ -445,7 +445,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     - 절대 분활화면 연출하지 않는다. 전체 대본 내용에 어울리는 하나의 장면으로 묘사.
 
     [임무]
-    대본을 분석하여 AI가 그릴 수 있는 **최상급 퀄리티의 애니메이션 프롬프트**를 작성하십시오.
+    대본을 분석하여 AI가 그릴 수 있는 **최상급 지브리풍 퀄리티의 애니메이션 프롬프트**를 작성하십시오.
     - "Masterpiece, best quality, ultra-detailed, intricate background, dynamic pose, expressive face" 등의 키워드가 반영되도록 하십시오.
     - **한글**로만 출력하십시오.
         """
@@ -896,6 +896,7 @@ if st.session_state['generated_results']:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
 
                 except: pass
+
 
 
 
