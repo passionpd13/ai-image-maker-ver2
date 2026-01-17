@@ -673,10 +673,10 @@ with st.sidebar:
 
     # [NEW] 페인트 익스플레이너 프리셋
     PRESET_PAINT = """'The Paint Explainer' 유튜브 채널 스타일 (Minimalist Stickman).
-완전한 흰색 배경(Pure White Background). 배경 묘사 없음.
+단색 느낌의 배경(Pure White Background). 배경 묘사 있음.
 검은색 선으로 이루어진 단순한 졸라맨(Stick Figure) 캐릭터. (둥근 머리, 막대기 팔다리).
-MS 그림판(MS Paint)으로 대충 그린 듯한 키치하고 단순한 느낌.
-채색은 최소화하고 특정 사물(국기, 돈 등)에만 원색 포인트 컬러 사용.
+MS 그림판(MS Paint)으로 그린 듯한 키치하고 단순한 느낌.
+채색은 적당히 하고 특정 사물(국기, 돈 등)에만 원색 포인트 컬러 사용.
 복잡한 예술적 기교나 명암(Shading) 절대 금지. 단순하고 직관적인 설명화."""
 
     if 'style_prompt_area' not in st.session_state:
@@ -937,4 +937,5 @@ if st.session_state['generated_results']:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
 
                 except: pass
+
 
