@@ -278,7 +278,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         lang_example = "(예: 'New York' -> '뉴욕', 'Tokyo' -> '도쿄')"
     elif target_language == "English":
         lang_guide = "화면 속 글씨는 **무조건 '영어(English)'로 표기**하십시오."
-        lang_example = "(예: '서울' -> 'Seoul', '독도' -> 'Dokdo')"
+        lang_example = "(예: 'Seoul', 'Dokdo')"
     elif target_language == "Japanese":
         lang_guide = "화면 속 글씨는 **무조건 '일본어(Japanese)'로 표기**하십시오."
         lang_example = "(예: '서울' -> 'ソウル', 'New York' -> 'ニューヨーク')"
@@ -991,8 +991,11 @@ if st.session_state['generated_results']:
 
             # [왼쪽: 이미지 및 버튼]
             with cols[0]:
-                try: st.image(item['path'], use_container_width=True)
-                except: st.error("이미지 없음")
+                try: 
+                    # [수정됨] 이미지 크기를 width=300으로 고정하여 거대해지는 것 방지
+                    st.image(item['path'], width=300) 
+                except: 
+                    st.error("이미지 없음")
 
                 if st.button(f"🔄 이미지 다시 생성", key=f"regen_img_{index}", use_container_width=True):
                     if not api_key: st.error("API Key 필요")
