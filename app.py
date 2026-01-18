@@ -480,6 +480,62 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     - **한글**로만 출력하십시오.
         """
 
+    # ---------------------------------------------------------
+    # [모드 NEW] 스틱맨 사실적 연출 (Realistic Stickman Drama)
+    # ---------------------------------------------------------
+    elif genre_mode == "realistic_stickman":
+        full_instruction = f"""
+    [역할]
+    당신은 **'넷플릭스 2D 애니메이션 감독'**입니다. 
+    **반드시 '2D 그림(Digital Art)' 스타일**이어야 하며, **실사(Photorealism)나 3D 렌더링 느낌이 나면 절대 안 됩니다.**
+    단순한 얼굴이 둥근 스틱맨들을 주인공으로 사용하여, 배경과 조명만 영화처럼 분위기 있게 연출합니다.
+    
+    [전체 영상 주제] "{video_title}"
+    [유저 스타일 선호] {style_instruction}
+
+    [🚫 핵심 금지 사항 - 절대 어기지 마시오]
+    - **실사 사진(Real Photo), 3D 렌더링(Unreal Engine), 사람 피부 질감(Skin texture) 절대 금지.**
+    - 사람의 코, 입, 귀, 손톱 등을 리얼하게 묘사하지 마시오.
+    - 무조건 **'그림(Illustration/Drawing/Manhwa)'** 느낌이 나야 합니다.
+
+    [핵심 비주얼 스타일 가이드 - 절대 준수]
+    1. **캐릭터(Character):** - **얼굴이 둥근 하얀색 스틱맨(Round-headed white stickman)**을 사용하십시오.
+       - 하지만 선은 굵고 부드러우며, **그림자(Shading)**가 들어가 입체감이 느껴져야 합니다.
+       - **의상:** 대본 상황에 맞는 현실적인 의상(정장, 군복, 잠옷, 작업복 등)을 스틱맨 위에 입혀 '캐릭터성'을 부여하십시오.
+       - 얼굴이 크게 잘 보이게 연출. 장면도 잘 드러나게.
+       
+    2. **배경(Background) - 가장 중요:**
+       - 단순한 그라데이션이나 단색 배경을 **절대 금지**합니다.
+       - **고해상도 컨셉 아트(High-quality Concept Art)** 수준으로 배경을 그리십시오.
+       - 예: 사무실이라면 책상의 서류 더미, 창밖의 풍경, 커피잔의 김, 벽의 질감까지 묘사해야 합니다.
+       
+    3. **조명(Lighting):**
+       - 2D지만 **입체적인 조명(Volumetric Lighting)**과 그림자를 사용하여 깊이감을 만드십시오.
+       - 상황에 따라 따뜻한 햇살, 차가운 네온사, 어두운 방의 스탠드 조명 등을 명확히 구분하십시오.
+       
+    4. **연기(Acting):**
+       - 인포그래픽처럼 정보를 나열하지 말고, **캐릭터가 행동(Action)하는 장면**을 포착하십시오.
+       - 감정 표현: 얼굴 표정은 단순하게 가되, **어깨의 처짐, 주먹 쥔 손, 다급한 달리기, 무릎 꿇기 등 '몸짓(Body Language)'**으로 감정을 전달하십시오.
+
+    5. **언어(Text):** {lang_guide} {lang_example} (자막 연출보다는 배경 속 간판, 서류, 화면 등 자연스러운 텍스트 위주로)
+    6. **구도:** 분할 화면(Split Screen) 금지. 16:9 꽉 찬 시네마틱 구도 사용.
+
+    [임무]
+    제공된 대본 조각(Script Segment)을 읽고, 그 상황을 가장 잘 보여주는 **한 장면의 영화 스틸컷** 같은 프롬프트를 작성하십시오.
+    
+    [작성 팁]
+    - "A cinematic 2D shot of a round-headed stickman..." 으로 시작하는 느낌으로 작성.
+    - 대본이 추상적(예: 경제 위기)이라면, 스틱맨이 텅 빈 지갑을 보며 좌절하는 구체적인 상황으로 치환하여 묘사하십시오.
+    - **분량:** 최소 7문장 이상으로 상세하게 묘사.
+    - 자막 같은 연출 하지 않는다. ("화면 하단 중앙에는 명조체로 **'필리핀, 1944년'**이라는 한글 텍스트가 선명하게 새겨져 있다" 이런 연출 하면 안된다) 
+
+    
+    [출력 형식]
+    - **분량:** 최소 7문장 이상으로 상세하게 묘사.
+    - **무조건 한국어(한글)**로만 작성하십시오.
+    - 부가 설명 없이 **오직 프롬프트 텍스트만** 출력하십시오.
+        """
+
     else:
         # [모드 1] 밝은 정보/이슈
         full_instruction = f"""
@@ -679,6 +735,14 @@ MS 그림판(MS Paint)으로 그린 듯한 키치하고 단순한 느낌.
 채색은 적당히 하고 특정 사물(국기, 돈 등)에만 원색 포인트 컬러 사용.
 복잡한 예술적 기교나 명암(Shading) 절대 금지. 단순하고 직관적인 설명화."""
 
+    # [NEW] 스틱맨 사실적 연출 프리셋 (상황/감정/배경 디테일 강조)
+    PRESET_REALISTIC = """고퀄리티 얼굴이 둥근 2D 애니메이션 스타일, 사실적인 배경과 조명 연출.
+캐릭터: 얼굴이 둥근 하얀색 2D 스틱맨들. 단순한 낙서가 아니라, 명암과 덩어리감이 느껴지는 '고급 스틱맨' 스타일. 얼굴이 크게 잘보이게 연출.
+배경: 단순한 단색 배경 금지. 대본의 장소(사무실, 거리, 방 안, 전장 등)를 '사진'처럼 디테일하고 입체적으로 2d 묘사.
+분위기: 정보 전달보다는 '상황극(Drama)'에 집중. 영화적인 조명(Cinematic Lighting)과 심도(Depth) 표현.
+연출: 스틱맨 여러 캐릭터들이 대본 속 행동을 리얼하게 연기(Acting). 감정 표현은 표정보다는 역동적인 몸짓(Body Language)으로 극대화.
+절대 금지: 화면 분할(Split Screen), 텍스트 나열, 단순 인포그래픽 스타일."""
+
     if 'style_prompt_area' not in st.session_state:
         st.session_state['style_prompt_area'] = PRESET_INFO
 
@@ -692,8 +756,10 @@ MS 그림판(MS Paint)으로 그린 듯한 키치하고 단순한 느낌.
             st.session_state['style_prompt_area'] = PRESET_WEBTOON
         elif "일본 만화" in selection:
             st.session_state['style_prompt_area'] = PRESET_MANGA
-        elif "화이트보드" in selection: # [NEW] 추가된 모드 연결
+        elif "화이트보드" in selection:
             st.session_state['style_prompt_area'] = PRESET_PAINT
+        elif "리얼 스틱맨" in selection: # [NEW] 모드 연결
+            st.session_state['style_prompt_area'] = PRESET_REALISTIC
         else:
             st.session_state['style_prompt_area'] = PRESET_NEWS
 
@@ -705,7 +771,8 @@ MS 그림판(MS Paint)으로 그린 듯한 키치하고 단순한 느낌.
             "한국 웹툰 (K-Webtoon Style)", 
             "일본 만화 (Japanese Manga/Anime)", 
             "뉴스/실사 자료화면 (Realistic Footage)",
-            "화이트보드/스틱맨 (The Paint Explainer Style)" # [NEW] 옵션 추가
+            "화이트보드/스틱맨 (The Paint Explainer Style)",
+            "리얼 스틱맨 (Netflix Drama Style)" # [NEW] 옵션 추가
         ), 
         index=0,
         key="genre_radio",
@@ -721,8 +788,10 @@ MS 그림판(MS Paint)으로 그린 듯한 키치하고 단순한 느낌.
         SELECTED_GENRE_MODE = "webtoon"
     elif "일본 만화" in genre_select:
         SELECTED_GENRE_MODE = "manga"
-    elif "화이트보드" in genre_select: # [NEW] 모드 변수 매핑
+    elif "화이트보드" in genre_select:
         SELECTED_GENRE_MODE = "paint_explainer"
+    elif "리얼 스틱맨" in genre_select: # [NEW] 모드 변수 매핑
+        SELECTED_GENRE_MODE = "realistic_stickman"
     else:
         SELECTED_GENRE_MODE = "news"
 
@@ -937,5 +1006,3 @@ if st.session_state['generated_results']:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
 
                 except: pass
-
-
