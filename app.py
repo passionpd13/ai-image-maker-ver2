@@ -985,17 +985,20 @@ if st.session_state['generated_results']:
                     edited_prompt = st.text_area(
                         "프롬프트 내용을 수정하고 왼쪽의 [이미지 다시 생성] 버튼을 누르세요.",
                         value=item['prompt'],
-                        height=150,
+                        height=400, # [수정] 높이 400으로 확대
                         key=prompt_key
                     )
 
             # [왼쪽: 이미지 및 버튼]
             with cols[0]:
-                try: 
-                    # [수정됨] 이미지 크기를 width=400으로 고정하여 거대해지는 것 방지
-                    st.image(item['path'], width=400) 
-                except: 
-                    st.error("이미지 없음")
+                # [수정] 가운데 정렬을 위한 컬럼 분할 (좌1:중4:우1 비율)
+                sub_c1, sub_c2, sub_c3 = st.columns([1, 4, 1])
+                with sub_c2:
+                    try: 
+                        # 가운데 컬럼을 꽉 채우도록 설정 (화면 전체 꽉 채우는 것 방지)
+                        st.image(item['path'], use_container_width=True) 
+                    except: 
+                        st.error("이미지 없음")
 
                 if st.button(f"🔄 이미지 다시 생성", key=f"regen_img_{index}", use_container_width=True):
                     if not api_key: st.error("API Key 필요")
@@ -1026,4 +1029,3 @@ if st.session_state['generated_results']:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
 
                 except: pass
-
