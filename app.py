@@ -992,8 +992,8 @@ if st.session_state['generated_results']:
             # [왼쪽: 이미지 및 버튼]
             with cols[0]:
                 try: 
-                    # [수정됨] 이미지 크기를 width=300으로 고정하여 거대해지는 것 방지
-                    st.image(item['path'], width=300) 
+                    # [수정됨] 이미지 크기를 width=400으로 고정하여 거대해지는 것 방지
+                    st.image(item['path'], width=400) 
                 except: 
                     st.error("이미지 없음")
 
@@ -1026,3 +1026,4 @@ if st.session_state['generated_results']:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
 
                 except: pass
+
