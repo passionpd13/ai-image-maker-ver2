@@ -525,7 +525,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     
     [작성 팁]
     - "A cinematic 2D shot of a round-headed stickman..." 으로 시작하는 느낌으로 작성.
-    - 대본이 추상적(예: 경제 위기)이라면, 스틱맨이 텅 빈 지갑을 보며 좌절하는 구체적인 상황으로 치환하여 묘사하십시오.
+    - 대본이 추상적(예: 경제 위기)이라면, 스틱맨이텅 빈 지갑을 보며 좌절하는 구체적인 상황으로 치환하여 묘사하십시오.
     - **분량:** 최소 7문장 이상으로 상세하게 묘사.
     - 자막 같은 연출 하지 않는다. ("화면 하단 중앙에는 명조체로 **'필리핀, 1944년'**이라는 한글 텍스트가 선명하게 새겨져 있다" 이런 연출 하면 안된다) 
 
@@ -996,6 +996,7 @@ if st.session_state['generated_results']:
                 with sub_c2:
                     try: 
                         # 가운데 컬럼을 꽉 채우도록 설정 (화면 전체 꽉 채우는 것 방지)
+                        # target_ratio가 16:9든 9:16이든, 이 컬럼 너비에 맞춰지므로 적절한 크기로 보입니다.
                         st.image(item['path'], use_container_width=True) 
                     except: 
                         st.error("이미지 없음")
