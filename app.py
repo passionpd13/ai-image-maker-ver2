@@ -985,25 +985,24 @@ if st.session_state['generated_results']:
                     edited_prompt = st.text_area(
                         "프롬프트 내용을 수정하고 왼쪽의 [이미지 다시 생성] 버튼을 누르세요.",
                         value=item['prompt'],
-                        height=400, # [수정] 높이 400으로 유지
+                        height=400, # [수정] 높이 400으로 확대
                         key=prompt_key
                     )
 
             # [왼쪽: 이미지 및 버튼]
             with cols[0]:
-                # [수정] 가운데 정렬을 위한 컬럼 분할 (좌1:중4:우1 비율)
-                sub_c1, sub_c2, sub_c3 = st.columns([1, 4, 1])
-                with sub_c2:
-                    try: 
-                        # [핵심 수정] 비율에 따라 이미지 표시 방식 변경
-                        if target_ratio == "16:9":
-                            # 16:9 (가로형)일 때는 컬럼을 꽉 채움
-                            st.image(item['path'], use_container_width=True)
-                        else:
-                            # 9:16 (세로형)일 때는 너무 커지지 않게 너비 고정
-                            st.image(item['path'], width=300) 
-                    except: 
-                        st.error("이미지 없음")
+                try: 
+                    # [핵심 수정] 비율에 따라 이미지 표시 방식 변경
+                    if target_ratio == "16:9":
+                        # 16:9 (가로형)일 때는 컬럼을 꽉 채움
+                        st.image(item['path'], use_container_width=True)
+                    else:
+                        # 9:16 (세로형)일 때는 너무 커지지 않게 너비 고정 (가운데 정렬 효과를 위해 컬럼 사용)
+                        sub_c1, sub_c2, sub_c3 = st.columns([1, 2, 1])
+                        with sub_c2:
+                            st.image(item['path'], use_container_width=True) 
+                except: 
+                    st.error("이미지 없음")
 
                 if st.button(f"🔄 이미지 다시 생성", key=f"regen_img_{index}", use_container_width=True):
                     if not api_key: st.error("API Key 필요")
