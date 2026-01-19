@@ -411,7 +411,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     elif genre_mode == "manga":
         full_instruction = f"""
     [역할]
-    당신은 **작화 퀄리티가 극도로 높은 '대작 지브리풍 애니메이션'의 총괄 작화 감독**입니다.
+    당신은 **작화 퀄리티가 극도로 높은 '대작 귀여운 지브리풍 애니메이션'의 총괄 작화 감독**입니다.
     단순히 예쁜 그림이 아니라, **대본의 상황, 행동, 감정을 '소름 돋을 정도로 구체적이고 디테일하게' 묘사**해야 합니다.
 
     [전체 영상 주제] "{video_title}"
@@ -419,7 +419,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
 
     [필수 연출 지침]
     1. **작화 스타일 (High Detail):**
-        - **서정적이고 몽환적인 느낌 금지.** 대신 **선명하고, 날카롭고, 정보량이 많은(High Information Density)** 작화를 추구하십시오.
+        - **서정적이고 몽환적인 느낌 금지.** 대신 **선명하고, 사실적이니지만 인물은 귀여운, 정보량이 많은(High Information Density)** 작화를 추구하십시오.
         - 배경은 흐릿하게 처리하지 말고, 간판의 글씨, 책상의 소품, 벽의 질감까지 **집요할 정도로 디테일하게** 묘사하십시오. (예: 'MAPPA', 'Ufotable' 제작사의 고퀄리티 작화 스타일)
     2. **행동 및 감정 묘사 (Action & Emotion):**
         - 대본에 묘사된 캐릭터의 행동을 **'순간 포착'** 하듯 역동적으로 그리십시오.
@@ -434,7 +434,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     - 절대 분활화면 연출하지 않는다. 전체 대본 내용에 어울리는 하나의 장면으로 묘사.
 
     [임무]
-    대본을 분석하여 AI가 그릴 수 있는 **최상급 지브리풍 퀄리티의 애니메이션 프롬프트**를 작성하십시오.
+    대본을 분석하여 AI가 그릴 수 있는 **최상급 귀여운 지브리풍 퀄리티의 애니메이션 프롬프트**를 작성하십시오.
     - "Masterpiece, best quality, ultra-detailed, intricate background, dynamic pose, expressive face" 등의 키워드가 반영되도록 하십시오.
     - **한글**로만 출력하십시오.
         """
@@ -734,7 +734,7 @@ with st.sidebar:
 인물들 등장시 대본에 어울리는 인물들의 행동 또는 감정 연출.
 대본에 어울리는 내용을 기반으로 분활화면으로 연출하지 말고 하나의 화면으로 연출한다."""
 
-    PRESET_MANGA = """일본 대작 애니메이션 스타일 (High-Budget Anime Style).
+    PRESET_MANGA = """일본 대작 귀여운 지브리풍 애니메이션 스타일 (High-Budget Anime Style).
 서정적인 느낌보다는 '정보량이 많고 치밀한' 고밀도 배경 작화 (High Detail Backgrounds).
 캐릭터의 표정과 행동을 '순간 포착'하듯 역동적으로 묘사.
 대본의 지문을 하나도 놓치지 않고 시각화하는 '철저한 디테일' 위주. (16:9)
@@ -1033,3 +1033,4 @@ if st.session_state['generated_results']:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
 
                 except: pass
+
