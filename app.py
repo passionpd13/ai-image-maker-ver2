@@ -428,7 +428,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         - 대본에 있는 작은 지문 하나도 놓치지 말고 시각화하십시오.
         - "컵을 떨군다"는 대본이라면, 컵이 손에서 떠나 공중에 있는 순간과 튀어 오르는 물방울까지 묘사하십시오.
     4. **텍스트 처리:** {lang_guide} {lang_example}
-    
+      
     [작성 요구사항]
     - **분량:** 최소 7문장 이상으로 상세하게 묘사.
     - 절대 분활화면 연출하지 않는다. 전체 대본 내용에 어울리는 하나의 장면으로 묘사.
@@ -606,10 +606,12 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     return (scene_num, f"주제 '{video_title}'에 어울리는 배경 일러스트 (Fallback).")
 
 # ==========================================
-# [함수] 3. 이미지 생성 (503 과부하 및 한도 초과 완벽 대응)
+# [함수] 3. 이미지 생성 (수정됨: 비율 설정 추가)
 # ==========================================
 def generate_image(client, prompt, filename, output_dir, selected_model_name, style_instruction, target_ratio="16:9"):
     full_path = os.path.join(output_dir, filename)
+    
+    # [수정] 프롬프트가 너무 길면 잘릴 수 있으므로, 핵심만 전달
     final_prompt = f"{style_instruction}\n\n[장면 묘사]: {prompt}"
     
     safety_settings = [
@@ -619,54 +621,39 @@ def generate_image(client, prompt, filename, output_dir, selected_model_name, st
         types.SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_ONLY_HIGH"),
     ]
 
-    # 최대 5번까지 재시도 (503 에러는 끈질기게 시도해야 함)
-    max_retries = 5
-    
-    for attempt in range(1, max_retries + 1):
-        try:
-            # 재시도 시 대기 시간 (Exponential Backoff)
-            if attempt > 1:
-                wait_time = 2 ** attempt
-                # 503 에러였던 경우 더 오래 대기
-                print(f"⏳ {filename} - {attempt}번째 재시도 중... ({wait_time}초 대기)")
-                time.sleep(wait_time)
+    print(f"🔄 생성 시도: {filename} / Model: {selected_model_name} / Ratio: {target_ratio}") # 로그 출력
 
-            response = client.models.generate_content(
-                model=selected_model_name,
-                contents=[final_prompt],
-                config=types.GenerateContentConfig(
-                    image_config=types.ImageConfig(aspect_ratio=target_ratio),
-                    safety_settings=safety_settings
-                )
+    try:
+        response = client.models.generate_content(
+            model=selected_model_name,
+            contents=[final_prompt],
+            config=types.GenerateContentConfig(
+                image_config=types.ImageConfig(aspect_ratio=target_ratio), # [수정] 비율 동적 적용
+                safety_settings=safety_settings
             )
-            
-            if response.parts:
-                for part in response.parts:
-                    if part.inline_data:
-                        img_data = part.inline_data.data
-                        image = Image.open(BytesIO(img_data))
-                        image.save(full_path)
-                        return full_path
-                    if part.text:
-                        return None # 안전 문제 거절은 재시도 의미 없음
+        )
+        
+        if response.parts:
+            for part in response.parts:
+                # 1. 이미지가 정상적으로 생성된 경우
+                if part.inline_data:
+                    img_data = part.inline_data.data
+                    image = Image.open(BytesIO(img_data))
+                    image.save(full_path)
+                    print(f"✅ 저장 성공: {full_path}")
+                    return full_path
+                
+                # 2. [중요] 이미지가 아니라 텍스트(거절 메시지)가 온 경우
+                if part.text:
+                    print(f"⚠️ 모델 거절(Safety/Refusal): {part.text}")
+                    # 빈 이미지나 에러 이미지를 생성해서라도 반환해야 UI가 깨지지 않음
+                    return None 
 
-        except Exception as e:
-            error_msg = str(e)
-            print(f"⚠️ 에러 발생 ({filename}): {error_msg}")
-            
-            # [핵심 수정 1] 503 (Overloaded) 또는 500 (Internal) 에러 처리
-            if "503" in error_msg or "overloaded" in error_msg or "500" in error_msg:
-                print(f"🐢 서버 과부하(503) 감지. 10초간 대기 후 재시도합니다.")
-                time.sleep(10) # 과부하 때는 푹 쉬어줘야 함
-                continue
+    except Exception as e:
+        print(f"❌ API 에러 발생 ({filename}): {str(e)}")
+        # API 키 오류나 모델명 오류일 가능성이 높음
+        return None
 
-            # [핵심 수정 2] 429 (Quota Exceeded) 처리
-            if "429" in error_msg or "ResourceExhausted" in error_msg:
-                if attempt == max_retries:
-                    return "ERROR_QUOTA"
-                time.sleep(5)
-                continue
-            
     return None
 
 # ==========================================
@@ -933,31 +920,24 @@ if start_btn:
         prompts.sort(key=lambda x: x[0])
 
         # 3. 이미지 생성 (병렬)
-        # [수정] 이미지 생성은 텍스트보다 부하가 크므로 workers를 강제로 낮추는 것이 안정적입니다.
-        safe_workers = min(max_workers, 4) 
-        
-        status_box.write(f"🎨 이미지 생성 중 (Model: {SELECTED_IMAGE_MODEL}, Threads: {safe_workers})...")
+        status_box.write(f"🎨 이미지 생성 중 ({SELECTED_IMAGE_MODEL}, {target_ratio})...")
         results = []
-        
-        # 한도 초과 알림을 한 번만 띄우기 위한 플래그
-        quota_alert_shown = False 
 
-        with ThreadPoolExecutor(max_workers=safe_workers) as executor:
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_meta = {}
             for s_num, prompt_text in prompts:
                 idx = s_num - 1
                 orig_text = chunks[idx]
                 fname = make_filename(s_num, orig_text)
+                time.sleep(0.05)
                 
-                # [핵심 수정] 요청 사이에 1.5초 간격을 두어 API 429 에러 방지
-                time.sleep(1.5) 
-                
+                # [수정] target_ratio 전달
                 future = executor.submit(
                     generate_image,
                     client, prompt_text, fname, USER_DIR,
                     SELECTED_IMAGE_MODEL, 
                     style_instruction,
-                    target_ratio
+                    target_ratio # 비율 파라미터 추가
                 )
                 future_to_meta[future] = (s_num, fname, orig_text, prompt_text)
 
@@ -965,31 +945,13 @@ if start_btn:
             for future in as_completed(future_to_meta):
                 s_num, fname, orig_text, p_text = future_to_meta[future]
                 path = future.result()
-                
-                # [핵심 수정] 결과 처리 로직
-                if path == "ERROR_QUOTA":
-                    if not quota_alert_shown:
-                        st.error("🚨 [긴급] Google API 무료 사용량이 초과되었습니다! (Quota Exceeded)")
-                        st.toast("🚨 API 한도가 초과되어 생성이 중단되었습니다.", icon="🛑")
-                        quota_alert_shown = True
-                    print(f"Scene {s_num}: Quota Exceeded.")
-                    
-                elif path: 
-                    # 정상 성공 시
+                if path:
                     results.append({
                         "scene": s_num, "path": path, "filename": fname, 
                         "script": orig_text, "prompt": p_text
                     })
-                else:
-                    # 기타 실패
-                    print(f"Scene {s_num}: Failed (Safety or Unknown).")
-
                 completed_cnt += 1
                 progress_bar.progress(0.5 + (completed_cnt / total_scenes * 0.5))
-
-        # 루프가 끝난 후, 한도 초과가 발생했었다면 다시 한 번 경고창을 크게 표시
-        if quota_alert_shown:
-            st.warning("⚠️ 일부 이미지가 API 한도 초과로 인해 생성되지 않았습니다. 잠시 후 다시 시도하거나 다른 API 키를 사용하세요.")
 
         results.sort(key=lambda x: x['scene'])
         st.session_state['generated_results'] = results
@@ -1006,8 +968,7 @@ if st.session_state['generated_results']:
     st.markdown(f"## 📸 결과물 ({len(st.session_state['generated_results'])}장)")
     
     zip_data = create_zip_buffer(CURRENT_USER_DIR)
-    # [수정] use_container_width -> width="stretch" (버튼은 상황에 따라 type="primary" 등으로 대체되거나 width 유지)
-    st.download_button("📦 전체 이미지 ZIP 다운로드", data=zip_data, file_name="all_images.zip", mime="application/zip", type="primary")
+    st.download_button("📦 전체 이미지 ZIP 다운로드", data=zip_data, file_name="all_images.zip", mime="application/zip", use_container_width=True)
     st.markdown("---")
 
     for index, item in enumerate(st.session_state['generated_results']):
@@ -1024,25 +985,26 @@ if st.session_state['generated_results']:
                     edited_prompt = st.text_area(
                         "프롬프트 내용을 수정하고 왼쪽의 [이미지 다시 생성] 버튼을 누르세요.",
                         value=item['prompt'],
-                        height=400, 
+                        height=400, # [수정] 높이 400으로 확대
                         key=prompt_key
                     )
 
             # [왼쪽: 이미지 및 버튼]
             with cols[0]:
                 try: 
+                    # [핵심 수정] 비율에 따라 이미지 표시 방식 변경
                     if target_ratio == "16:9":
-                        # [수정] use_container_width=True -> width="stretch" (경고 메시지 반영)
-                        st.image(item['path'], width="stretch")
+                        # 16:9 (가로형)일 때는 컬럼을 꽉 채움
+                        st.image(item['path'], use_container_width=True)
                     else:
+                        # 9:16 (세로형)일 때는 너무 커지지 않게 너비 고정 (가운데 정렬 효과를 위해 컬럼 사용)
                         sub_c1, sub_c2, sub_c3 = st.columns([1, 2, 1])
                         with sub_c2:
-                            # [수정] use_container_width=True -> width="stretch"
-                            st.image(item['path'], width="stretch") 
+                            st.image(item['path'], use_container_width=True) 
                 except: 
                     st.error("이미지 없음")
 
-                if st.button(f"🔄 이미지 다시 생성", key=f"regen_img_{index}"):
+                if st.button(f"🔄 이미지 다시 생성", key=f"regen_img_{index}", use_container_width=True):
                     if not api_key: st.error("API Key 필요")
                     else:
                         current_prompt_text = st.session_state.get(prompt_key, item['prompt'])
@@ -1050,6 +1012,7 @@ if st.session_state['generated_results']:
                         with st.spinner(f"Scene {item['scene']} 재생성 중..."):
                             client = genai.Client(api_key=api_key)
                             
+                            # [수정] 재생성 시에도 target_ratio 전달
                             new_path = generate_image(
                                 client, 
                                 current_prompt_text, 
@@ -1057,7 +1020,7 @@ if st.session_state['generated_results']:
                                 CURRENT_USER_DIR, 
                                 SELECTED_IMAGE_MODEL, 
                                 style_instruction,
-                                target_ratio
+                                target_ratio # 비율 파라미터 추가
                             )
                             
                             if new_path:
@@ -1068,4 +1031,5 @@ if st.session_state['generated_results']:
                 try:
                     with open(item['path'], "rb") as file:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
+
                 except: pass
