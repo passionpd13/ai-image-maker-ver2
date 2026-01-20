@@ -28,7 +28,7 @@ if 'user_id' not in st.session_state:
     st.session_state['user_id'] = str(uuid.uuid4())
 
 # ==========================================
-# [디자인] 다크모드 & 가독성 완벽 패치 (로그창 수정 포함)
+# [디자인] 다크모드 & 가독성 완벽 패치 (특정 클래스 수정 포함)
 # ==========================================
 st.markdown("""
     <style>
@@ -192,31 +192,33 @@ st.markdown("""
     }
 
     /* ============================================================
-       [긴급 패치] Status Widget 내 로그 박스(Code Block) 스타일 강제 적용
+       [사용자 요청] 특정 클래스 및 코드블록 강제 블랙 처리
        ============================================================ */
-    /* 1. 코드 블록 컨테이너 */
-    div[data-testid="stStatusWidget"] div[data-testid="stCodeBlock"] {
-        background-color: #000000 !important;
-        border: 1px solid #333 !important;
-        border-radius: 5px !important;
-    }
     
-    /* 2. 코드 블록 내부 pre 태그 (가장 중요) */
-    div[data-testid="stStatusWidget"] div[data-testid="stCodeBlock"] pre {
-        background-color: #000000 !important; /* 배경 완전 검정 */
-        color: #00FF00 !important;             /* 글씨 완전 녹색 */
-        border: none !important;
-    }
-    
-    /* 3. 코드 태그 */
-    div[data-testid="stStatusWidget"] div[data-testid="stCodeBlock"] code {
+    /* 사용자님이 지정해주신 클래스 (흰색 배경 원인) */
+    .st-emotion-cache-1m0wf70 {
         background-color: #000000 !important;
         color: #00FF00 !important;
-        font-family: 'Courier New', monospace !important;
+        border: 1px solid #333 !important;
     }
 
-    /* 4. 구문 강조(Syntax Highlight) 덮어쓰기 - 알록달록 방지 */
-    div[data-testid="stStatusWidget"] div[data-testid="stCodeBlock"] span {
+    /* 혹시 모를 변형 클래스 및 공통 코드 블록 타겟팅 */
+    .st-emotion-cache-1m0wf70 pre,
+    .st-emotion-cache-evr5gns2 {
+        background-color: #000000 !important;
+    }
+
+    /* Status Widget 내부의 모든 코드 블록 강제 적용 */
+    div[data-testid="stStatusWidget"] div[data-testid="stCodeBlock"],
+    div[data-testid="stStatusWidget"] pre,
+    div[data-testid="stStatusWidget"] code {
+        background-color: #000000 !important; /* 배경 완전 검정 */
+        color: #00FF00 !important;             /* 글씨 완전 녹색 */
+        border-color: #333 !important;
+    }
+    
+    /* 텍스트 스팬 컬러 강제 (구문 강조 무시) */
+    div[data-testid="stStatusWidget"] code span {
         color: #00FF00 !important;
         background-color: transparent !important;
     }
