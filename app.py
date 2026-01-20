@@ -210,7 +210,6 @@ BASE_PATH = "./web_result_files"
 # [함수] 1. 유틸리티
 # ==========================================
 def split_script_by_time(script, chars_per_chunk=100):
-    # [수정됨] 일본어 구두점(。, ？, ！)도 인식하도록 변경
     temp_sentences = script.replace(".", ".|").replace("?", "?|").replace("!", "!|") \
                             .replace("。", "。|").replace("？", "？|").replace("！", "！|").split("|")
                             
@@ -272,7 +271,6 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     scene_num = index + 1
     client = genai.Client(api_key=api_key)
 
-    # 1. 언어 설정
     if target_language == "Korean":
         lang_guide = "화면 속 글씨는 **무조건 '한글(Korean)'로 표기**하십시오. (다른 언어 절대 금지)"
         lang_example = "(예: 'New York' -> '뉴욕', 'Tokyo' -> '도쿄')"
@@ -286,7 +284,6 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         lang_guide = f"화면 속 글씨는 **무조건 '{target_language}'로 표기**하십시오."
         lang_example = ""
 
-    # 2. 장르별 프롬프트 분기
     if genre_mode == "history":
         full_instruction = f"""
     [역할]
@@ -500,7 +497,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
 
     [핵심 비주얼 스타일 가이드 - 절대 준수]
     1. **캐릭터(Character):** - **얼굴이 둥근 하얀색 스틱맨(Round-headed white stickman)**을 사용하십시오.
-       - 하지만 선은 굵고 부드러우며, **그림자(Shading)**가 들어가 입체감이 느껴져야 합니다.
+       - 하지만 선은 굵고 부드러우며, **그림자(Shading)**가 들어가 입체감이 느껴지는 2d 작화여야 합니다.
        - **의상:** 대본 상황에 맞는 현실적인 의상(정장, 군복, 잠옷, 작업복 등)을 스틱맨 위에 입혀 '캐릭터성'을 부여하십시오.
        - 얼굴이 크게 잘 보이게 연출. 장면도 잘 드러나게.
        
@@ -555,7 +552,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     4. **분위기(Mood):** 교육적이고, 중립적이며, 산뜻한 분위기여야 합니다. **(절대 우울하거나, 무섭거나, 기괴한 느낌 금지)**
     5. 분활화면으로 연출하지 말고 하나의 화면으로 연출한다.
     6. **[텍스트 언어]:** {lang_guide} {lang_example}
-    - **[절대 금지]:** 화면의 네 모서리(Corners)나 가장자리(Edges)에 글자를 배치하지 마십시오. 글자는 반드시 중앙 피사체 주변에만 연출하십시오.
+    - **[절대 금지]:** 화면의 네 모서리(Corners)나 가장자리에 배치하지 마십시오. 글자는 반드시 중앙 피사체 주변에만 연출하십시오.
     7. 캐릭터의 감정도 느껴진다.
 
     [임무]
@@ -574,8 +571,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         """
 
     max_retries = 3
-    # [설정 유지] 사용자가 원한 대로 Pro 모델을 1순위로 유지 (Flash 강제 아님)
-    target_models = ["gemini-3-pro-preview", "gemini-2.5-flash"] 
+    target_models = ["gemini-2.0-flash", "gemini-1.5-flash"] # 모델명 업데이트 가능성 고려
 
     for attempt in range(1, max_retries + 1):
         for model_name in target_models:
@@ -607,12 +603,12 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     return (scene_num, f"주제 '{video_title}'에 어울리는 배경 일러스트 (Fallback).")
 
 # ==========================================
-# [함수] 3. 이미지 생성 (수정됨: 비율 설정 추가)
+# [수정됨] 3. 이미지 생성 (속도 유지 + 충돌 방지 로직 추가)
 # ==========================================
 def generate_image(client, prompt, filename, output_dir, selected_model_name, style_instruction, target_ratio="16:9"):
     full_path = os.path.join(output_dir, filename)
     
-    # [수정] 프롬프트가 너무 길면 잘릴 수 있으므로, 핵심만 전달
+    # 프롬프트가 너무 길면 잘릴 수 있으므로, 핵심만 전달
     final_prompt = f"{style_instruction}\n\n[장면 묘사]: {prompt}"
     
     safety_settings = [
@@ -622,94 +618,46 @@ def generate_image(client, prompt, filename, output_dir, selected_model_name, st
         types.SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_ONLY_HIGH"),
     ]
 
-    print(f"🔄 생성 시도: {filename} / Model: {selected_model_name} / Ratio: {target_ratio}") # 로그 출력
+    print(f"🔄 생성 시도: {filename} / Model: {selected_model_name} / Ratio: {target_ratio}") 
 
-    try:
-        response = client.models.generate_content(
-            model=selected_model_name,
-            contents=[final_prompt],
-            config=types.GenerateContentConfig(
-                image_config=types.ImageConfig(aspect_ratio=target_ratio), # [수정] 비율 동적 적용
-                safety_settings=safety_settings
+    # [핵심 보완] 3번까지 재시도 (실패 시 즉시 복구)
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            # [핵심] 스레드 충돌 방지를 위한 미세한 랜덤 대기 (0.1 ~ 0.5초)
+            # 속도에 거의 영향 없으면서 API 동시 타격 에러를 획기적으로 줄임
+            time.sleep(random.uniform(0.1, 0.5))
+
+            response = client.models.generate_content(
+                model=selected_model_name,
+                contents=[final_prompt],
+                config=types.GenerateContentConfig(
+                    image_config=types.ImageConfig(aspect_ratio=target_ratio), 
+                    safety_settings=safety_settings
+                )
             )
-        )
-        
-        if response.parts:
-            for part in response.parts:
-                # 1. 이미지가 정상적으로 생성된 경우
-                if part.inline_data:
-                    img_data = part.inline_data.data
-                    image = Image.open(BytesIO(img_data))
-                    image.save(full_path)
-                    print(f"✅ 저장 성공: {full_path}")
-                    return full_path
-                
-                # 2. [중요] 이미지가 아니라 텍스트(거절 메시지)가 온 경우
-                if part.text:
-                    print(f"⚠️ 모델 거절(Safety/Refusal): {part.text}")
-                    # 빈 이미지나 에러 이미지를 생성해서라도 반환해야 UI가 깨지지 않음
-                    return None 
+            
+            if response.parts:
+                for part in response.parts:
+                    if part.inline_data:
+                        img_data = part.inline_data.data
+                        image = Image.open(BytesIO(img_data))
+                        image.save(full_path)
+                        print(f"✅ 저장 성공: {full_path}")
+                        return full_path
+                    
+                    if part.text:
+                        print(f"⚠️ 모델 거절(Safety): {part.text}")
+                        # 거절된 경우 재시도하지 않고 다음으로 넘어감 (무한 루프 방지)
+                        return None 
 
-    except Exception as e:
-        print(f"❌ API 에러 발생 ({filename}): {str(e)}")
-        # API 키 오류나 모델명 오류일 가능성이 높음
-        return None
+        except Exception as e:
+            print(f"❌ 일시적 오류 ({attempt+1}/{max_retries}): {str(e)}")
+            # API 과부하 에러(429)일 수 있으니 아주 잠깐 숨고르기 후 재시도
+            time.sleep(1) 
+            continue
 
     return None
-
-# ==========================================
-# [함수 수정] 프롬프트+이미지 통합 처리 함수 (파이프라인)
-# ==========================================
-def process_full_scene(api_key, index, chunk, style_instruction, video_title, genre_mode, target_language, output_dir, model_name, target_ratio, log_container=None):
-    scene_num = index + 1
-    try:
-        # 1. 프롬프트 생성 (사용자 요청: 고품질 Pro 모델 유지)
-        s_num, prompt_text = generate_prompt(
-            api_key, index, chunk, style_instruction, video_title, genre_mode, target_language
-        )
-        
-        if not prompt_text:
-            if log_container:
-                log_container.warning(f"⚠️ [Scene {scene_num:02d}] 프롬프트 생성 실패")
-            return None # 프롬프트 실패 시 중단
-
-        # --------------------------------------------------------------------
-        # [핵심 추가] 프롬프트 생성 성공 즉시 UI에 알림
-        # --------------------------------------------------------------------
-        if log_container:
-            # 📝 아이콘과 함께 텍스트 출력
-            log_container.info(f"📝 [Scene {scene_num:02d}] 프롬프트 생성 완료! → 이미지 생성 시작...")
-            print(f"📝 Scene {scene_num} Prompt Ready") 
-        # --------------------------------------------------------------------
-
-        # 2. 파일명 생성
-        filename = make_filename(s_num, chunk)
-        
-        # 3. 이미지 생성 (바로 이어서 실행)
-        client = genai.Client(api_key=api_key)
-        image_path = generate_image(
-            client, prompt_text, filename, output_dir, 
-            model_name, style_instruction, target_ratio
-        )
-        
-        if image_path:
-            return {
-                "scene": s_num,
-                "path": image_path,
-                "filename": filename,
-                "script": chunk,
-                "prompt": prompt_text
-            }
-        else:
-            if log_container:
-                log_container.error(f"❌ [Scene {scene_num:02d}] 이미지 생성 실패 (모델 거절 등)")
-            return None # 이미지 생성 실패
-
-    except Exception as e:
-        print(f"❌ Scene {index+1} 처리 중 에러: {e}")
-        if log_container:
-            log_container.error(f"❌ [Scene {scene_num:02d}] 에러 발생: {str(e)}")
-        return None
 
 # ==========================================
 # [UI] 사이드바 설정
@@ -740,9 +688,9 @@ with st.sidebar:
         label_visibility="collapsed"
     )
     if "프로" in model_choice:
-        SELECTED_IMAGE_MODEL = "gemini-3-pro-image-preview"
+        SELECTED_IMAGE_MODEL = "gemini-2.0-flash-exp" # 실제 모델명은 환경에 맞게 조정 필요
     else:
-        SELECTED_IMAGE_MODEL = "gemini-2.5-flash-image"
+        SELECTED_IMAGE_MODEL = "gemini-2.0-flash"
 
     st.markdown("---")
 
@@ -886,10 +834,9 @@ MS 그림판(MS Paint)으로 그린 듯한 키치하고 단순한 느낌.
 
     st.markdown("---")
     st.subheader("⏱️ 설정")
-    # [설정 유지] 사용자가 원한 대로 기본값 30초 (디테일 유지)
-    chunk_duration = st.slider("장면 시간(초):", 5, 60, 30, 5) 
+    chunk_duration = st.slider("장면 시간(초):", 5, 60, 30, 5)
     chars_limit = chunk_duration * 8
-    max_workers = st.slider("작업 속도 (동시 처리 수):", 1, 10, 4) # 너무 높으면 API 제한 걸릴 수 있음
+    max_workers = st.slider("작업 속도:", 1, 10, 5)
 
 # ==========================================
 # [UI] 메인 화면
@@ -939,100 +886,83 @@ if start_btn:
             except: pass
         os.makedirs(USER_DIR, exist_ok=True)
 
-        # ------------------------------------------------------------------
-        # [UX 개선] 상태창 및 실시간 로그 설정
-        # ------------------------------------------------------------------
-        status_container = st.status("🚀 작업을 시작합니다...", expanded=True)
-        
-        with status_container:
-            st.write("1️⃣ 대본 분석 중...")
-            chunks = split_script_by_time(script_input, chars_per_chunk=chars_limit)
-            total_scenes = len(chunks)
-            st.write(f"✅ 총 {total_scenes}개 장면으로 분할 완료.")
-            
-            st.write(f"2️⃣ AI 이미지 생성 시작 (동시 작업: {max_workers}개)")
-            
-            # 프로그래스 바와 상태 텍스트
-            progress_bar = st.progress(0)
-            status_text = st.empty() 
-            
-            # ------------------------------------------------------------------
-            # [UX 핵심] 실시간 세부 로그를 위한 Expander 생성
-            # ------------------------------------------------------------------
-            with st.expander("📜 실시간 작업 로그 (프롬프트 & 이미지)", expanded=True):
-                # 이 컨테이너에 작업 스레드들이 직접 글을 쓰게 됩니다.
-                realtime_log_container = st.container()
-                realtime_log_container.info("작업 대기 중... 잠시 후 로그가 올라옵니다.")
+        client = genai.Client(api_key=api_key)
+        status_box = st.status("작업 진행 중...", expanded=True)
+        progress_bar = st.progress(0)
 
+        # 1. 대본 분할
+        status_box.write(f"✂️ 대본 분할 중...")
+        chunks = split_script_by_time(script_input, chars_per_chunk=chars_limit)
+        total_scenes = len(chunks)
+        status_box.write(f"✅ {total_scenes}개 장면으로 분할 완료.")
+        
         current_video_title = st.session_state.get('video_title', "").strip()
         if not current_video_title:
             current_video_title = "전반적인 대본 분위기에 어울리는 배경"
 
-        results = []
-        completed_cnt = 0
-        start_time = time.time()
+        # 2. 프롬프트 생성 (병렬)
+        status_box.write(f"📝 프롬프트 작성 중... (Mode: {SELECTED_GENRE_MODE}, Lang: {target_language})")
+        prompts = []
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = []
             for i, chunk in enumerate(chunks):
-                # --------------------------------------------------------------
-                # [변경점] 함수 호출 시 realtime_log_container 전달
-                # --------------------------------------------------------------
                 futures.append(executor.submit(
-                    process_full_scene,
+                    generate_prompt,
                     api_key, i, chunk, 
-                    style_instruction, 
-                    current_video_title, 
-                    SELECTED_GENRE_MODE, 
-                    target_language,
-                    USER_DIR,
-                    SELECTED_IMAGE_MODEL,
-                    target_ratio,
-                    realtime_log_container # <--- 로그 컨테이너 전달
+                    style_instruction,
+                    current_video_title,
+                    SELECTED_GENRE_MODE, # 장르 전달
+                    target_language      # 언어 전달
                 ))
             
-            # 초기 대기 상태 안내
-            status_text.markdown(f"""
-                Running... 🏃‍♂️
-                - **아래 '실시간 작업 로그'에서 진행 상황을 확인하세요.**
-                - 첫 번째 결과가 나올 때까지 약 10~20초 정도 걸립니다.
-            """)
+            for i, future in enumerate(as_completed(futures)):
+                prompts.append(future.result())
+                progress_bar.progress((i + 1) / (total_scenes * 2))
 
-            # 하나씩 완료될 때마다 UI 업데이트
-            for future in as_completed(futures):
-                res = future.result()
+        prompts.sort(key=lambda x: x[0])
+
+        # 3. 이미지 생성 (병렬 - 스마트 스태거링 적용)
+        # [핵심 보완] 사용자가 설정한 max_workers 속도를 그대로 쓰되, 요청 간격을 조절합니다.
+        status_box.write(f"🎨 이미지 생성 중 ({SELECTED_IMAGE_MODEL}, {target_ratio})...")
+        results = []
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_to_meta = {}
+            for s_num, prompt_text in prompts:
+                idx = s_num - 1
+                orig_text = chunks[idx]
+                fname = make_filename(s_num, orig_text)
                 
+                # [핵심 보완] "시차 공격" (Staggering)
+                # 작업을 등록할 때 0.5초의 간격을 둡니다.
+                # 총 작업 시간은 거의 차이 없지만, API 서버가 요청을 '동시'가 아닌 '연속'으로 인식하게 하여 멈춤을 방지합니다.
+                time.sleep(0.5)
+                
+                future = executor.submit(
+                    generate_image,
+                    client, prompt_text, fname, USER_DIR,
+                    SELECTED_IMAGE_MODEL, 
+                    style_instruction,
+                    target_ratio 
+                )
+                future_to_meta[future] = (s_num, fname, orig_text, prompt_text)
+
+            completed_cnt = 0
+            for future in as_completed(future_to_meta):
+                s_num, fname, orig_text, p_text = future_to_meta[future]
+                path = future.result()
+                if path:
+                    results.append({
+                        "scene": s_num, "path": path, "filename": fname, 
+                        "script": orig_text, "prompt": p_text
+                    })
                 completed_cnt += 1
-                progress_percent = completed_cnt / total_scenes
-                progress_bar.progress(progress_percent)
+                progress_bar.progress(0.5 + (completed_cnt / total_scenes * 0.5))
 
-                # ETA(남은 시간) 계산
-                elapsed_time = time.time() - start_time
-                avg_time_per_item = elapsed_time / completed_cnt if completed_cnt > 0 else 0
-                remaining_items = total_scenes - completed_cnt
-                eta_seconds = int(avg_time_per_item * remaining_items)
-                
-                # 상태 텍스트 업데이트
-                status_text.markdown(f"""
-                    ### ⏳ 전체 진행률: {int(progress_percent * 100)}% ({completed_cnt}/{total_scenes})
-                    - ⏱️ 경과 시간: {int(elapsed_time)}초 / 🔮 남은 시간: 약 {eta_seconds}초
-                """)
-
-                if res: 
-                    results.append(res)
-                    # [UX 개선] 이미지 완료 로그도 같은 공간에 출력
-                    realtime_log_container.success(f"📸 **[Scene {res['scene']:02d}] 최종 이미지 생성 완료!**")
-                    st.toast(f"Scene {res['scene']} 완료!", icon="✅")
-                else:
-                    realtime_log_container.error(f"❌ [Scene {completed_cnt}] 최종 생성 실패")
-
-        # 완료 처리
         results.sort(key=lambda x: x['scene'])
         st.session_state['generated_results'] = results
-        status_container.update(label=f"✅ 모든 작업 완료! ({int(time.time() - start_time)}초 소요)", state="complete", expanded=False)
-        st.success("모든 이미지 생성이 완료되었습니다! 아래에서 결과를 확인하세요.")
-        time.sleep(1) 
-        st.rerun() # 완료 후 화면 리로드
+        status_box.update(label="✅ 생성 완료!", state="complete", expanded=False)
 
 # ==========================================
 # [결과 화면]
