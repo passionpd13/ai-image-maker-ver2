@@ -606,12 +606,10 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     return (scene_num, f"주제 '{video_title}'에 어울리는 배경 일러스트 (Fallback).")
 
 # ==========================================
-# [함수] 3. 이미지 생성 (수정됨: 비율 설정 추가)
+# [함수] 3. 이미지 생성 (API 한도 감지 기능 추가)
 # ==========================================
 def generate_image(client, prompt, filename, output_dir, selected_model_name, style_instruction, target_ratio="16:9"):
     full_path = os.path.join(output_dir, filename)
-    
-    # [수정] 프롬프트가 너무 길면 잘릴 수 있으므로, 핵심만 전달
     final_prompt = f"{style_instruction}\n\n[장면 묘사]: {prompt}"
     
     safety_settings = [
@@ -621,39 +619,43 @@ def generate_image(client, prompt, filename, output_dir, selected_model_name, st
         types.SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_ONLY_HIGH"),
     ]
 
-    print(f"🔄 생성 시도: {filename} / Model: {selected_model_name} / Ratio: {target_ratio}") # 로그 출력
+    # 최대 3번 재시도
+    max_retries = 3
+    for attempt in range(1, max_retries + 1):
+        try:
+            if attempt > 1:
+                time.sleep(2 ** attempt) # 재시도 시 대기
 
-    try:
-        response = client.models.generate_content(
-            model=selected_model_name,
-            contents=[final_prompt],
-            config=types.GenerateContentConfig(
-                image_config=types.ImageConfig(aspect_ratio=target_ratio), # [수정] 비율 동적 적용
-                safety_settings=safety_settings
+            response = client.models.generate_content(
+                model=selected_model_name,
+                contents=[final_prompt],
+                config=types.GenerateContentConfig(
+                    image_config=types.ImageConfig(aspect_ratio=target_ratio),
+                    safety_settings=safety_settings
+                )
             )
-        )
-        
-        if response.parts:
-            for part in response.parts:
-                # 1. 이미지가 정상적으로 생성된 경우
-                if part.inline_data:
-                    img_data = part.inline_data.data
-                    image = Image.open(BytesIO(img_data))
-                    image.save(full_path)
-                    print(f"✅ 저장 성공: {full_path}")
-                    return full_path
-                
-                # 2. [중요] 이미지가 아니라 텍스트(거절 메시지)가 온 경우
-                if part.text:
-                    print(f"⚠️ 모델 거절(Safety/Refusal): {part.text}")
-                    # 빈 이미지나 에러 이미지를 생성해서라도 반환해야 UI가 깨지지 않음
-                    return None 
+            
+            if response.parts:
+                for part in response.parts:
+                    if part.inline_data:
+                        img_data = part.inline_data.data
+                        image = Image.open(BytesIO(img_data))
+                        image.save(full_path)
+                        return full_path
+                    if part.text:
+                        return None # 안전 문제로 거절됨
 
-    except Exception as e:
-        print(f"❌ API 에러 발생 ({filename}): {str(e)}")
-        # API 키 오류나 모델명 오류일 가능성이 높음
-        return None
-
+        except Exception as e:
+            error_msg = str(e)
+            print(f"⚠️ 에러 발생: {error_msg}")
+            
+            # [핵심 수정] 한도 초과 에러인지 확인
+            if "429" in error_msg or "ResourceExhausted" in error_msg:
+                if attempt == max_retries: # 마지막 시도에서도 실패하면
+                    return "ERROR_QUOTA" # 한도 초과 신호 반환
+                time.sleep(5) # 한도 초과면 좀 더 길게 쉬고 재시도
+                continue
+            
     return None
 
 # ==========================================
@@ -920,24 +922,28 @@ if start_btn:
         prompts.sort(key=lambda x: x[0])
 
         # 3. 이미지 생성 (병렬)
-        status_box.write(f"🎨 이미지 생성 중 ({SELECTED_IMAGE_MODEL}, {target_ratio})...")
+        safe_workers = min(max_workers, 4) 
+        status_box.write(f"🎨 이미지 생성 중 (Model: {SELECTED_IMAGE_MODEL}, Threads: {safe_workers})...")
         results = []
+        
+        # 한도 초과 알림을 한 번만 띄우기 위한 플래그
+        quota_alert_shown = False 
 
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        with ThreadPoolExecutor(max_workers=safe_workers) as executor:
             future_to_meta = {}
             for s_num, prompt_text in prompts:
                 idx = s_num - 1
                 orig_text = chunks[idx]
                 fname = make_filename(s_num, orig_text)
-                time.sleep(0.05)
                 
-                # [수정] target_ratio 전달
+                time.sleep(1.5) # 요청 간격 조절
+                
                 future = executor.submit(
                     generate_image,
                     client, prompt_text, fname, USER_DIR,
                     SELECTED_IMAGE_MODEL, 
                     style_instruction,
-                    target_ratio # 비율 파라미터 추가
+                    target_ratio
                 )
                 future_to_meta[future] = (s_num, fname, orig_text, prompt_text)
 
@@ -945,17 +951,36 @@ if start_btn:
             for future in as_completed(future_to_meta):
                 s_num, fname, orig_text, p_text = future_to_meta[future]
                 path = future.result()
-                if path:
+                
+                # [핵심 수정] 결과 처리 로직
+                if path == "ERROR_QUOTA":
+                    # 한도 초과 신호를 받으면 사용자에게 알림
+                    if not quota_alert_shown:
+                        st.error("🚨 [긴급] Google API 무료 사용량이 초과되었습니다! (Quota Exceeded)")
+                        st.toast("🚨 API 한도가 초과되어 생성이 중단되었습니다.", icon="🛑")
+                        quota_alert_shown = True
+                    print(f"Scene {s_num}: Quota Exceeded.")
+                    
+                elif path: 
+                    # 정상 성공 시
                     results.append({
                         "scene": s_num, "path": path, "filename": fname, 
                         "script": orig_text, "prompt": p_text
                     })
+                else:
+                    # 기타 실패
+                    print(f"Scene {s_num}: Failed (Safety or Unknown).")
+
                 completed_cnt += 1
                 progress_bar.progress(0.5 + (completed_cnt / total_scenes * 0.5))
+        
+        # 루프가 끝난 후, 한도 초과가 발생했었다면 다시 한 번 경고창을 크게 표시
+        if quota_alert_shown:
+            st.warning("⚠️ 일부 이미지가 API 한도 초과로 인해 생성되지 않았습니다. 잠시 후 다시 시도하거나 다른 API 키를 사용하세요.")
 
         results.sort(key=lambda x: x['scene'])
         st.session_state['generated_results'] = results
-        status_box.update(label="✅ 생성 완료!", state="complete", expanded=False)
+        status_box.update(label="✅ 작업 종료", state="complete", expanded=False)
 
 # ==========================================
 # [결과 화면]
@@ -1033,4 +1058,5 @@ if st.session_state['generated_results']:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
 
                 except: pass
+
 
