@@ -17,190 +17,190 @@ from google.genai import types
 # [설정] 페이지 기본 설정
 # ==========================================
 st.set_page_config(
-    page_title="열정피디 AI 이미지 생성기 VER.2 (Final)",
-    layout="wide",
-    page_icon="🎨",
-    initial_sidebar_state="expanded"
+    page_title="열정피디 AI 이미지 생성기 VER.2 (Final)",
+    layout="wide",
+    page_icon="🎨",
+    initial_sidebar_state="expanded"
 )
 
 # 사용자별 고유 세션 ID 생성
 if 'user_id' not in st.session_state:
-    st.session_state['user_id'] = str(uuid.uuid4())
+    st.session_state['user_id'] = str(uuid.uuid4())
 
 # ==========================================
 # [디자인] 다크모드 & 가독성 완벽 패치
 # ==========================================
 st.markdown("""
-    <style>
-    /* 1. 상단 헤더 */
-    header[data-testid="stHeader"] {
-        background-color: #0E1117 !important;
-        z-index: 1 !important;
-    }
+    <style>
+    /* 1. 상단 헤더 */
+    header[data-testid="stHeader"] {
+        background-color: #0E1117 !important;
+        z-index: 1 !important;
+    }
 
-    /* 2. 콘텐츠 영역 여백 */
-    .block-container {
-        padding-top: 6rem !important; 
-        padding-bottom: 5rem !important;
-    }
+    /* 2. 콘텐츠 영역 여백 */
+    .block-container {
+        padding-top: 6rem !important; 
+        padding-bottom: 5rem !important;
+    }
 
-    /* 3. 전체 배경 및 폰트 */
-    .stApp {
-        background-color: #0E1117;
-        color: #FFFFFF !important;
-        font-family: 'Pretendard', sans-serif;
-    }
+    /* 3. 전체 배경 및 폰트 */
+    .stApp {
+        background-color: #0E1117;
+        color: #FFFFFF !important;
+        font-family: 'Pretendard', sans-serif;
+    }
 
-    /* 텍스트 가독성 강화 */
-    p, div, label, span, li, h1, h2, h3, h4, h5, h6 {
-        color: #FFFFFF !important;
-    }
-    
-    h1, h2 {
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-    }
+    /* 텍스트 가독성 강화 */
+    p, div, label, span, li, h1, h2, h3, h4, h5, h6 {
+        color: #FFFFFF !important;
+    }
+    
+    h1, h2 {
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
 
-    /* 4. 배너 스타일 */
-    .student-banner {
-        background: linear-gradient(90deg, #00C6FF 0%, #0072FF 100%);
-        color: white !important;
-        padding: 30px 20px;
-        border-radius: 15px;
-        text-align: center;
-        font-size: 2.0rem;
-        font-weight: 800;
-        margin-bottom: 30px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        letter-spacing: 1px;
-    }
+    /* 4. 배너 스타일 */
+    .student-banner {
+        background: linear-gradient(90deg, #00C6FF 0%, #0072FF 100%);
+        color: white !important;
+        padding: 30px 20px;
+        border-radius: 15px;
+        text-align: center;
+        font-size: 2.0rem;
+        font-weight: 800;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        letter-spacing: 1px;
+    }
 
-    /* 5. 입력창 스타일 */
-    .stTextInput label p, .stTextArea label p, .stSelectbox label p, .stRadio label p {
-        font-size: 1.2rem !important;
-        font-weight: 700 !important;
-        color: #FFD700 !important;
-        margin-bottom: 8px !important;
-    }
+    /* 5. 입력창 스타일 */
+    .stTextInput label p, .stTextArea label p, .stSelectbox label p, .stRadio label p {
+        font-size: 1.2rem !important;
+        font-weight: 700 !important;
+        color: #FFD700 !important;
+        margin-bottom: 8px !important;
+    }
 
-    .stTextInput input, .stTextArea textarea {
-        background-color: #1F2128 !important;
-        color: #FFFFFF !important;
-        border: 1px solid #4A4A4A !important;
-        border-radius: 10px !important;
-        font-size: 1.1rem !important;
-    }
-    .stTextInput input:focus, .stTextArea textarea:focus {
-        border-color: #0072FF !important;
-        box-shadow: 0 0 8px rgba(0, 114, 255, 0.5);
-    }
+    .stTextInput input, .stTextArea textarea {
+        background-color: #1F2128 !important;
+        color: #FFFFFF !important;
+        border: 1px solid #4A4A4A !important;
+        border-radius: 10px !important;
+        font-size: 1.1rem !important;
+    }
+    .stTextInput input:focus, .stTextArea textarea:focus {
+        border-color: #0072FF !important;
+        box-shadow: 0 0 8px rgba(0, 114, 255, 0.5);
+    }
 
-    /* 6. Selectbox 스타일 */
-    div[data-testid="stSelectbox"] > div > div {
-        background-color: #1F2128 !important;
-        color: #FFFFFF !important;
-        border: 1px solid #4A4A4A !important;
-    }
-    div[data-testid="stSelectbox"] * {
-        color: #FFFFFF !important;
-    }
-    div[data-testid="stSelectbox"] svg {
-        fill: #FFFFFF !important;
-    }
-    div[data-baseweb="popover"], div[data-baseweb="menu"], ul[data-testid="stSelectboxVirtualDropdown"] {
-        background-color: #1F2128 !important;
-    }
-    li[role="option"] {
-        color: #FFFFFF !important;
-        background-color: #1F2128 !important;
-    }
-    li[role="option"]:hover, li[aria-selected="true"] {
-        background-color: #333 !important;
-        color: #00BFFF !important; 
-    }
+    /* 6. Selectbox 스타일 */
+    div[data-testid="stSelectbox"] > div > div {
+        background-color: #1F2128 !important;
+        color: #FFFFFF !important;
+        border: 1px solid #4A4A4A !important;
+    }
+    div[data-testid="stSelectbox"] * {
+        color: #FFFFFF !important;
+    }
+    div[data-testid="stSelectbox"] svg {
+        fill: #FFFFFF !important;
+    }
+    div[data-baseweb="popover"], div[data-baseweb="menu"], ul[data-testid="stSelectboxVirtualDropdown"] {
+        background-color: #1F2128 !important;
+    }
+    li[role="option"] {
+        color: #FFFFFF !important;
+        background-color: #1F2128 !important;
+    }
+    li[role="option"]:hover, li[aria-selected="true"] {
+        background-color: #333 !important;
+        color: #00BFFF !important; 
+    }
 
-    /* 7. 버튼 스타일 */
-    .stButton > button {
-        width: 100%;
-        background: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%);
-        color: white !important;
-        border: none;
-        padding: 15px 20px;
-        font-size: 1.2rem !important;
-        font-weight: bold;
-        border-radius: 10px;
-        transition: all 0.3s ease;
-    }
-    .stButton > button:hover {
-        transform: scale(1.02);
-        box-shadow: 0 5px 15px rgba(255, 75, 43, 0.4);
-    }
+    /* 7. 버튼 스타일 */
+    .stButton > button {
+        width: 100%;
+        background: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%);
+        color: white !important;
+        border: none;
+        padding: 15px 20px;
+        font-size: 1.2rem !important;
+        font-weight: bold;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    .stButton > button:hover {
+        transform: scale(1.02);
+        box-shadow: 0 5px 15px rgba(255, 75, 43, 0.4);
+    }
 
-    [data-testid="stDownloadButton"] button {
-        background-color: #2C2F38 !important;
-        border: 1px solid #555 !important;
-        color: white !important;
-    }
-    [data-testid="stDownloadButton"] button:hover {
-        border-color: #00BFFF !important;
-        color: #00BFFF !important;
-    }
+    [data-testid="stDownloadButton"] button {
+        background-color: #2C2F38 !important;
+        border: 1px solid #555 !important;
+        color: white !important;
+    }
+    [data-testid="stDownloadButton"] button:hover {
+        border-color: #00BFFF !important;
+        color: #00BFFF !important;
+    }
 
-    /* 8. Expander 스타일 */
-    div[data-testid="stExpander"] details {
-        background-color: #1F2128 !important;
-        border: 1px solid #4A4A4A !important;
-        border-radius: 8px !important;
-        color: #FFFFFF !important;
-    }
-    div[data-testid="stExpander"] details > summary {
-        background-color: #1F2128 !important;
-        color: #FFFFFF !important;
-    }
-    div[data-testid="stExpander"] details > summary:hover {
-        background-color: #2C2F38 !important;
-        color: #FFD700 !important;
-    }
-    div[data-testid="stExpander"] details > summary span {
-        color: inherit !important;
-    }
-    div[data-testid="stExpander"] details > summary svg {
-        fill: #FFFFFF !important;
-    }
-    div[data-testid="stExpander"] details > summary:hover svg {
-        fill: #FFD700 !important;
-    }
-    div[data-testid="stExpander"] details > div {
-        background-color: #1F2128 !important;
-        color: #FFFFFF !important;
-    }
-    
-    /* 9. Status Widget 스타일 */
-    div[data-testid="stStatusWidget"] {
-        background-color: #1F2128 !important;
-        border: 1px solid #4A4A4A !important;
-        color: #FFFFFF !important;
-    }
-    div[data-testid="stStatusWidget"] p, 
-    div[data-testid="stStatusWidget"] span, 
-    div[data-testid="stStatusWidget"] div, 
-    div[data-testid="stStatusWidget"] label {
-        color: #FFFFFF !important;
-    }
-    div[data-testid="stStatusWidget"] svg {
-        fill: #FFFFFF !important;
-        color: #FFFFFF !important;
-    }
+    /* 8. Expander 스타일 */
+    div[data-testid="stExpander"] details {
+        background-color: #1F2128 !important;
+        border: 1px solid #4A4A4A !important;
+        border-radius: 8px !important;
+        color: #FFFFFF !important;
+    }
+    div[data-testid="stExpander"] details > summary {
+        background-color: #1F2128 !important;
+        color: #FFFFFF !important;
+    }
+    div[data-testid="stExpander"] details > summary:hover {
+        background-color: #2C2F38 !important;
+        color: #FFD700 !important;
+    }
+    div[data-testid="stExpander"] details > summary span {
+        color: inherit !important;
+    }
+    div[data-testid="stExpander"] details > summary svg {
+        fill: #FFFFFF !important;
+    }
+    div[data-testid="stExpander"] details > summary:hover svg {
+        fill: #FFD700 !important;
+    }
+    div[data-testid="stExpander"] details > div {
+        background-color: #1F2128 !important;
+        color: #FFFFFF !important;
+    }
+    
+    /* 9. Status Widget 스타일 */
+    div[data-testid="stStatusWidget"] {
+        background-color: #1F2128 !important;
+        border: 1px solid #4A4A4A !important;
+        color: #FFFFFF !important;
+    }
+    div[data-testid="stStatusWidget"] p, 
+    div[data-testid="stStatusWidget"] span, 
+    div[data-testid="stStatusWidget"] div, 
+    div[data-testid="stStatusWidget"] label {
+        color: #FFFFFF !important;
+    }
+    div[data-testid="stStatusWidget"] svg {
+        fill: #FFFFFF !important;
+        color: #FFFFFF !important;
+    }
 
-    /* 사이드바 */
-    [data-testid="stSidebar"] {
-        background-color: #12141C;
-        border-right: 1px solid #2C2F38;
-    }
-    </style>
+    /* 사이드바 */
+    [data-testid="stSidebar"] {
+        background-color: #12141C;
+        border-right: 1px solid #2C2F38;
+    }
+    </style>
 
-    <div class="student-banner">
-        🎨 열정피디 AI 이미지 생성기 (Final)
-    </div>
+    <div class="student-banner">
+        🎨 열정피디 AI 이미지 생성기 (Final)
+    </div>
 """, unsafe_allow_html=True)
 
 # 파일 저장 경로
@@ -210,523 +210,536 @@ BASE_PATH = "./web_result_files"
 # [함수] 1. 유틸리티
 # ==========================================
 def split_script_by_time(script, chars_per_chunk=100):
-    # [수정됨] 일본어 구두점(。, ？, ！)도 인식하도록 변경
-    temp_sentences = script.replace(".", ".|").replace("?", "?|").replace("!", "!|") \
-                            .replace("。", "。|").replace("？", "？|").replace("！", "！|").split("|")
-                            
-    chunks = []
-    current_chunk = ""
-    MIN_LENGTH = 30 
+    # [수정됨] 일본어 구두점(。, ？, ！)도 인식하도록 변경
+    temp_sentences = script.replace(".", ".|").replace("?", "?|").replace("!", "!|") \
+                            .replace("。", "。|").replace("？", "？|").replace("！", "！|").split("|")
+                            
+    chunks = []
+    current_chunk = ""
+    MIN_LENGTH = 30 
 
-    for sentence in temp_sentences:
-        sentence = sentence.strip()
-        if not sentence: continue
-        
-        if current_chunk:
-            temp_combined = current_chunk + " " + sentence
-        else:
-            temp_combined = sentence
+    for sentence in temp_sentences:
+        sentence = sentence.strip()
+        if not sentence: continue
+        
+        if current_chunk:
+            temp_combined = current_chunk + " " + sentence
+        else:
+            temp_combined = sentence
 
-        if len(temp_combined) < chars_per_chunk:
-            current_chunk = temp_combined
-        else:
-            if len(current_chunk) < MIN_LENGTH:
-                current_chunk = temp_combined
-            else:
-                chunks.append(current_chunk.strip())
-                current_chunk = sentence
-    
-    if current_chunk.strip():
-        if len(current_chunk) < MIN_LENGTH and chunks:
-            chunks[-1] += " " + current_chunk.strip()
-        else:
-            chunks.append(current_chunk.strip())
-            
-    return chunks
+        if len(temp_combined) < chars_per_chunk:
+            current_chunk = temp_combined
+        else:
+            if len(current_chunk) < MIN_LENGTH:
+                current_chunk = temp_combined
+            else:
+                chunks.append(current_chunk.strip())
+                current_chunk = sentence
+    
+    if current_chunk.strip():
+        if len(current_chunk) < MIN_LENGTH and chunks:
+            chunks[-1] += " " + current_chunk.strip()
+        else:
+            chunks.append(current_chunk.strip())
+            
+    return chunks
 
 def make_filename(scene_num, text_chunk):
-    clean_line = text_chunk.replace("\n", " ").strip()
-    clean_line = re.sub(r'[\\/:*?"<>|]', "", clean_line)
-    
-    if len(clean_line) <= 20:
-        summary = clean_line
-    else:
-        summary = f"{clean_line[:9]}...{clean_line[-9:]}"
-        
-    return f"S{scene_num:03d}_{summary}.png"
+    clean_line = text_chunk.replace("\n", " ").strip()
+    clean_line = re.sub(r'[\\/:*?"<>|]', "", clean_line)
+    
+    if len(clean_line) <= 20:
+        summary = clean_line
+    else:
+        summary = f"{clean_line[:9]}...{clean_line[-9:]}"
+        
+    return f"S{scene_num:03d}_{summary}.png"
 
 def create_zip_buffer(source_dir):
-    buffer = BytesIO()
-    with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-        for root, dirs, files in os.walk(source_dir):
-            for file in files:
-                file_path = os.path.join(root, file)
-                zip_file.write(file_path, os.path.basename(file_path))
-    buffer.seek(0)
-    return buffer
+    buffer = BytesIO()
+    with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        for root, dirs, files in os.walk(source_dir):
+            for file in files:
+                file_path = os.path.join(root, file)
+                zip_file.write(file_path, os.path.basename(file_path))
+    buffer.seek(0)
+    return buffer
 
 # ==========================================
 # [함수] 2. 프롬프트 생성
 # ==========================================
 def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, genre_mode="info", target_language="Korean"):
-    scene_num = index + 1
-    client = genai.Client(api_key=api_key)
+    scene_num = index + 1
+    client = genai.Client(api_key=api_key)
 
-    # 1. 언어 설정
-    if target_language == "Korean":
-        lang_guide = "화면 속 글씨는 **무조건 '한글(Korean)'로 표기**하십시오. (다른 언어 절대 금지)"
-        lang_example = "(예: 'New York' -> '뉴욕', 'Tokyo' -> '도쿄')"
-    elif target_language == "English":
-        lang_guide = "화면 속 글씨는 **무조건 '영어(English)'로 표기**하십시오."
-        lang_example = "(예: 'Seoul', 'Dokdo')"
-    elif target_language == "Japanese":
-        lang_guide = "화면 속 글씨는 **무조건 '일본어(Japanese)'로 표기**하십시오."
-        lang_example = "(예: '서울' -> 'ソウル', 'New York' -> 'ニューヨーク')"
-    else:
-        lang_guide = f"화면 속 글씨는 **무조건 '{target_language}'로 표기**하십시오."
-        lang_example = ""
+    # 1. 언어 설정
+    if target_language == "Korean":
+        lang_guide = "화면 속 글씨는 **무조건 '한글(Korean)'로 표기**하십시오. (다른 언어 절대 금지)"
+        lang_example = "(예: 'New York' -> '뉴욕', 'Tokyo' -> '도쿄')"
+    elif target_language == "English":
+        lang_guide = "화면 속 글씨는 **무조건 '영어(English)'로 표기**하십시오."
+        lang_example = "(예: 'Seoul', 'Dokdo')"
+    elif target_language == "Japanese":
+        lang_guide = "화면 속 글씨는 **무조건 '일본어(Japanese)'로 표기**하십시오."
+        lang_example = "(예: '서울' -> 'ソウル', 'New York' -> 'ニューヨーク')"
+    else:
+        lang_guide = f"화면 속 글씨는 **무조건 '{target_language}'로 표기**하십시오."
+        lang_example = ""
 
-    # 2. 장르별 프롬프트 분기
-    if genre_mode == "history":
-        full_instruction = f"""
-    [역할]
-    당신은 **세계사의 결정적인 순간들(한국사, 서양사, 동양사 등)**을 한국 시청자에게 전달하는 '시대극 애니메이션 감독'입니다.
-    역사적 비극을 다루지만, 절대로 잔인하거나 혐오스러운 묘사를 하지 않습니다.
+    # 2. 장르별 프롬프트 분기
+    if genre_mode == "history":
+        full_instruction = f"""
+    [역할]
+    당신은 **세계사의 결정적인 순간들(한국사, 서양사, 동양사 등)**을 한국 시청자에게 전달하는 '시대극 애니메이션 감독'입니다.
+    역사적 비극을 다루지만, 절대로 잔인하거나 혐오스러운 묘사를 하지 않습니다.
 
-    [전체 영상 주제] "{video_title}"
-    [그림 스타일 가이드 - 유저 지정 (최우선 준수)] {style_instruction}
-    
-    [필수 연출 지침]
-    1. **[매우 중요] 매체(Medium):** 무조건 **평면적인 '2D 스틱맨 일러스트레이션'** 스타일로 표현하십시오. (3D, 실사, 모델링 느낌 절대 금지)
-    2. **[매우 중요] 텍스트 현지화(Localization):** 배경이 서양, 중국, 일본 등 어디든 상관없이, {lang_guide}
-        - **금지:** 지정된 언어 외의 문자 사용을 절대 금지합니다.
-        - **예시:** {lang_example}
-    3. **[매우 중요 - 순화된 표현] 비극의 상징화(Symbolization of Tragedy):** 전쟁, 죽음, 고통과 같은 비극적인 상황은 **절대로 직접적으로 묘사하지 마십시오.** 물리적 폭력 대신, **상실감, 허무함, 애도**의 정서에 집중하십시오.
-        - **핵심:** 파괴된 신체나 직접적인 무기 사용 장면 대신, **남겨진 물건(주인 없는 신발, 깨진 안경), 드리우는 그림자, 시들어버린 자연물, 혹은 빛이 사라지는 연출** 등을 통해 간접적으로 슬픔을 표현하십시오.
-    4. **[핵심] 다양한 장소와 시대 연출(Diverse Locations):** 대본에 나오는 **특정 시대와 장소의 특징(건축 양식, 의상, 자연환경)을 정확히 포착**하여 그리십시오.
-    5. **[수정됨] 절제된 캐릭터 연기(Restrained Acting):** 2D 스틱맨 캐릭터는 시대에 맞는 의상을 입되, **과장된 표정보다는 '몸짓(Body Language)'과 '분위기'로 감정을 표현**해야 합니다. 비극적인 상황에서도 격렬한 분노나 공포보다는 **깊은 슬픔, 체념, 혹은 간절한 기도**와 같은 정적인 감정을 우선시하십시오.
-    6. **조명(Lighting):** 2D 작화 내에서 극적인 분위기를 만드는 **'시네마틱 조명'**을 사용하십시오. (시대극 특유의 톤)
-    7. **[수정됨] 색감(Colors):** **차분하고 애상적인 색감(Somber & Melancholic Tones)**을 사용하십시오. 깊이 있되 다양한 채도의 색조를 사용하여, 역사 다큐멘터리의 톤앤매너를 유지하십시오. (자극적인 붉은색 과다 사용 금지)
-    8. **구성(Composition):** 시청자가 상황을 한눈에 이해할 수 있도록 핵심 피사체를 화면 중앙에 배치하십시오. 분활화면(Split screen)은 금지입니다.
-    - **[절대 금지]:** 텍스트가 화면의 네 모서리(Corners)나 가장자리에 배치되는 것을 절대 금지합니다. (자막 공간 확보)
-    9. **[매우 중요] 배경보다 **'인물(Character)'이 무조건 우선**입니다. 캐릭터가 화면을 장악해야 합니다.
-    10. 상호작용하는 소품 (Interactive Props): 스틱맨 캐릭터가 대본 속 중요한 사물과 어떻게 상호작용하는지 명확히 그리십시오. 사물은 단순하지만 그 특징이 명확해야 합니다.
-    11. 캐릭터 연출 : 스틱맨은 시대를 반영하는 의상과 헤어스타일을 연출한다.
+    [전체 영상 주제] "{video_title}"
+    [그림 스타일 가이드 - 유저 지정 (최우선 준수)] {style_instruction}
+    
+    [필수 연출 지침]
+    1. **[매우 중요] 매체(Medium):** 무조건 **평면적인 '2D 스틱맨 일러스트레이션'** 스타일로 표현하십시오. (3D, 실사, 모델링 느낌 절대 금지)
+    2. **[매우 중요] 텍스트 현지화(Localization):** 배경이 서양, 중국, 일본 등 어디든 상관없이, {lang_guide}
+        - **금지:** 지정된 언어 외의 문자 사용을 절대 금지합니다.
+        - **예시:** {lang_example}
+    3. **[매우 중요 - 순화된 표현] 비극의 상징화(Symbolization of Tragedy):** 전쟁, 죽음, 고통과 같은 비극적인 상황은 **절대로 직접적으로 묘사하지 마십시오.** 물리적 폭력 대신, **상실감, 허무함, 애도**의 정서에 집중하십시오.
+        - **핵심:** 파괴된 신체나 직접적인 무기 사용 장면 대신, **남겨진 물건(주인 없는 신발, 깨진 안경), 드리우는 그림자, 시들어버린 자연물, 혹은 빛이 사라지는 연출** 등을 통해 간접적으로 슬픔을 표현하십시오.
+    4. **[핵심] 다양한 장소와 시대 연출(Diverse Locations):** 대본에 나오는 **특정 시대와 장소의 특징(건축 양식, 의상, 자연환경)을 정확히 포착**하여 그리십시오.
+    5. **[수정됨] 절제된 캐릭터 연기(Restrained Acting):** 2D 스틱맨 캐릭터는 시대에 맞는 의상을 입되, **과장된 표정보다는 '몸짓(Body Language)'과 '분위기'로 감정을 표현**해야 합니다. 비극적인 상황에서도 격렬한 분노나 공포보다는 **깊은 슬픔, 체념, 혹은 간절한 기도**와 같은 정적인 감정을 우선시하십시오.
+    6. **조명(Lighting):** 2D 작화 내에서 극적인 분위기를 만드는 **'시네마틱 조명'**을 사용하십시오. (시대극 특유의 톤)
+    7. **[수정됨] 색감(Colors):** **차분하고 애상적인 색감(Somber & Melancholic Tones)**을 사용하십시오. 깊이 있되 다양한 채도의 색조를 사용하여, 역사 다큐멘터리의 톤앤매너를 유지하십시오. (자극적인 붉은색 과다 사용 금지)
+    8. **구성(Composition):** 시청자가 상황을 한눈에 이해할 수 있도록 핵심 피사체를 화면 중앙에 배치하십시오. 분활화면(Split screen)은 금지입니다.
+    - **[절대 금지]:** 텍스트가 화면의 네 모서리(Corners)나 가장자리에 배치되는 것을 절대 금지합니다. (자막 공간 확보)
+    9. **[매우 중요] 배경보다 **'인물(Character)'이 무조건 우선**입니다. 캐릭터가 화면을 장악해야 합니다.
+    10. 상호작용하는 소품 (Interactive Props): 스틱맨 캐릭터가 대본 속 중요한 사물과 어떻게 상호작용하는지 명확히 그리십시오. 사물은 단순하지만 그 특징이 명확해야 합니다.
+    11. 캐릭터 연출 : 스틱맨은 시대를 반영하는 의상과 헤어스타일을 연출한다.
 
-    [임무]
-    제공된 대본 조각(Script Segment)을 바탕으로, 이미지 생성 AI가 그릴 수 있는 **구체적인 묘사 프롬프트**를 작성하십시오.
-    
-    [작성 요구사항]
-    - **분량:** 최소 7문장 이상으로 상세하게 묘사.
-    - **포함 요소:**
-        - **텍스트 지시:** (중요) 이미지에 들어갈 텍스트를 반드시 **'{target_language}'**로 명시하십시오.
-        - **안전한 묘사:** 잔인한 장면은 은유적으로 표현하여 필터링을 피하십시오.
-        - **시대적 배경:** 대본의 시대(고대/중세/근대)와 장소(동양/서양)를 명확히 반영한 배경 묘사.
-        - **캐릭터 연기:** 상황에 따른 캐릭터의 감정 표정과 동작(얼굴의 눈,입 필수 연출)
-            - 단순한 스틱맨이라도 상황에 따른 감정 표현을 사용하십시오.
-            - **얼굴 디테일:** **'눈'과 '입'의 모양을 반드시 구체적으로 묘사**하십시오. (예: 공포에 질려 덜덜 떨리는 입, 분노로 이가 갈리도록 꽉 다문 입, 폭포수처럼 쏟아지는 눈물 등)
-            - **역동적 몸짓:** 정적인 자세 대신 감정을 온몸으로 표현하는 동작을 묘사하십시오. 
-        - 배경 보다는 인물과 상황에 더 초점을 맞춘다.
-        - 자막 같은 연출 하지 않는다. ("화면 하단 중앙에는 명조체로 **'필리핀, 1944년'**이라는 한글 텍스트가 선명하게 새겨져 있다" 이런 연출 하면 안된다) 
+    [임무]
+    제공된 대본 조각(Script Segment)을 바탕으로, 이미지 생성 AI가 그릴 수 있는 **구체적인 묘사 프롬프트**를 작성하십시오.
+    
+    [작성 요구사항]
+    - **분량:** 최소 7문장 이상으로 상세하게 묘사.
+    - **포함 요소:**
+        - **텍스트 지시:** (중요) 이미지에 들어갈 텍스트를 반드시 **'{target_language}'**로 명시하십시오.
+        - **안전한 묘사:** 잔인한 장면은 은유적으로 표현하여 필터링을 피하십시오.
+        - **시대적 배경:** 대본의 시대(고대/중세/근대)와 장소(동양/서양)를 명확히 반영한 배경 묘사.
+        - **캐릭터 연기:** 상황에 따른 캐릭터의 감정 표정과 동작(얼굴의 눈,입 필수 연출)
+            - 단순한 스틱맨이라도 상황에 따른 감정 표현을 사용하십시오.
+            - **얼굴 디테일:** **'눈'과 '입'의 모양을 반드시 구체적으로 묘사**하십시오. (예: 공포에 질려 덜덜 떨리는 입, 분노로 이가 갈리도록 꽉 다문 입, 폭포수처럼 쏟아지는 눈물 등)
+            - **역동적 몸짓:** 정적인 자세 대신 감정을 온몸으로 표현하는 동작을 묘사하십시오. 
+        - 배경 보다는 인물과 상황에 더 초점을 맞춘다.
+        - 자막 같은 연출 하지 않는다. ("화면 하단 중앙에는 명조체로 **'필리핀, 1944년'**이라는 한글 텍스트가 선명하게 새겨져 있다" 이런 연출 하면 안된다) 
 
-    [🎭 캐릭터 감정 연기 지침 (Character Acting Guide) - 중요]
-    얼굴 표정이 단순한 스틱맨이므로, **몸짓과 표정(Body Language)**으로 감정을 표현하십시오.
-    
-    - 금지: 피(Blood), 출혈, 시체(Corpse, Dead body), 잘린 머리(Decapitation), 고문, 자살, 뼈/해골(Skeleton), 내장, 리얼한 총/칼(Weapon).
-    - 금지: 나치(Nazi), 욱일기 등 정치적으로 극도로 민감한 심볼.
+    [🎭 캐릭터 감정 연기 지침 (Character Acting Guide) - 중요]
+    얼굴 표정이 단순한 스틱맨이므로, **몸짓과 표정(Body Language)**으로 감정을 표현하십시오.
+    
+    - 금지: 피(Blood), 출혈, 시체(Corpse, Dead body), 잘린 머리(Decapitation), 고문, 자살, 뼈/해골(Skeleton), 내장, 리얼한 총/칼(Weapon).
+    - 금지: 나치(Nazi), 욱일기 등 정치적으로 극도로 민감한 심볼.
 
-    [🛡️ 검열 회피를 위한 '시각적 은유(Visual Metaphors)' 가이드]
-    대본 내용이 잔인하거나 폭력적일 경우, 반드시 아래의 **상징물**로 대체하여 묘사하십시오.
-    
-    [출력 형식]
-    - **무조건 한국어(한글)**로만 작성하십시오.
-    - 부가적인 설명 없이 **오직 프롬프트 텍스트만** 출력하십시오.
-        """
-        
-    elif genre_mode == "webtoon":
-        full_instruction = f"""
-    [역할]
-    당신은 네이버 웹툰 스타일의 **'인기 웹툰 메인 작화가'**입니다.
-    독자들이 1초 만에 이해하고 클릭하고 싶게 만드는 **'트렌디하고 역동적인 웹툰 컷'**을 그려야 합니다.
+    [🛡️ 검열 회피를 위한 '시각적 은유(Visual Metaphors)' 가이드]
+    대본 내용이 잔인하거나 폭력적일 경우, 반드시 아래의 **상징물**로 대체하여 묘사하십시오.
+    
+    [출력 형식]
+    - **무조건 한국어(한글)**로만 작성하십시오.
+    - 부가적인 설명 없이 **오직 프롬프트 텍스트만** 출력하십시오.
+        """
+        
+    elif genre_mode == "webtoon":
+        full_instruction = f"""
+    [역할]
+    당신은 네이버 웹툰 스타일의 **'인기 웹툰 메인 작화가'**입니다.
+    독자들이 1초 만에 이해하고 클릭하고 싶게 만드는 **'트렌디하고 역동적인 웹툰 컷'**을 그려야 합니다.
 
-    [전체 영상 주제] "{video_title}"
-    [그림 스타일 가이드] {style_instruction}
+    [전체 영상 주제] "{video_title}"
+    [그림 스타일 가이드] {style_instruction}
 
-    [필수 연출 지침]
-    1. **작화 스타일:** 한국 웹툰(K-Webtoon) 특유의 **선명한 외곽선(Sharp Outlines)**과 **화려한 채색(Vibrant Coloring)**을 사용하십시오.
-    2. **캐릭터 디자인:** **스틱맨 절대 금지.** 8등신 비율의 **'매력적인 웹툰 주인공(Anime/Manhwa Style)'**으로 묘사하십시오.
-    3. **[핵심 - 배경 및 상황 강화]:**
-        - 캐릭터 얼굴만 크게 그리지 말고, 캐릭터가 어디에 있는지, 주변에 무엇이 있는지 **'배경과 상황(Context & Background)'을 매우 구체적으로 묘사**하십시오.
-        - 예: 방 안이라면 가구와 조명, 거리라면 건물과 행인들, 사무실이라면 책상 위의 서류까지 디테일하게 그리십시오.
-    4. **[핵심 - 효과 절제]:**
-        - **집중선(Speed lines)이나 과도한 이펙트는 남발하지 마십시오.** (정말 충격적인 장면에서만 가끔 사용)
-        - 대신 **공간감(Depth of Field)**과 **현실적인 배경 디테일**로 상황을 설명하십시오.
-    5. **카메라 앵글:** 하이 앵글, 로우 앵글, 광각 렌즈 등을 사용하되, 배경이 잘 보이도록 구도를 잡으십시오.
-    6. **텍스트 처리:** {lang_guide} {lang_example}
-        - 웹툰 말풍선 느낌이나 배경 오브젝트(간판, 스마트폰)에 자연스럽게 녹여내십시오.
+    [필수 연출 지침]
+    1. **작화 스타일:** 한국 웹툰(K-Webtoon) 특유의 **선명한 외곽선(Sharp Outlines)**과 **화려한 채색(Vibrant Coloring)**을 사용하십시오.
+    2. **캐릭터 디자인:** **스틱맨 절대 금지.** 8등신 비율의 **'매력적인 웹툰 주인공(Anime/Manhwa Style)'**으로 묘사하십시오.
+    3. **[핵심 - 배경 및 상황 강화]:**
+        - 캐릭터 얼굴만 크게 그리지 말고, 캐릭터가 어디에 있는지, 주변에 무엇이 있는지 **'배경과 상황(Context & Background)'을 매우 구체적으로 묘사**하십시오.
+        - 예: 방 안이라면 가구와 조명, 거리라면 건물과 행인들, 사무실이라면 책상 위의 서류까지 디테일하게 그리십시오.
+    4. **[핵심 - 효과 절제]:**
+        - **집중선(Speed lines)이나 과도한 이펙트는 남발하지 마십시오.** (정말 충격적인 장면에서만 가끔 사용)
+        - 대신 **공간감(Depth of Field)**과 **현실적인 배경 디테일**로 상황을 설명하십시오.
+    5. **카메라 앵글:** 하이 앵글, 로우 앵글, 광각 렌즈 등을 사용하되, 배경이 잘 보이도록 구도를 잡으십시오.
+    6. **텍스트 처리:** {lang_guide} {lang_example}
+        - 웹툰 말풍선 느낌이나 배경 오브젝트(간판, 스마트폰)에 자연스럽게 녹여내십시오.
 
-    [임무]
-    제공된 대본을 바탕으로 이미지 생성 프롬프트를 작성하십시오. (한글 출력)
-    - "집중선이 배경에 깔리며..." 같은 표현은 자제하고, **"디테일한 사무실 배경을 뒤로 하고...", "비 내리는 거리 한복판에서..."** 처럼 공간 묘사를 우선하십시오.
-        """
+    [임무]
+    제공된 대본을 바탕으로 이미지 생성 프롬프트를 작성하십시오. (한글 출력)
+    - "집중선이 배경에 깔리며..." 같은 표현은 자제하고, **"디테일한 사무실 배경을 뒤로 하고...", "비 내리는 거리 한복판에서..."** 처럼 공간 묘사를 우선하십시오.
+        """
 
-    elif genre_mode == "news":
-        full_instruction = f"""
-    [역할]
-    당신은 뉴스 보도 및 다큐멘터리 제작을 위한 **'실사 자료화면(Stock Footage) 전문 디렉터'**입니다.
-    대본 내용을 시각적으로 뒷받침하는 **'고품질 실사 사진(Hyper-Realistic Photo)'**을 기획해야 합니다.
+    elif genre_mode == "news":
+        full_instruction = f"""
+    [역할]
+    당신은 뉴스 보도 및 다큐멘터리 제작을 위한 **'실사 자료화면(Stock Footage) 전문 디렉터'**입니다.
+    대본 내용을 시각적으로 뒷받침하는 **'고품질 실사 사진(Hyper-Realistic Photo)'**을 기획해야 합니다.
 
-    [전체 영상 주제] "{video_title}"
-    [스타일 가이드] {style_instruction}
+    [전체 영상 주제] "{video_title}"
+    [스타일 가이드] {style_instruction}
 
-    [필수 연출 지침]
-    1. **완벽한 실사(Photorealism Only):**
-        - **절대 그림, 일러스트, 3D 렌더링, 만화 느낌 금지.**
-        - 실제 DSLR 카메라로 촬영한 듯한 **'뉴스 보도 사진'** 혹은 **'다큐멘터리 스틸컷'**이어야 합니다.
-    2. **[매우 중요 - 분할 화면 절대 금지]:**
-        - 화면을 여러 개로 나누는 **'콜라주(Collage)'나 '분할 화면(Split Screen)' 연출을 절대 금지**합니다.
-        - 무조건 **'단일 화면(Single Shot)'**으로 하나의 장면에만 집중하십시오.
-    3. **자료화면 연출(Stock Footage Style):**
-        - 앵커가 앉아있는 스튜디오 모습이 **아닙니다.**
-        - 대본의 내용을 설명하는 **현장 스케치, 인서트 컷, 사물 클로즈업, 풍경** 등을 실사로 묘사하십시오.
-    4. **추상적 개념의 시각화:**
-        - 예: '부동산 폭락' -> (X) 집이 무너지는 만화 (O) '매매' 스티커가 붙은 아파트 단지의 쓸쓸한 전경 또는 부동산 중개소의 텅 빈 유리창.
-        - 예: '저출산' -> (X) 우는 아기 천사 (O) 텅 빈 놀이터의 그네가 흔들리는 모습.
-    5. **텍스트 처리:** {lang_guide} {lang_example}
-        - 텍스트는 인위적으로 띄우지 말고, 거리의 간판, 신문 헤드라인, 스마트폰 화면, 서류 내용처럼 **실제 사물에 합성**된 것처럼 자연스럽게 묘사하십시오.
-    6. **조명 및 톤앤매너:**
-        - 뉴스 보도에 적합한 **선명하고 사실적인 조명(Natural & Sharp Lighting)**.
-        - 과도한 예술적 필터보다는 사실 전달에 집중한 톤.
-    7. **인물 연출:**
-        - 대본에 어울리는 인물들의 행동 연출.
-    8. 분활화면으로 연출하지 말고 하나의 화면으로 연출한다.
+    [필수 연출 지침]
+    1. **완벽한 실사(Photorealism Only):**
+        - **절대 그림, 일러스트, 3D 렌더링, 만화 느낌 금지.**
+        - 실제 DSLR 카메라로 촬영한 듯한 **'뉴스 보도 사진'** 혹은 **'다큐멘터리 스틸컷'**이어야 합니다.
+    2. **[매우 중요 - 분할 화면 절대 금지]:**
+        - 화면을 여러 개로 나누는 **'콜라주(Collage)'나 '분할 화면(Split Screen)' 연출을 절대 금지**합니다.
+        - 무조건 **'단일 화면(Single Shot)'**으로 하나의 장면에만 집중하십시오.
+    3. **자료화면 연출(Stock Footage Style):**
+        - 앵커가 앉아있는 스튜디오 모습이 **아닙니다.**
+        - 대본의 내용을 설명하는 **현장 스케치, 인서트 컷, 사물 클로즈업, 풍경** 등을 실사로 묘사하십시오.
+    4. **추상적 개념의 시각화:**
+        - 예: '부동산 폭락' -> (X) 집이 무너지는 만화 (O) '매매' 스티커가 붙은 아파트 단지의 쓸쓸한 전경 또는 부동산 중개소의 텅 빈 유리창.
+        - 예: '저출산' -> (X) 우는 아기 천사 (O) 텅 빈 놀이터의 그네가 흔들리는 모습.
+    5. **텍스트 처리:** {lang_guide} {lang_example}
+        - 텍스트는 인위적으로 띄우지 말고, 거리의 간판, 신문 헤드라인, 스마트폰 화면, 서류 내용처럼 **실제 사물에 합성**된 것처럼 자연스럽게 묘사하십시오.
+    6. **조명 및 톤앤매너:**
+        - 뉴스 보도에 적합한 **선명하고 사실적인 조명(Natural & Sharp Lighting)**.
+        - 과도한 예술적 필터보다는 사실 전달에 집중한 톤.
+    7. **인물 연출:**
+        - 대본에 어울리는 인물들의 행동 연출.
+    8. 분활화면으로 연출하지 말고 하나의 화면으로 연출한다.
 
-    [임무]
-    대본을 분석하여 AI가 생성할 수 있는 **구체적인 실사 사진 프롬프트**를 작성하십시오.
-    - "Photorealistic, 8k resolution, cinematic lighting, depth of field" 등의 퀄리티 키워드 포함.
-    - 인물 묘사 시 'Korean' 혹은 구체적인 인종/나이대를 명시하여 사실성 부여.
-    - **한글**로만 출력하십시오.
-        """
+    [임무]
+    대본을 분석하여 AI가 생성할 수 있는 **구체적인 실사 사진 프롬프트**를 작성하십시오.
+    - "Photorealistic, 8k resolution, cinematic lighting, depth of field" 등의 퀄리티 키워드 포함.
+    - 인물 묘사 시 'Korean' 혹은 구체적인 인종/나이대를 명시하여 사실성 부여.
+    - **한글**로만 출력하십시오.
+        """
 
-    elif genre_mode == "manga":
-        full_instruction = f"""
-    [역할]
-    당신은 **작화 퀄리티가 극도로 높은 '대작 귀여운 지브리풍 애니메이션'의 총괄 작화 감독**입니다.
-    단순히 예쁜 그림이 아니라, **대본의 상황, 행동, 감정을 '소름 돋을 정도로 구체적이고 디테일하게' 묘사**해야 합니다.
+    elif genre_mode == "manga":
+        full_instruction = f"""
+    [역할]
+    당신은 **작화 퀄리티가 극도로 높은 '대작 귀여운 지브리풍 애니메이션'의 총괄 작화 감독**입니다.
+    단순히 예쁜 그림이 아니라, **대본의 상황, 행동, 감정을 '소름 돋을 정도로 구체적이고 디테일하게' 묘사**해야 합니다.
 
-    [전체 영상 주제] "{video_title}"
-    [스타일 가이드] {style_instruction}
+    [전체 영상 주제] "{video_title}"
+    [스타일 가이드] {style_instruction}
 
-    [필수 연출 지침]
-    1. **작화 스타일 (High Detail):**
-        - **서정적이고 몽환적인 느낌 금지.** 대신 **선명하고, 사실적이니지만 인물은 귀여운, 정보량이 많은(High Information Density)** 작화를 추구하십시오.
-        - 배경은 흐릿하게 처리하지 말고, 간판의 글씨, 책상의 소품, 벽의 질감까지 **집요할 정도로 디테일하게** 묘사하십시오. (예: 'MAPPA', 'Ufotable' 제작사의 고퀄리티 작화 스타일)
-    2. **행동 및 감정 묘사 (Action & Emotion):**
-        - 대본에 묘사된 캐릭터의 행동을 **'순간 포착'** 하듯 역동적으로 그리십시오.
-        - **표정 연기:** 눈썹의 각도, 입 모양, 눈동자의 흔들림까지 구체적으로 지시하여 캐릭터의 심리를 완벽하게 표현하십시오.
-    3. **대본 충실도 (Script Fidelity):**
-        - 대본에 있는 작은 지문 하나도 놓치지 말고 시각화하십시오.
-        - "컵을 떨군다"는 대본이라면, 컵이 손에서 떠나 공중에 있는 순간과 튀어 오르는 물방울까지 묘사하십시오.
-    4. **텍스트 처리:** {lang_guide} {lang_example}
-      
-    [작성 요구사항]
-    - **분량:** 최소 7문장 이상으로 상세하게 묘사.
-    - 절대 분활화면 연출하지 않는다. 전체 대본 내용에 어울리는 하나의 장면으로 묘사.
+    [필수 연출 지침]
+    1. **작화 스타일 (High Detail):**
+        - **서정적이고 몽환적인 느낌 금지.** 대신 **선명하고, 사실적이니지만 인물은 귀여운, 정보량이 많은(High Information Density)** 작화를 추구하십시오.
+        - 배경은 흐릿하게 처리하지 말고, 간판의 글씨, 책상의 소품, 벽의 질감까지 **집요할 정도로 디테일하게** 묘사하십시오. (예: 'MAPPA', 'Ufotable' 제작사의 고퀄리티 작화 스타일)
+    2. **행동 및 감정 묘사 (Action & Emotion):**
+        - 대본에 묘사된 캐릭터의 행동을 **'순간 포착'** 하듯 역동적으로 그리십시오.
+        - **표정 연기:** 눈썹의 각도, 입 모양, 눈동자의 흔들림까지 구체적으로 지시하여 캐릭터의 심리를 완벽하게 표현하십시오.
+    3. **대본 충실도 (Script Fidelity):**
+        - 대본에 있는 작은 지문 하나도 놓치지 말고 시각화하십시오.
+        - "컵을 떨군다"는 대본이라면, 컵이 손에서 떠나 공중에 있는 순간과 튀어 오르는 물방울까지 묘사하십시오.
+    4. **텍스트 처리:** {lang_guide} {lang_example}
+    
+    [작성 요구사항]
+    - **분량:** 최소 7문장 이상으로 상세하게 묘사.
+    - 절대 분활화면 연출하지 않는다. 전체 대본 내용에 어울리는 하나의 장면으로 묘사.
 
-    [임무]
-    대본을 분석하여 AI가 그릴 수 있는 **최상급 귀여운 지브리풍 퀄리티의 애니메이션 프롬프트**를 작성하십시오.
-    - "Masterpiece, best quality, ultra-detailed, intricate background, dynamic pose, expressive face" 등의 키워드가 반영되도록 하십시오.
-    - **한글**로만 출력하십시오.
-        """
+    [임무]
+    대본을 분석하여 AI가 그릴 수 있는 **최상급 귀여운 지브리풍 퀄리티의 애니메이션 프롬프트**를 작성하십시오.
+    - "Masterpiece, best quality, ultra-detailed, intricate background, dynamic pose, expressive face" 등의 키워드가 반영되도록 하십시오.
+    - **한글**로만 출력하십시오.
+        """
 
-    elif genre_mode == "paint_explainer":
-        # [NEW] The Paint Explainer 스타일 (흰 배경 + 스틱맨 + 단순함 + 명확한 사물 표현)
-        full_instruction = f"""
-    [역할]
-    당신은 유튜브 'The Paint Explainer' 채널 스타일의 **'초심플 스틱맨 일러스트레이터'**입니다.
-    복잡한 세상의 이야기를 **'흰색 배경 위, 검은색 선으로 된 졸라맨(Stickman)'과 '직관적인 사물 그림'**으로 아주 단순하고 명쾌하게 설명해야 합니다.
+    elif genre_mode == "paint_explainer":
+        # [NEW] The Paint Explainer 스타일 (흰 배경 + 스틱맨 + 단순함 + 명확한 사물 표현)
+        full_instruction = f"""
+    [역할]
+    당신은 유튜브 'The Paint Explainer' 채널 스타일의 **'초심플 스틱맨 일러스트레이터'**입니다.
+    복잡한 세상의 이야기를 **'흰색 배경 위, 검은색 선으로 된 졸라맨(Stickman)'과 '직관적인 사물 그림'**으로 아주 단순하고 명쾌하게 설명해야 합니다.
 
-    [전체 영상 주제] "{video_title}"
-    [스타일 가이드] {style_instruction}
+    [전체 영상 주제] "{video_title}"
+    [스타일 가이드] {style_instruction}
 
-    [필수 연출 지침]
-    1. **[핵심 - 배경] 배경은 무조건 '완전한 흰색(Pure White Background)'**입니다.
-        - 배경에 풍경, 하늘, 그라데이션, 종이 질감 등을 절대 넣지 마십시오. 그냥 하얀 여백입니다.
-    2. **[핵심 - 캐릭터] 완벽한 '졸라맨(Stick Figure)' 스타일:**
-        - 머리는 동그라미(Circle head).
-        - 몸통과 팔다리는 **단순한 검은 막대기 선(Stick limbs)**.
-        - 표정은 점 눈(. .)과 선 입(__)으로 단순하지만 상황(기쁨, 슬픔, 당황)을 명확히 전달해야 합니다.
-    3. **[핵심 - 소품 및 상황 연출 (Props & Context) - 강화됨]:**
-        - 대본 속 중요한 사물들을 **단순하지만 그 특징이 가장 잘 드러나게 과장하여** 그리십시오.
-        - **시각적 은유(Visual Metaphor)를 적극 활용하십시오.**
-          - (예: '엄청난 빚' -> 스틱맨을 짓누르는 건물만 한 바위 덩어리에 '빚(DEBT)'이라고 씀)
-          - (예: '돈을 벌다' -> 스틱맨 손으로 자석을 들고 돈다발을 끌어당기는 모습)
-        - 상황 설명력을 높이기 위해 **화살표(→), 물음표(?), 느낌표(!), 당황 표시(땀방울 💦), 반짝임(✨) 등의 기호**를 적극적으로 그림 옆에 추가하십시오.
-        - 사물끼리의 관계(원인->결과)를 화살표로 연결하여 보여주십시오.
-    4. **[작화 스타일] MS 그림판(MS Paint) 감성:**
-        - 고퀄리티 예술 작품이 아닙니다. 마우스로 대충 그린 듯한(Rough sketch, scribbles, crude drawing) 느낌을 살리십시오.
-        - 그림자는 그리지 않습니다(No shading). 완전한 평면(Flat)입니다.
-    5. **[색상 사용]:**
-        - 기본은 **흑백(Black lines on White)**입니다.
-        - 강조하고 싶은 핵심 사물(돈, 국기, 중요한 버튼 등)에만 **빨강, 파랑, 노랑 같은 원색(Primary Colors)**을 포인트로 사용하여 시선을 집중시키십시오.
-    6. **[텍스트 처리]:** {lang_guide} {lang_example}
-        - 삐뚤빼뚤한 마우스 손글씨 느낌으로 연출하십시오. 텍스트 박스보다는 그림 옆에 자연스럽게 쓰인 느낌이 좋습니다.
-    7. **[구도]:**
-        - 분할 화면 금지. 하나의 흰 화면 위에 캐릭터와 관련 사물들을 배치하여 하나의 상황극처럼 만드십시오.
+    [필수 연출 지침]
+    1. **[핵심 - 배경] 배경은 무조건 '완전한 흰색(Pure White Background)'**입니다.
+        - 배경에 풍경, 하늘, 그라데이션, 종이 질감 등을 절대 넣지 마십시오. 그냥 하얀 여백입니다.
+    2. **[핵심 - 캐릭터] 완벽한 '졸라맨(Stick Figure)' 스타일:**
+        - 머리는 동그라미(Circle head).
+        - 몸통과 팔다리는 **단순한 검은 막대기 선(Stick limbs)**.
+        - 표정은 점 눈(. .)과 선 입(__)으로 단순하지만 상황(기쁨, 슬픔, 당황)을 명확히 전달해야 합니다.
+    3. **[핵심 - 소품 및 상황 연출 (Props & Context) - 강화됨]:**
+        - 대본 속 중요한 사물들을 **단순하지만 그 특징이 가장 잘 드러나게 과장하여** 그리십시오.
+        - **시각적 은유(Visual Metaphor)를 적극 활용하십시오.**
+            - (예: '엄청난 빚' -> 스틱맨을 짓누르는 건물만 한 바위 덩어리에 '빚(DEBT)'이라고 씀)
+            - (예: '돈을 벌다' -> 스틱맨 손으로 자석을 들고 돈다발을 끌어당기는 모습)
+        - 상황 설명력을 높이기 위해 **화살표(→), 물음표(?), 느낌표(!), 당황 표시(땀방울 💦), 반짝임(✨) 등의 기호**를 적극적으로 그림 옆에 추가하십시오.
+        - 사물끼리의 관계(원인->결과)를 화살표로 연결하여 보여주십시오.
+    4. **[작화 스타일] MS 그림판(MS Paint) 감성:**
+        - 고퀄리티 예술 작품이 아닙니다. 마우스로 대충 그린 듯한(Rough sketch, scribbles, crude drawing) 느낌을 살리십시오.
+        - 그림자는 그리지 않습니다(No shading). 완전한 평면(Flat)입니다.
+    5. **[색상 사용]:**
+        - 기본은 **흑백(Black lines on White)**입니다.
+        - 강조하고 싶은 핵심 사물(돈, 국기, 중요한 버튼 등)에만 **빨강, 파랑, 노랑 같은 원색(Primary Colors)**을 포인트로 사용하여 시선을 집중시키십시오.
+    6. **[텍스트 처리]:** {lang_guide} {lang_example}
+        - 삐뚤빼뚤한 마우스 손글씨 느낌으로 연출하십시오. 텍스트 박스보다는 그림 옆에 자연스럽게 쓰인 느낌이 좋습니다.
+    7. **[구도]:**
+        - 분할 화면 금지. 하나의 흰 화면 위에 캐릭터와 관련 사물들을 배치하여 하나의 상황극처럼 만드십시오.
 
-    [임무]
-    대본을 분석하여 AI가 그릴 수 있는 **'The Paint Explainer 스타일'의 프롬프트**를 작성하십시오.
-    - "Minimalist stick figure, crude ms paint style, pure white background, simple line drawing, visual metaphor, infographic elements (arrows, symbols)" 등의 키워드가 반영되도록 하십시오.
-    - **한글**로만 출력하십시오.
-        """
+    [임무]
+    대본을 분석하여 AI가 그릴 수 있는 **'The Paint Explainer 스타일'의 프롬프트**를 작성하십시오.
+    - "Minimalist stick figure, crude ms paint style, pure white background, simple line drawing, visual metaphor, infographic elements (arrows, symbols)" 등의 키워드가 반영되도록 하십시오.
+    - **한글**로만 출력하십시오.
+        """
 
-    # ---------------------------------------------------------
-    # [모드 NEW] 스틱맨 사실적 연출 (Realistic Stickman Drama)
-    # ---------------------------------------------------------
-    elif genre_mode == "realistic_stickman":
-        full_instruction = f"""
-    [역할]
-    당신은 **'넷플릭스 2D 애니메이션 감독'**입니다. 
-    **반드시 '2D 그림(Digital Art)' 스타일**이어야 하며, **실사(Photorealism)나 3D 렌더링 느낌이 나면 절대 안 됩니다.**
-    단순한 얼굴이 둥근 스틱맨들을 주인공으로 사용하여, 배경과 조명만 영화처럼 분위기 있게 연출합니다.
-    
-    [전체 영상 주제] "{video_title}"
-    [유저 스타일 선호] {style_instruction}
+    # ---------------------------------------------------------
+    # [모드 NEW] 스틱맨 사실적 연출 (Realistic Stickman Drama)
+    # ---------------------------------------------------------
+    elif genre_mode == "realistic_stickman":
+        full_instruction = f"""
+    [역할]
+    당신은 **'넷플릭스 2D 애니메이션 감독'**입니다. 
+    **반드시 '2D 그림(Digital Art)' 스타일**이어야 하며, **실사(Photorealism)나 3D 렌더링 느낌이 나면 절대 안 됩니다.**
+    단순한 얼굴이 둥근 스틱맨들을 주인공으로 사용하여, 배경과 조명만 영화처럼 분위기 있게 연출합니다.
+    
+    [전체 영상 주제] "{video_title}"
+    [유저 스타일 선호] {style_instruction}
 
-    [🚫 핵심 금지 사항 - 절대 어기지 마시오]
-    - **실사 사진(Real Photo), 3D 렌더링(Unreal Engine), 사람 피부 질감(Skin texture) 절대 금지.**
-    - 사람의 코, 입, 귀, 손톱 등을 리얼하게 묘사하지 마시오.
-    - 무조건 **'그림(Illustration/Drawing/Manhwa)'** 느낌이 나야 합니다.
+    [🚫 핵심 금지 사항 - 절대 어기지 마시오]
+    - **실사 사진(Real Photo), 3D 렌더링(Unreal Engine), 사람 피부 질감(Skin texture) 절대 금지.**
+    - 사람의 코, 입, 귀, 손톱 등을 리얼하게 묘사하지 마시오.
+    - 무조건 **'그림(Illustration/Drawing/Manhwa)'** 느낌이 나야 합니다.
 
-    [핵심 비주얼 스타일 가이드 - 절대 준수]
-    1. **캐릭터(Character):** - **얼굴이 둥근 하얀색 스틱맨(Round-headed white stickman)**을 사용하십시오.
-       - 하지만 선은 굵고 부드러우며, **그림자(Shading)**가 들어가 입체감이 느껴져야 합니다.
-       - **의상:** 대본 상황에 맞는 현실적인 의상(정장, 군복, 잠옷, 작업복 등)을 스틱맨 위에 입혀 '캐릭터성'을 부여하십시오.
-       - 얼굴이 크게 잘 보이게 연출. 장면도 잘 드러나게.
-       
-    2. **배경(Background) - 가장 중요:**
-       - 단순한 그라데이션이나 단색 배경을 **절대 금지**합니다.
-       - **고해상도 컨셉 아트(High-quality Concept Art)** 수준으로 배경을 그리십시오.
-       - 예: 사무실이라면 책상의 서류 더미, 창밖의 풍경, 커피잔의 김, 벽의 질감까지 묘사해야 합니다.
-       
-    3. **조명(Lighting):**
-       - 2D지만 **입체적인 조명(Volumetric Lighting)**과 그림자를 사용하여 깊이감을 만드십시오.
-       - 상황에 따라 따뜻한 햇살, 차가운 네온사, 어두운 방의 스탠드 조명 등을 명확히 구분하십시오.
-       
-    4. **연기(Acting):**
-       - 인포그래픽처럼 정보를 나열하지 말고, **캐릭터가 행동(Action)하는 장면**을 포착하십시오.
-       - 감정 표현: 얼굴 표정은 단순하게 가되, **어깨의 처짐, 주먹 쥔 손, 다급한 달리기, 무릎 꿇기 등 '몸짓(Body Language)'**으로 감정을 전달하십시오.
+    [핵심 비주얼 스타일 가이드 - 절대 준수]
+    1. **캐릭터(Character):** - **얼굴이 둥근 하얀색 스틱맨(Round-headed white stickman)**을 사용하십시오.
+       - 하지만 선은 굵고 부드러우며, **그림자(Shading)**가 들어가 입체감이 느껴져야 합니다.
+       - **의상:** 대본 상황에 맞는 현실적인 의상(정장, 군복, 잠옷, 작업복 등)을 스틱맨 위에 입혀 '캐릭터성'을 부여하십시오.
+       - 얼굴이 크게 잘 보이게 연출. 장면도 잘 드러나게.
+       
+    2. **배경(Background) - 가장 중요:**
+       - 단순한 그라데이션이나 단색 배경을 **절대 금지**합니다.
+       - **고해상도 컨셉 아트(High-quality Concept Art)** 수준으로 배경을 그리십시오.
+       - 예: 사무실이라면 책상의 서류 더미, 창밖의 풍경, 커피잔의 김, 벽의 질감까지 묘사해야 합니다.
+       
+    3. **조명(Lighting):**
+       - 2D지만 **입체적인 조명(Volumetric Lighting)**과 그림자를 사용하여 깊이감을 만드십시오.
+       - 상황에 따라 따뜻한 햇살, 차가운 네온사, 어두운 방의 스탠드 조명 등을 명확히 구분하십시오.
+       
+    4. **연기(Acting):**
+       - 인포그래픽처럼 정보를 나열하지 말고, **캐릭터가 행동(Action)하는 장면**을 포착하십시오.
+       - 감정 표현: 얼굴 표정은 단순하게 가되, **어깨의 처짐, 주먹 쥔 손, 다급한 달리기, 무릎 꿇기 등 '몸짓(Body Language)'**으로 감정을 전달하십시오.
 
-    5. **언어(Text):** {lang_guide} {lang_example} (자막 연출보다는 배경 속 간판, 서류, 화면 등 자연스러운 텍스트 위주로)
-    6. **구도:** 분할 화면(Split Screen) 금지. 16:9 꽉 찬 시네마틱 구도 사용.
+    5. **언어(Text):** {lang_guide} {lang_example} (자막 연출보다는 배경 속 간판, 서류, 화면 등 자연스러운 텍스트 위주로)
+    6. **구도:** 분할 화면(Split Screen) 금지. 16:9 꽉 찬 시네마틱 구도 사용.
 
-    [임무]
-    제공된 대본 조각(Script Segment)을 읽고, 그 상황을 가장 잘 보여주는 **한 장면의 영화 스틸컷** 같은 프롬프트를 작성하십시오.
-    
-    [작성 팁]
-    - "A cinematic 2D shot of a round-headed stickman..." 으로 시작하는 느낌으로 작성.
-    - 대본이 추상적(예: 경제 위기)이라면, 스틱맨이 텅 빈 지갑을 보며 좌절하는 구체적인 상황으로 치환하여 묘사하십시오.
-    - **분량:** 최소 7문장 이상으로 상세하게 묘사.
-    - 자막 같은 연출 하지 않는다. ("화면 하단 중앙에는 명조체로 **'필리핀, 1944년'**이라는 한글 텍스트가 선명하게 새겨져 있다" 이런 연출 하면 안된다) 
+    [임무]
+    제공된 대본 조각(Script Segment)을 읽고, 그 상황을 가장 잘 보여주는 **한 장면의 영화 스틸컷** 같은 프롬프트를 작성하십시오.
+    
+    [작성 팁]
+    - "A cinematic 2D shot of a round-headed stickman..." 으로 시작하는 느낌으로 작성.
+    - 대본이 추상적(예: 경제 위기)이라면, 스틱맨이 텅 빈 지갑을 보며 좌절하는 구체적인 상황으로 치환하여 묘사하십시오.
+    - **분량:** 최소 7문장 이상으로 상세하게 묘사.
+    - 자막 같은 연출 하지 않는다. ("화면 하단 중앙에는 명조체로 **'필리핀, 1944년'**이라는 한글 텍스트가 선명하게 새겨져 있다" 이런 연출 하면 안된다) 
 
-    
-    [출력 형식]
-    - **분량:** 최소 7문장 이상으로 상세하게 묘사.
-    - **무조건 한국어(한글)**로만 작성하십시오.
-    - 부가 설명 없이 **오직 프롬프트 텍스트만** 출력하십시오.
-        """
+    
+    [출력 형식]
+    - **분량:** 최소 7문장 이상으로 상세하게 묘사.
+    - **무조건 한국어(한글)**로만 작성하십시오.
+    - 부가 설명 없이 **오직 프롬프트 텍스트만** 출력하십시오.
+        """
 
-    else:
-        # [모드 1] 밝은 정보/이슈
-        full_instruction = f"""
-    [역할]
-    당신은 복잡한 상황을 아주 쉽고 직관적인 그림으로 표현하는 '비주얼 커뮤니케이션 전문가'이자 '교육용 일러스트레이터'입니다.
+    else:
+        # [모드 1] 밝은 정보/이슈
+        full_instruction = f"""
+    [역할]
+    당신은 복잡한 상황을 아주 쉽고 직관적인 그림으로 표현하는 '비주얼 커뮤니케이션 전문가'이자 '교육용 일러스트레이터'입니다.
 
-    [전체 영상 주제]
-    "{video_title}"
+    [전체 영상 주제]
+    "{video_title}"
 
-    [그림 스타일 가이드 - 절대 준수]
-    {style_instruction}
-    
-    [필수 연출 지침]
-    1. **조명(Lighting):** 무조건 **'밝고 화사한 조명(High Key Lighting)'**을 사용하십시오. 그림자가 짙거나 어두운 부분은 없어야 합니다.
-    2. **색감(Colors):** 채도가 높고 선명한 색상을 사용하여 시인성을 높이십시오. (칙칙하거나 회색조 톤 금지)
-    3. **구성(Composition):** 시청자가 상황을 한눈에 이해할 수 있도록 피사체를 화면 중앙에 명확하게 배치하십시오.
-    4. **분위기(Mood):** 교육적이고, 중립적이며, 산뜻한 분위기여야 합니다. **(절대 우울하거나, 무섭거나, 기괴한 느낌 금지)**
-    5. 분활화면으로 연출하지 말고 하나의 화면으로 연출한다.
-    6. **[텍스트 언어]:** {lang_guide} {lang_example}
-    - **[절대 금지]:** 화면의 네 모서리(Corners)나 가장자리(Edges)에 글자를 배치하지 마십시오. 글자는 반드시 중앙 피사체 주변에만 연출하십시오.
-    7. 캐릭터의 감정도 느껴진다.
+    [그림 스타일 가이드 - 절대 준수]
+    {style_instruction}
+    
+    [필수 연출 지침]
+    1. **조명(Lighting):** 무조건 **'밝고 화사한 조명(High Key Lighting)'**을 사용하십시오. 그림자가 짙거나 어두운 부분은 없어야 합니다.
+    2. **색감(Colors):** 채도가 높고 선명한 색상을 사용하여 시인성을 높이십시오. (칙칙하거나 회색조 톤 금지)
+    3. **구성(Composition):** 시청자가 상황을 한눈에 이해할 수 있도록 피사체를 화면 중앙에 명확하게 배치하십시오.
+    4. **분위기(Mood):** 교육적이고, 중립적이며, 산뜻한 분위기여야 합니다. **(절대 우울하거나, 무섭거나, 기괴한 느낌 금지)**
+    5. 분활화면으로 연출하지 말고 하나의 화면으로 연출한다.
+    6. **[텍스트 언어]:** {lang_guide} {lang_example}
+    - **[절대 금지]:** 화면의 네 모서리(Corners)나 가장자리(Edges)에 글자를 배치하지 마십시오. 글자는 반드시 중앙 피사체 주변에만 연출하십시오.
+    7. 캐릭터의 감정도 느껴진다.
 
-    [임무]
-    제공된 대본 조각(Script Segment)을 바탕으로, 이미지 생성 AI가 그릴 수 있는 **구체적인 묘사 프롬프트**를 작성하십시오.
-    
-    [작성 요구사항]
-    - **분량:** 최소 5문장 이상으로 상세하게 묘사.
-    - **포함 요소:**
-        - **캐릭터 행동:** 대본의 상황을 연기하는 캐릭터의 구체적인 동작.
-        - **배경:** 상황을 설명하는 소품이나 장소 (배경은 깔끔하게).
-        - **시각적 은유:** 추상적인 내용일 경우, 이를 설명할 수 있는 시각적 아이디어 (예: 돈이 날아가는 모습, 그래프가 하락하는 모습 등).
-    
-    [출력 형식]
-    - **무조건 한국어(한글)**로만 작성하십시오.
-    - 부가적인 설명 없이 **오직 프롬프트 텍스트만** 출력하십시오.
-        """
+    [임무]
+    제공된 대본 조각(Script Segment)을 바탕으로, 이미지 생성 AI가 그릴 수 있는 **구체적인 묘사 프롬프트**를 작성하십시오.
+    
+    [작성 요구사항]
+    - **분량:** 최소 5문장 이상으로 상세하게 묘사.
+    - **포함 요소:**
+        - **캐릭터 행동:** 대본의 상황을 연기하는 캐릭터의 구체적인 동작.
+        - **배경:** 상황을 설명하는 소품이나 장소 (배경은 깔끔하게).
+        - **시각적 은유:** 추상적인 내용일 경우, 이를 설명할 수 있는 시각적 아이디어 (예: 돈이 날아가는 모습, 그래프가 하락하는 모습 등).
+    
+    [출력 형식]
+    - **무조건 한국어(한글)**로만 작성하십시오.
+    - 부가적인 설명 없이 **오직 프롬프트 텍스트만** 출력하십시오.
+        """
 
-    max_retries = 3
-    target_models = ["gemini-3-pro-preview", "gemini-2.5-flash"]
+    max_retries = 3
+    target_models = ["gemini-3-pro-preview", "gemini-2.5-flash"]
 
-    for attempt in range(1, max_retries + 1):
-        for model_name in target_models:
-            try:
-                time.sleep(random.uniform(0.2, 0.5))
-                
-                response = client.models.generate_content(
-                    model=model_name,
-                    contents=full_instruction + f'\n\n[대본 내용]\n"{text_chunk}"',
-                    config=types.GenerateContentConfig(
-                        temperature=0.75,
-                        safety_settings=[
-                            types.SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_ONLY_HIGH"),
-                            types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_ONLY_HIGH"),
-                            types.SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_ONLY_HIGH"),
-                            types.SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_ONLY_HIGH"),
-                        ]
-                    )
-                )
+    for attempt in range(1, max_retries + 1):
+        for model_name in target_models:
+            try:
+                time.sleep(random.uniform(0.2, 0.5))
+                
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=full_instruction + f'\n\n[대본 내용]\n"{text_chunk}"',
+                    config=types.GenerateContentConfig(
+                        temperature=0.75,
+                        safety_settings=[
+                            types.SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_ONLY_HIGH"),
+                            types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_ONLY_HIGH"),
+                            types.SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_ONLY_HIGH"),
+                            types.SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_ONLY_HIGH"),
+                        ]
+                    )
+                )
 
-                if response.text:
-                    result = response.text.strip()
-                    if len(result) < 5 or result == text_chunk: continue
-                    return (scene_num, result)
+                if response.text:
+                    result = response.text.strip()
+                    if len(result) < 5 or result == text_chunk: continue
+                    return (scene_num, result)
 
-            except Exception as e:
-                time.sleep(1)
+            except Exception as e:
+                time.sleep(1)
 
-    return (scene_num, f"주제 '{video_title}'에 어울리는 배경 일러스트 (Fallback).")
+    return (scene_num, f"주제 '{video_title}'에 어울리는 배경 일러스트 (Fallback).")
 
 # ==========================================
-# [함수] 3. 이미지 생성 (수정됨: 비율 설정 추가)
+# [함수] 3. 이미지 생성 (503 과부하 및 한도 초과 완벽 대응)
 # ==========================================
 def generate_image(client, prompt, filename, output_dir, selected_model_name, style_instruction, target_ratio="16:9"):
-    full_path = os.path.join(output_dir, filename)
-    
-    # [수정] 프롬프트가 너무 길면 잘릴 수 있으므로, 핵심만 전달
-    final_prompt = f"{style_instruction}\n\n[장면 묘사]: {prompt}"
-    
-    safety_settings = [
-        types.SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_ONLY_HIGH"),
-        types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_ONLY_HIGH"),
-        types.SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_ONLY_HIGH"),
-        types.SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_ONLY_HIGH"),
-    ]
+    full_path = os.path.join(output_dir, filename)
+    final_prompt = f"{style_instruction}\n\n[장면 묘사]: {prompt}"
+    
+    safety_settings = [
+        types.SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_ONLY_HIGH"),
+        types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_ONLY_HIGH"),
+        types.SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_ONLY_HIGH"),
+        types.SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_ONLY_HIGH"),
+    ]
 
-    print(f"🔄 생성 시도: {filename} / Model: {selected_model_name} / Ratio: {target_ratio}") # 로그 출력
+    # 최대 5번까지 재시도 (503 에러는 끈질기게 시도해야 함)
+    max_retries = 5
+    
+    for attempt in range(1, max_retries + 1):
+        try:
+            # 재시도 시 대기 시간 (Exponential Backoff)
+            if attempt > 1:
+                wait_time = 2 ** attempt
+                # 503 에러였던 경우 더 오래 대기
+                print(f"⏳ {filename} - {attempt}번째 재시도 중... ({wait_time}초 대기)")
+                time.sleep(wait_time)
 
-    try:
-        response = client.models.generate_content(
-            model=selected_model_name,
-            contents=[final_prompt],
-            config=types.GenerateContentConfig(
-                image_config=types.ImageConfig(aspect_ratio=target_ratio), # [수정] 비율 동적 적용
-                safety_settings=safety_settings
-            )
-        )
-        
-        if response.parts:
-            for part in response.parts:
-                # 1. 이미지가 정상적으로 생성된 경우
-                if part.inline_data:
-                    img_data = part.inline_data.data
-                    image = Image.open(BytesIO(img_data))
-                    image.save(full_path)
-                    print(f"✅ 저장 성공: {full_path}")
-                    return full_path
-                
-                # 2. [중요] 이미지가 아니라 텍스트(거절 메시지)가 온 경우
-                if part.text:
-                    print(f"⚠️ 모델 거절(Safety/Refusal): {part.text}")
-                    # 빈 이미지나 에러 이미지를 생성해서라도 반환해야 UI가 깨지지 않음
-                    return None 
+            response = client.models.generate_content(
+                model=selected_model_name,
+                contents=[final_prompt],
+                config=types.GenerateContentConfig(
+                    image_config=types.ImageConfig(aspect_ratio=target_ratio),
+                    safety_settings=safety_settings
+                )
+            )
+            
+            if response.parts:
+                for part in response.parts:
+                    if part.inline_data:
+                        img_data = part.inline_data.data
+                        image = Image.open(BytesIO(img_data))
+                        image.save(full_path)
+                        return full_path
+                    if part.text:
+                        return None # 안전 문제 거절은 재시도 의미 없음
 
-    except Exception as e:
-        print(f"❌ API 에러 발생 ({filename}): {str(e)}")
-        # API 키 오류나 모델명 오류일 가능성이 높음
-        return None
+        except Exception as e:
+            error_msg = str(e)
+            print(f"⚠️ 에러 발생 ({filename}): {error_msg}")
+            
+            # [핵심 수정 1] 503 (Overloaded) 또는 500 (Internal) 에러 처리
+            if "503" in error_msg or "overloaded" in error_msg or "500" in error_msg:
+                print(f"🐢 서버 과부하(503) 감지. 10초간 대기 후 재시도합니다.")
+                time.sleep(10) # 과부하 때는 푹 쉬어줘야 함
+                continue
 
-    return None
+            # [핵심 수정 2] 429 (Quota Exceeded) 처리
+            if "429" in error_msg or "ResourceExhausted" in error_msg:
+                if attempt == max_retries:
+                    return "ERROR_QUOTA"
+                time.sleep(5)
+                continue
+            
+    return None
 
 # ==========================================
 # [UI] 사이드바 설정
 # ==========================================
 with st.sidebar:
-    st.title("⚙️ 설정")
+    st.title("⚙️ 설정")
 
-    # API Key
-    api_key = ""
-    try:
-        if "general" in st.secrets and "google_api_key" in st.secrets["general"]:
-            api_key = st.secrets["general"]["google_api_key"]
-    except: pass
+    # API Key
+    api_key = ""
+    try:
+        if "general" in st.secrets and "google_api_key" in st.secrets["general"]:
+            api_key = st.secrets["general"]["google_api_key"]
+    except: pass
 
-    if api_key:
-        st.success("🔑 API Key 로드 완료")
-    else:
-        api_key = st.text_input("🔑 Google API Key", type="password")
+    if api_key:
+        st.success("🔑 API Key 로드 완료")
+    else:
+        api_key = st.text_input("🔑 Google API Key", type="password")
 
-    st.markdown("---")
-    
-    # 1. 모델 선택
-    st.subheader("🖼️ 모델 선택")
-    model_choice = st.radio(
-        "모델 선택", 
-        ("나노바나나 프로 (Gemini 3)", "나노바나나 (Gemini 2.5)"), 
-        index=0,
-        label_visibility="collapsed"
-    )
-    if "프로" in model_choice:
-        SELECTED_IMAGE_MODEL = "gemini-3-pro-image-preview"
-    else:
-        SELECTED_IMAGE_MODEL = "gemini-2.5-flash-image"
+    st.markdown("---")
+    
+    # 1. 모델 선택
+    st.subheader("🖼️ 모델 선택")
+    model_choice = st.radio(
+        "모델 선택", 
+        ("나노바나나 프로 (Gemini 3)", "나노바나나 (Gemini 2.5)"), 
+        index=0,
+        label_visibility="collapsed"
+    )
+    if "프로" in model_choice:
+        SELECTED_IMAGE_MODEL = "gemini-3-pro-image-preview"
+    else:
+        SELECTED_IMAGE_MODEL = "gemini-2.5-flash-image"
 
-    st.markdown("---")
+    st.markdown("---")
 
-    # [NEW] 비율 선택 기능 추가
-    st.subheader("📐 화면 비율")
-    ratio_choice = st.radio(
-        "비율 선택",
-        ("16:9 (가로형 - 유튜브)", "9:16 (세로형 - 쇼츠/릴스)"),
-        index=0,
-        label_visibility="collapsed"
-    )
-    # 실제 API에 전달할 값 설정
-    target_ratio = "16:9" if "16:9" in ratio_choice else "9:16"
+    # [NEW] 비율 선택 기능 추가
+    st.subheader("📐 화면 비율")
+    ratio_choice = st.radio(
+        "비율 선택",
+        ("16:9 (가로형 - 유튜브)", "9:16 (세로형 - 쇼츠/릴스)"),
+        index=0,
+        label_visibility="collapsed"
+    )
+    # 실제 API에 전달할 값 설정
+    target_ratio = "16:9" if "16:9" in ratio_choice else "9:16"
 
-    st.markdown("---")
+    st.markdown("---")
 
-    # 2. 영상 장르 선택
-    st.subheader("🎨 영상 장르(Mood)")
-    
-    PRESET_INFO = """대사에 어울리는 2d 얼굴이 둥근 하얀색 스틱맨 연출로 설명과 이해가 잘되는 화면 자료 느낌으로 그려줘 상황을 잘 나타내게 분활화면으로 말고 하나의 장면으로
+    # 2. 영상 장르 선택
+    st.subheader("🎨 영상 장르(Mood)")
+    
+    PRESET_INFO = """대사에 어울리는 2d 얼굴이 둥근 하얀색 스틱맨 연출로 설명과 이해가 잘되는 화면 자료 느낌으로 그려줘 상황을 잘 나타내게 분활화면으로 말고 하나의 장면으로
 너무 어지럽지 않게, 글씨는 핵심 키워드 2~3만 나오게 한다
 글씨가 너무 많지 않게 핵심만. 2D 스틱맨을 활용해 대본을 설명이 잘되게 설명하는 연출을 한다. 자막 스타일 연출은 하지 않는다.
 글씨가 나올경우 핵심 키워드 중심으로만 나오게 너무 글이 많지 않도록 한다, 글자는 배경과 서물에 자연스럽게 연출, 전체 배경 연출은 2D로 디테일하게 몰입감 있게 연출해서 그려줘 (16:9)
 다양한 장소와 상황 연출로 배경을 디테일하게 한다. 무조건 2D 스틱맨 연출"""
-    
-    PRESET_HISTORY = """역사적 사실을 기반으로 한 '2D 시네마틱 얼굴이 둥근 하얀색 스틱맨 애니메이션' 스타일.
+    
+    PRESET_HISTORY = """역사적 사실을 기반으로 한 '2D 시네마틱 얼굴이 둥근 하얀색 스틱맨 애니메이션' 스타일.
 깊이 있는 색감(Dark & Rich Tone)과 극적인 조명 사용.
 캐릭터는 2D 실루엣이나 스틱맨이지만 시대에 맞는 의상과 헤어스타일을 착용.
 2D 스틱맨을 활용해 대본을 설명이 잘되게 설명하는 연출을 한다. 자막 스타일 연출은 하지 않는다.
 전쟁, 기근 등의 묘사는 상징적이고 은유적으로 표현. 너무 고어틱한 연출은 하지 않는다.
 배경 묘사에 디테일을 살려 시대적 분위기를 강조. 무조건 얼굴이 둥근 2D 스틱맨 연출."""
 
-    PRESET_WEBTOON = """한국 인기 웹툰 스타일의 고퀄리티 2D 일러스트레이션 (Korean Webtoon Style).
+    PRESET_WEBTOON = """한국 인기 웹툰 스타일의 고퀄리티 2D 일러스트레이션 (Korean Webtoon Style).
 선명한 펜선과 화려한 채색. 집중선(Speed lines)은 정말 중요한 순간에만 가끔 사용.
 캐릭터는 8등신 웹툰 주인공 스타일. 캐릭터 주변의 '상황'과 '배경(장소)'을 아주 구체적이고 밀도 있게 묘사.
-단순 인물 컷보다는 주변 사물과 배경이 함께 보이는 구도 선호. 
+단순 인물 컷보다는 주변 사물과 배경이 함께 보이는 구도 선호. 
 전체적으로 배경 디테일이 살아있는 네이버 웹툰 썸네일 스타일. (16:9)"""
 
-    PRESET_NEWS = """'고화질 실사 자료화면(Photorealistic Stock Footage)'.
+    PRESET_NEWS = """'고화질 실사 자료화면(Photorealistic Stock Footage)'.
 그림이나 만화 느낌이 전혀 없는, 실제 DSLR 카메라로 촬영한 듯한 4K 실사(Real Photo) 퀄리티.
 뉴스 스튜디오가 아닌, 대본 내용을 설명하는 사실적인 '현장 스케치', '인서트 컷', '사물 클로즈업'.
 인물은 실제 한국 사람(Korean)처럼, 배경은 실제 장소처럼 사실적으로 묘사.
@@ -734,106 +747,106 @@ with st.sidebar:
 인물들 등장시 대본에 어울리는 인물들의 행동 또는 감정 연출.
 대본에 어울리는 내용을 기반으로 분활화면으로 연출하지 말고 하나의 화면으로 연출한다."""
 
-    PRESET_MANGA = """일본 대작 귀여운 지브리풍 애니메이션 스타일 (High-Budget Anime Style).
+    PRESET_MANGA = """일본 대작 귀여운 지브리풍 애니메이션 스타일 (High-Budget Anime Style).
 서정적인 느낌보다는 '정보량이 많고 치밀한' 고밀도 배경 작화 (High Detail Backgrounds).
 캐릭터의 표정과 행동을 '순간 포착'하듯 역동적으로 묘사.
 대본의 지문을 하나도 놓치지 않고 시각화하는 '철저한 디테일' 위주. (16:9)
 전체 대본에 어울리는 하나의 장면으로 연출."""
 
-    # [NEW] 페인트 익스플레이너 프리셋
-    PRESET_PAINT = """'The Paint Explainer' 유튜브 채널 스타일 (Minimalist Stickman).
+    # [NEW] 페인트 익스플레이너 프리셋
+    PRESET_PAINT = """'The Paint Explainer' 유튜브 채널 스타일 (Minimalist Stickman).
 단색 느낌의 배경(Pure White Background). 배경 묘사 있음.
 검은색 선으로 이루어진 단순한 졸라맨(Stick Figure) 캐릭터. (둥근 머리, 막대기 팔다리).
 MS 그림판(MS Paint)으로 그린 듯한 키치하고 단순한 느낌.
 채색은 적당히 하고 특정 사물(국기, 돈 등)에만 원색 포인트 컬러 사용.
 복잡한 예술적 기교나 명암(Shading) 절대 금지. 단순하고 직관적인 설명화."""
 
-    # [NEW] 스틱맨 사실적 연출 프리셋 (상황/감정/배경 디테일 강조)
-    PRESET_REALISTIC = """고퀄리티 얼굴이 둥근 2D 애니메이션 스타일, 사실적인 배경과 조명 연출.
+    # [NEW] 스틱맨 사실적 연출 프리셋 (상황/감정/배경 디테일 강조)
+    PRESET_REALISTIC = """고퀄리티 얼굴이 둥근 2D 애니메이션 스타일, 사실적인 배경과 조명 연출.
 캐릭터: 얼굴이 둥근 하얀색 2D 스틱맨들. 단순한 낙서가 아니라, 명암과 덩어리감이 느껴지는 '고급 스틱맨' 스타일. 얼굴이 크게 잘보이게 연출.
 배경: 단순한 단색 배경 금지. 대본의 장소(사무실, 거리, 방 안, 전장 등)를 '사진'처럼 디테일하고 입체적으로 2d 묘사.
 분위기: 정보 전달보다는 '상황극(Drama)'에 집중. 영화적인 조명(Cinematic Lighting)과 심도(Depth) 표현.
 연출: 스틱맨 여러 캐릭터들이 대본 속 행동을 리얼하게 연기(Acting). 감정 표현은 표정보다는 역동적인 몸짓(Body Language)으로 극대화.
 절대 금지: 화면 분할(Split Screen), 텍스트 나열, 단순 인포그래픽 스타일."""
 
-    if 'style_prompt_area' not in st.session_state:
-        st.session_state['style_prompt_area'] = PRESET_INFO
+    if 'style_prompt_area' not in st.session_state:
+        st.session_state['style_prompt_area'] = PRESET_INFO
 
-    def update_style_text():
-        selection = st.session_state.genre_radio
-        if "밝은 정보" in selection:
-            st.session_state['style_prompt_area'] = PRESET_INFO
-        elif "역사/다큐" in selection:
-            st.session_state['style_prompt_area'] = PRESET_HISTORY
-        elif "웹툰" in selection:
-            st.session_state['style_prompt_area'] = PRESET_WEBTOON
-        elif "일본 만화" in selection:
-            st.session_state['style_prompt_area'] = PRESET_MANGA
-        elif "화이트보드" in selection:
-            st.session_state['style_prompt_area'] = PRESET_PAINT
-        elif "리얼 스틱맨" in selection: # [NEW] 모드 연결
-            st.session_state['style_prompt_area'] = PRESET_REALISTIC
-        else:
-            st.session_state['style_prompt_area'] = PRESET_NEWS
+    def update_style_text():
+        selection = st.session_state.genre_radio
+        if "밝은 정보" in selection:
+            st.session_state['style_prompt_area'] = PRESET_INFO
+        elif "역사/다큐" in selection:
+            st.session_state['style_prompt_area'] = PRESET_HISTORY
+        elif "웹툰" in selection:
+            st.session_state['style_prompt_area'] = PRESET_WEBTOON
+        elif "일본 만화" in selection:
+            st.session_state['style_prompt_area'] = PRESET_MANGA
+        elif "화이트보드" in selection:
+            st.session_state['style_prompt_area'] = PRESET_PAINT
+        elif "리얼 스틱맨" in selection: # [NEW] 모드 연결
+            st.session_state['style_prompt_area'] = PRESET_REALISTIC
+        else:
+            st.session_state['style_prompt_area'] = PRESET_NEWS
 
-    genre_select = st.radio(
-        "장르 선택", 
-        (
-            "밝은 정보/이슈 (Bright & Flat)", 
-            "역사/다큐 (Cinematic & Immersive)", 
-            "한국 웹툰 (K-Webtoon Style)", 
-            "일본 만화 (Japanese Manga/Anime)", 
-            "뉴스/실사 자료화면 (Realistic Footage)",
-            "화이트보드/스틱맨 (The Paint Explainer Style)",
-            "리얼 스틱맨 (Netflix Drama Style)" # [NEW] 옵션 추가
-        ), 
-        index=0,
-        key="genre_radio",
-        on_change=update_style_text,
-        label_visibility="collapsed"
-    )
+    genre_select = st.radio(
+        "장르 선택", 
+        (
+            "밝은 정보/이슈 (Bright & Flat)", 
+            "역사/다큐 (Cinematic & Immersive)", 
+            "한국 웹툰 (K-Webtoon Style)", 
+            "일본 만화 (Japanese Manga/Anime)", 
+            "뉴스/실사 자료화면 (Realistic Footage)",
+            "화이트보드/스틱맨 (The Paint Explainer Style)",
+            "리얼 스틱맨 (Netflix Drama Style)" # [NEW] 옵션 추가
+        ), 
+        index=0,
+        key="genre_radio",
+        on_change=update_style_text,
+        label_visibility="collapsed"
+    )
 
-    if "밝은 정보" in genre_select:
-        SELECTED_GENRE_MODE = "info"
-    elif "역사/다큐" in genre_select:
-        SELECTED_GENRE_MODE = "history"
-    elif "웹툰" in genre_select:
-        SELECTED_GENRE_MODE = "webtoon"
-    elif "일본 만화" in genre_select:
-        SELECTED_GENRE_MODE = "manga"
-    elif "화이트보드" in genre_select:
-        SELECTED_GENRE_MODE = "paint_explainer"
-    elif "리얼 스틱맨" in genre_select: # [NEW] 모드 변수 매핑
-        SELECTED_GENRE_MODE = "realistic_stickman"
-    else:
-        SELECTED_GENRE_MODE = "news"
+    if "밝은 정보" in genre_select:
+        SELECTED_GENRE_MODE = "info"
+    elif "역사/다큐" in genre_select:
+        SELECTED_GENRE_MODE = "history"
+    elif "웹툰" in genre_select:
+        SELECTED_GENRE_MODE = "webtoon"
+    elif "일본 만화" in genre_select:
+        SELECTED_GENRE_MODE = "manga"
+    elif "화이트보드" in genre_select:
+        SELECTED_GENRE_MODE = "paint_explainer"
+    elif "리얼 스틱맨" in genre_select: # [NEW] 모드 변수 매핑
+        SELECTED_GENRE_MODE = "realistic_stickman"
+    else:
+        SELECTED_GENRE_MODE = "news"
 
-    st.markdown("---")
+    st.markdown("---")
 
-    # 3. 이미지 텍스트 언어 선택
-    st.subheader("🌐 이미지 텍스트 언어")
-    target_language = st.selectbox(
-        "이미지 텍스트 언어",
-        ("Korean", "English", "Japanese"),
-        index=0,
-        label_visibility="collapsed"
-    )
+    # 3. 이미지 텍스트 언어 선택
+    st.subheader("🌐 이미지 텍스트 언어")
+    target_language = st.selectbox(
+        "이미지 텍스트 언어",
+        ("Korean", "English", "Japanese"),
+        index=0,
+        label_visibility="collapsed"
+    )
 
-    st.markdown("---")
+    st.markdown("---")
 
-    st.subheader("🖌️ 그림체 지침 (수정 가능)")
-    style_instruction = st.text_area(
-        "스타일 지침", 
-        key="style_prompt_area",
-        height=250,
-        label_visibility="collapsed"
-    )
+    st.subheader("🖌️ 그림체 지침 (수정 가능)")
+    style_instruction = st.text_area(
+        "스타일 지침", 
+        key="style_prompt_area",
+        height=250,
+        label_visibility="collapsed"
+    )
 
-    st.markdown("---")
-    st.subheader("⏱️ 설정")
-    chunk_duration = st.slider("장면 시간(초):", 5, 60, 30, 5)
-    chars_limit = chunk_duration * 8
-    max_workers = st.slider("작업 속도:", 1, 10, 5)
+    st.markdown("---")
+    st.subheader("⏱️ 설정")
+    chunk_duration = st.slider("장면 시간(초):", 5, 60, 30, 5)
+    chars_limit = chunk_duration * 8
+    max_workers = st.slider("작업 속도:", 1, 10, 5)
 
 # ==========================================
 # [UI] 메인 화면
@@ -843,193 +856,216 @@ st.caption(f"다크모드 & 빅 텍스트 | 🎨 Model: {SELECTED_IMAGE_MODEL} |
 
 # 세션 초기화
 if 'generated_results' not in st.session_state:
-    st.session_state['generated_results'] = []
+    st.session_state['generated_results'] = []
 if 'video_title' not in st.session_state:
-    st.session_state['video_title'] = ""
+    st.session_state['video_title'] = ""
 
 st.write("")
 
 # 1. 제목 입력
 col_title_input, col_space = st.columns([3, 1])
 with col_title_input:
-    st.text_input(
-        "📌 영상 제목/주제 (선택사항)",
-        key="video_title",
-        placeholder="예: 부자들의 3가지 습관 (전체 분위기 결정)",
-    )
+    st.text_input(
+        "📌 영상 제목/주제 (선택사항)",
+        key="video_title",
+        placeholder="예: 부자들의 3가지 습관 (전체 분위기 결정)",
+    )
 
 st.write("")
 script_input = st.text_area("📜 대본 입력 (여기에 붙여넣기)", height=350, placeholder="안녕하세요. 오늘은...")
 
 def clear_generated_results():
-    st.session_state['generated_results'] = []
-    gc.collect()
+    st.session_state['generated_results'] = []
+    gc.collect()
 
 st.write("")
 start_btn = st.button("🚀 이미지 생성 시작하기", type="primary", use_container_width=True, on_click=clear_generated_results)
 
 if start_btn:
-    if not api_key:
-        st.error("⚠️ Google API Key 필요")
-    elif not script_input:
-        st.warning("⚠️ 대본을 입력해주세요.")
-    else:
-        user_id = st.session_state['user_id']
-        USER_DIR = os.path.join(BASE_PATH, user_id, "output_images")
+    if not api_key:
+        st.error("⚠️ Google API Key 필요")
+    elif not script_input:
+        st.warning("⚠️ 대본을 입력해주세요.")
+    else:
+        user_id = st.session_state['user_id']
+        USER_DIR = os.path.join(BASE_PATH, user_id, "output_images")
 
-        st.session_state['generated_results'] = []
-        if os.path.exists(USER_DIR):
-            try: shutil.rmtree(USER_DIR)
-            except: pass
-        os.makedirs(USER_DIR, exist_ok=True)
+        st.session_state['generated_results'] = []
+        if os.path.exists(USER_DIR):
+            try: shutil.rmtree(USER_DIR)
+            except: pass
+        os.makedirs(USER_DIR, exist_ok=True)
 
-        client = genai.Client(api_key=api_key)
-        status_box = st.status("작업 진행 중...", expanded=True)
-        progress_bar = st.progress(0)
+        client = genai.Client(api_key=api_key)
+        status_box = st.status("작업 진행 중...", expanded=True)
+        progress_bar = st.progress(0)
 
-        # 1. 대본 분할
-        status_box.write(f"✂️ 대본 분할 중...")
-        chunks = split_script_by_time(script_input, chars_per_chunk=chars_limit)
-        total_scenes = len(chunks)
-        status_box.write(f"✅ {total_scenes}개 장면으로 분할 완료.")
-        
-        current_video_title = st.session_state.get('video_title', "").strip()
-        if not current_video_title:
-            current_video_title = "전반적인 대본 분위기에 어울리는 배경"
+        # 1. 대본 분할
+        status_box.write(f"✂️ 대본 분할 중...")
+        chunks = split_script_by_time(script_input, chars_per_chunk=chars_limit)
+        total_scenes = len(chunks)
+        status_box.write(f"✅ {total_scenes}개 장면으로 분할 완료.")
+        
+        current_video_title = st.session_state.get('video_title', "").strip()
+        if not current_video_title:
+            current_video_title = "전반적인 대본 분위기에 어울리는 배경"
 
-        # 2. 프롬프트 생성 (병렬)
-        status_box.write(f"📝 프롬프트 작성 중... (Mode: {SELECTED_GENRE_MODE}, Lang: {target_language})")
-        prompts = []
+        # 2. 프롬프트 생성 (병렬)
+        status_box.write(f"📝 프롬프트 작성 중... (Mode: {SELECTED_GENRE_MODE}, Lang: {target_language})")
+        prompts = []
 
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = []
-            for i, chunk in enumerate(chunks):
-                futures.append(executor.submit(
-                    generate_prompt,
-                    api_key, i, chunk, 
-                    style_instruction,
-                    current_video_title,
-                    SELECTED_GENRE_MODE, # 장르 전달
-                    target_language      # 언어 전달
-                ))
-            
-            for i, future in enumerate(as_completed(futures)):
-                prompts.append(future.result())
-                progress_bar.progress((i + 1) / (total_scenes * 2))
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = []
+            for i, chunk in enumerate(chunks):
+                futures.append(executor.submit(
+                    generate_prompt,
+                    api_key, i, chunk, 
+                    style_instruction,
+                    current_video_title,
+                    SELECTED_GENRE_MODE, # 장르 전달
+                    target_language      # 언어 전달
+                ))
+            
+            for i, future in enumerate(as_completed(futures)):
+                prompts.append(future.result())
+                progress_bar.progress((i + 1) / (total_scenes * 2))
 
-        prompts.sort(key=lambda x: x[0])
+        prompts.sort(key=lambda x: x[0])
 
-        # 3. 이미지 생성 (병렬)
-        status_box.write(f"🎨 이미지 생성 중 ({SELECTED_IMAGE_MODEL}, {target_ratio})...")
-        results = []
+        # 3. 이미지 생성 (병렬)
+        # [수정] 이미지 생성은 텍스트보다 부하가 크므로 workers를 강제로 낮추는 것이 안정적입니다.
+        safe_workers = min(max_workers, 4) 
+        
+        status_box.write(f"🎨 이미지 생성 중 (Model: {SELECTED_IMAGE_MODEL}, Threads: {safe_workers})...")
+        results = []
+        
+        # 한도 초과 알림을 한 번만 띄우기 위한 플래그
+        quota_alert_shown = False 
 
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            future_to_meta = {}
-            for s_num, prompt_text in prompts:
-                idx = s_num - 1
-                orig_text = chunks[idx]
-                fname = make_filename(s_num, orig_text)
-                time.sleep(0.05)
-                
-                # [수정] target_ratio 전달
-                future = executor.submit(
-                    generate_image,
-                    client, prompt_text, fname, USER_DIR,
-                    SELECTED_IMAGE_MODEL, 
-                    style_instruction,
-                    target_ratio # 비율 파라미터 추가
-                )
-                future_to_meta[future] = (s_num, fname, orig_text, prompt_text)
+        with ThreadPoolExecutor(max_workers=safe_workers) as executor:
+            future_to_meta = {}
+            for s_num, prompt_text in prompts:
+                idx = s_num - 1
+                orig_text = chunks[idx]
+                fname = make_filename(s_num, orig_text)
+                
+                # [핵심 수정] 요청 사이에 1.5초 간격을 두어 API 429 에러 방지
+                time.sleep(1.5) 
+                
+                future = executor.submit(
+                    generate_image,
+                    client, prompt_text, fname, USER_DIR,
+                    SELECTED_IMAGE_MODEL, 
+                    style_instruction,
+                    target_ratio
+                )
+                future_to_meta[future] = (s_num, fname, orig_text, prompt_text)
 
-            completed_cnt = 0
-            for future in as_completed(future_to_meta):
-                s_num, fname, orig_text, p_text = future_to_meta[future]
-                path = future.result()
-                if path:
-                    results.append({
-                        "scene": s_num, "path": path, "filename": fname, 
-                        "script": orig_text, "prompt": p_text
-                    })
-                completed_cnt += 1
-                progress_bar.progress(0.5 + (completed_cnt / total_scenes * 0.5))
+            completed_cnt = 0
+            for future in as_completed(future_to_meta):
+                s_num, fname, orig_text, p_text = future_to_meta[future]
+                path = future.result()
+                
+                # [핵심 수정] 결과 처리 로직
+                if path == "ERROR_QUOTA":
+                    if not quota_alert_shown:
+                        st.error("🚨 [긴급] Google API 무료 사용량이 초과되었습니다! (Quota Exceeded)")
+                        st.toast("🚨 API 한도가 초과되어 생성이 중단되었습니다.", icon="🛑")
+                        quota_alert_shown = True
+                    print(f"Scene {s_num}: Quota Exceeded.")
+                    
+                elif path: 
+                    # 정상 성공 시
+                    results.append({
+                        "scene": s_num, "path": path, "filename": fname, 
+                        "script": orig_text, "prompt": p_text
+                    })
+                else:
+                    # 기타 실패
+                    print(f"Scene {s_num}: Failed (Safety or Unknown).")
 
-        results.sort(key=lambda x: x['scene'])
-        st.session_state['generated_results'] = results
-        status_box.update(label="✅ 생성 완료!", state="complete", expanded=False)
+                completed_cnt += 1
+                progress_bar.progress(0.5 + (completed_cnt / total_scenes * 0.5))
+
+        # 루프가 끝난 후, 한도 초과가 발생했었다면 다시 한 번 경고창을 크게 표시
+        if quota_alert_shown:
+            st.warning("⚠️ 일부 이미지가 API 한도 초과로 인해 생성되지 않았습니다. 잠시 후 다시 시도하거나 다른 API 키를 사용하세요.")
+
+        results.sort(key=lambda x: x['scene'])
+        st.session_state['generated_results'] = results
+        status_box.update(label="✅ 생성 완료!", state="complete", expanded=False)
 
 # ==========================================
 # [결과 화면]
 # ==========================================
 if st.session_state['generated_results']:
-    user_id = st.session_state['user_id']
-    CURRENT_USER_DIR = os.path.join(BASE_PATH, user_id, "output_images")
+    user_id = st.session_state['user_id']
+    CURRENT_USER_DIR = os.path.join(BASE_PATH, user_id, "output_images")
 
-    st.divider()
-    st.markdown(f"## 📸 결과물 ({len(st.session_state['generated_results'])}장)")
-    
-    zip_data = create_zip_buffer(CURRENT_USER_DIR)
-    st.download_button("📦 전체 이미지 ZIP 다운로드", data=zip_data, file_name="all_images.zip", mime="application/zip", use_container_width=True)
-    st.markdown("---")
+    st.divider()
+    st.markdown(f"## 📸 결과물 ({len(st.session_state['generated_results'])}장)")
+    
+    zip_data = create_zip_buffer(CURRENT_USER_DIR)
+    # [수정] use_container_width -> width="stretch" (버튼은 상황에 따라 type="primary" 등으로 대체되거나 width 유지)
+    st.download_button("📦 전체 이미지 ZIP 다운로드", data=zip_data, file_name="all_images.zip", mime="application/zip", type="primary")
+    st.markdown("---")
 
-    for index, item in enumerate(st.session_state['generated_results']):
-        with st.container(border=True):
-            cols = st.columns([1, 2])
-            
-            # [오른쪽: 정보 및 수정]
-            with cols[1]:
-                st.markdown(f"### Scene {item['scene']:02d}")
-                st.markdown(f"**대본:**\n\n{item['script']}")
-                
-                with st.expander("📝 프롬프트 수정 & 확인", expanded=False):
-                    prompt_key = f"prompt_edit_{index}"
-                    edited_prompt = st.text_area(
-                        "프롬프트 내용을 수정하고 왼쪽의 [이미지 다시 생성] 버튼을 누르세요.",
-                        value=item['prompt'],
-                        height=400, # [수정] 높이 400으로 확대
-                        key=prompt_key
-                    )
+    for index, item in enumerate(st.session_state['generated_results']):
+        with st.container(border=True):
+            cols = st.columns([1, 2])
+            
+            # [오른쪽: 정보 및 수정]
+            with cols[1]:
+                st.markdown(f"### Scene {item['scene']:02d}")
+                st.markdown(f"**대본:**\n\n{item['script']}")
+                
+                with st.expander("📝 프롬프트 수정 & 확인", expanded=False):
+                    prompt_key = f"prompt_edit_{index}"
+                    edited_prompt = st.text_area(
+                        "프롬프트 내용을 수정하고 왼쪽의 [이미지 다시 생성] 버튼을 누르세요.",
+                        value=item['prompt'],
+                        height=400, 
+                        key=prompt_key
+                    )
 
-            # [왼쪽: 이미지 및 버튼]
-            with cols[0]:
-                try: 
-                    # [핵심 수정] 비율에 따라 이미지 표시 방식 변경
-                    if target_ratio == "16:9":
-                        # 16:9 (가로형)일 때는 컬럼을 꽉 채움
-                        st.image(item['path'], use_container_width=True)
-                    else:
-                        # 9:16 (세로형)일 때는 너무 커지지 않게 너비 고정 (가운데 정렬 효과를 위해 컬럼 사용)
-                        sub_c1, sub_c2, sub_c3 = st.columns([1, 2, 1])
-                        with sub_c2:
-                            st.image(item['path'], use_container_width=True) 
-                except: 
-                    st.error("이미지 없음")
+            # [왼쪽: 이미지 및 버튼]
+            with cols[0]:
+                try: 
+                    if target_ratio == "16:9":
+                        # [수정] use_container_width=True -> width="stretch" (경고 메시지 반영)
+                        st.image(item['path'], width="stretch")
+                    else:
+                        sub_c1, sub_c2, sub_c3 = st.columns([1, 2, 1])
+                        with sub_c2:
+                            # [수정] use_container_width=True -> width="stretch"
+                            st.image(item['path'], width="stretch") 
+                except: 
+                    st.error("이미지 없음")
 
-                if st.button(f"🔄 이미지 다시 생성", key=f"regen_img_{index}", use_container_width=True):
-                    if not api_key: st.error("API Key 필요")
-                    else:
-                        current_prompt_text = st.session_state.get(prompt_key, item['prompt'])
+                if st.button(f"🔄 이미지 다시 생성", key=f"regen_img_{index}"):
+                    if not api_key: st.error("API Key 필요")
+                    else:
+                        current_prompt_text = st.session_state.get(prompt_key, item['prompt'])
 
-                        with st.spinner(f"Scene {item['scene']} 재생성 중..."):
-                            client = genai.Client(api_key=api_key)
-                            
-                            # [수정] 재생성 시에도 target_ratio 전달
-                            new_path = generate_image(
-                                client, 
-                                current_prompt_text, 
-                                item['filename'],
-                                CURRENT_USER_DIR, 
-                                SELECTED_IMAGE_MODEL, 
-                                style_instruction,
-                                target_ratio # 비율 파라미터 추가
-                            )
-                            
-                            if new_path:
-                                st.session_state['generated_results'][index]['path'] = new_path
-                                st.session_state['generated_results'][index]['prompt'] = current_prompt_text
-                                st.rerun()
-                
-                try:
-                    with open(item['path'], "rb") as file:
-                        st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
-
-                except: pass
+                        with st.spinner(f"Scene {item['scene']} 재생성 중..."):
+                            client = genai.Client(api_key=api_key)
+                            
+                            new_path = generate_image(
+                                client, 
+                                current_prompt_text, 
+                                item['filename'],
+                                CURRENT_USER_DIR, 
+                                SELECTED_IMAGE_MODEL, 
+                                style_instruction,
+                                target_ratio
+                            )
+                            
+                            if new_path:
+                                st.session_state['generated_results'][index]['path'] = new_path
+                                st.session_state['generated_results'][index]['prompt'] = current_prompt_text
+                                st.rerun()
+                
+                try:
+                    with open(item['path'], "rb") as file:
+                        st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
+                except: pass
