@@ -55,7 +55,7 @@ st.markdown("""
     p, div, label, span, li, h1, h2, h3, h4, h5, h6 {
         color: #FFFFFF !important;
     }
-    
+     
     h1, h2 {
         text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
     }
@@ -173,7 +173,7 @@ st.markdown("""
         background-color: #1F2128 !important;
         color: #FFFFFF !important;
     }
-    
+     
     /* 9. Status Widget 스타일 */
     div[data-testid="stStatusWidget"] {
         background-color: #1F2128 !important;
@@ -196,6 +196,13 @@ st.markdown("""
         background-color: #12141C;
         border-right: 1px solid #2C2F38;
     }
+    
+    /* [NEW] 로그 텍스트 스타일 */
+    .log-text {
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        color: #00FF00 !important;
+    }
     </style>
 
     <div class="student-banner">
@@ -212,8 +219,8 @@ BASE_PATH = "./web_result_files"
 def split_script_by_time(script, chars_per_chunk=100):
     # [수정됨] 일본어 구두점(。, ？, ！)도 인식하도록 변경
     temp_sentences = script.replace(".", ".|").replace("?", "?|").replace("!", "!|") \
-                           .replace("。", "。|").replace("？", "？|").replace("！", "！|").split("|")
-                           
+                            .replace("。", "。|").replace("？", "？|").replace("！", "！|").split("|")
+                            
     chunks = []
     current_chunk = ""
     MIN_LENGTH = 30 
@@ -839,6 +846,8 @@ if 'generated_results' not in st.session_state:
     st.session_state['generated_results'] = []
 if 'video_title' not in st.session_state:
     st.session_state['video_title'] = ""
+if 'logs' not in st.session_state:
+    st.session_state['logs'] = []
 
 st.write("")
 
@@ -856,6 +865,7 @@ script_input = st.text_area("📜 대본 입력 (여기에 붙여넣기)", heigh
 
 def clear_generated_results():
     st.session_state['generated_results'] = []
+    st.session_state['logs'] = []
     gc.collect()
 
 st.write("")
@@ -877,21 +887,31 @@ if start_btn:
         os.makedirs(USER_DIR, exist_ok=True)
 
         client = genai.Client(api_key=api_key)
-        status_box = st.status("작업 진행 중...", expanded=True)
+        
+        # [NEW] 상태창 및 로그 컨테이너 생성
+        status_box = st.status("작업 준비 중...", expanded=True)
+        log_placeholder = status_box.empty() # 실시간 로그가 표시될 공간
         progress_bar = st.progress(0)
 
+        def update_log(message):
+            """로그를 세션에 추가하고 화면에 업데이트하는 함수"""
+            st.session_state['logs'].append(message)
+            # 최근 10줄만 보여주기 (스크롤 압박 방지)
+            log_content = "\n".join(st.session_state['logs'][-10:])
+            log_placeholder.markdown(f"```bash\n{log_content}\n```")
+
         # 1. 대본 분할
-        status_box.write(f"✂️ 대본 분할 중...")
+        status_box.update(label="✂️ 대본 분할 중...", state="running")
         chunks = split_script_by_time(script_input, chars_per_chunk=chars_limit)
         total_scenes = len(chunks)
-        status_box.write(f"✅ {total_scenes}개 장면으로 분할 완료.")
+        update_log(f"✅ 대본을 {total_scenes}개 장면으로 분할했습니다.")
         
         current_video_title = st.session_state.get('video_title', "").strip()
         if not current_video_title:
             current_video_title = "전반적인 대본 분위기에 어울리는 배경"
 
         # 2. 프롬프트 생성 (병렬)
-        status_box.write(f"📝 프롬프트 작성 중... (Mode: {SELECTED_GENRE_MODE}, Lang: {target_language})")
+        status_box.update(label=f"📝 프롬프트 작성 중... (총 {total_scenes}장)", state="running")
         prompts = []
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -906,14 +926,20 @@ if start_btn:
                     target_language      # 언어 전달
                 ))
             
-            for i, future in enumerate(as_completed(futures)):
-                prompts.append(future.result())
-                progress_bar.progress((i + 1) / (total_scenes * 2))
+            completed_prompts = 0
+            for future in as_completed(futures):
+                result = future.result()
+                prompts.append(result)
+                completed_prompts += 1
+                progress_bar.progress(completed_prompts / (total_scenes * 2))
+                # [NEW] 개별 진행상황 로그 출력
+                update_log(f"📝 Scene {result[0]} 프롬프트 작성 완료")
 
         prompts.sort(key=lambda x: x[0])
+        update_log("✅ 모든 프롬프트 작성이 완료되었습니다. 이미지 생성을 시작합니다.")
 
         # 3. 이미지 생성 (병렬)
-        status_box.write(f"🎨 이미지 생성 중 ({SELECTED_IMAGE_MODEL})...")
+        status_box.update(label=f"🎨 이미지 생성 중... (Model: {SELECTED_IMAGE_MODEL})", state="running")
         results = []
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -932,21 +958,31 @@ if start_btn:
                 )
                 future_to_meta[future] = (s_num, fname, orig_text, prompt_text)
 
-            completed_cnt = 0
+            completed_imgs = 0
             for future in as_completed(future_to_meta):
                 s_num, fname, orig_text, p_text = future_to_meta[future]
                 path = future.result()
+                
                 if path:
                     results.append({
                         "scene": s_num, "path": path, "filename": fname, 
                         "script": orig_text, "prompt": p_text
                     })
-                completed_cnt += 1
-                progress_bar.progress(0.5 + (completed_cnt / total_scenes * 0.5))
+                    # [NEW] 성공 로그
+                    update_log(f"📸 Scene {s_num}: 이미지 생성 성공 ({fname})")
+                else:
+                    # [NEW] 실패 로그
+                    update_log(f"⚠️ Scene {s_num}: 이미지 생성 실패 (정책/오류)")
+                
+                completed_imgs += 1
+                progress_bar.progress(0.5 + (completed_imgs / total_scenes * 0.5))
 
         results.sort(key=lambda x: x['scene'])
         st.session_state['generated_results'] = results
-        status_box.update(label="✅ 생성 완료!", state="complete", expanded=False)
+        
+        # 완료 처리
+        update_log("✨ 모든 작업이 완료되었습니다!")
+        status_box.update(label="✅ 생성 완료! 결과를 확인하세요.", state="complete", expanded=False)
 
 # ==========================================
 # [결과 화면]
