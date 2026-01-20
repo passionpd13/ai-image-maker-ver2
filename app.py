@@ -658,9 +658,10 @@ def generate_image(client, prompt, filename, output_dir, selected_model_name, st
     return None
 
 # ==========================================
-# [함수 추가] 프롬프트+이미지 통합 처리 함수 (파이프라인)
+# [함수 수정] 프롬프트+이미지 통합 처리 함수 (파이프라인)
 # ==========================================
-def process_full_scene(api_key, index, chunk, style_instruction, video_title, genre_mode, target_language, output_dir, model_name, target_ratio):
+def process_full_scene(api_key, index, chunk, style_instruction, video_title, genre_mode, target_language, output_dir, model_name, target_ratio, log_container=None):
+    scene_num = index + 1
     try:
         # 1. 프롬프트 생성 (사용자 요청: 고품질 Pro 모델 유지)
         s_num, prompt_text = generate_prompt(
@@ -668,7 +669,18 @@ def process_full_scene(api_key, index, chunk, style_instruction, video_title, ge
         )
         
         if not prompt_text:
+            if log_container:
+                log_container.warning(f"⚠️ [Scene {scene_num:02d}] 프롬프트 생성 실패")
             return None # 프롬프트 실패 시 중단
+
+        # --------------------------------------------------------------------
+        # [핵심 추가] 프롬프트 생성 성공 즉시 UI에 알림
+        # --------------------------------------------------------------------
+        if log_container:
+            # 📝 아이콘과 함께 텍스트 출력
+            log_container.info(f"📝 [Scene {scene_num:02d}] 프롬프트 생성 완료! → 이미지 생성 시작...")
+            print(f"📝 Scene {scene_num} Prompt Ready") 
+        # --------------------------------------------------------------------
 
         # 2. 파일명 생성
         filename = make_filename(s_num, chunk)
@@ -689,10 +701,14 @@ def process_full_scene(api_key, index, chunk, style_instruction, video_title, ge
                 "prompt": prompt_text
             }
         else:
+            if log_container:
+                log_container.error(f"❌ [Scene {scene_num:02d}] 이미지 생성 실패 (모델 거절 등)")
             return None # 이미지 생성 실패
 
     except Exception as e:
         print(f"❌ Scene {index+1} 처리 중 에러: {e}")
+        if log_container:
+            log_container.error(f"❌ [Scene {scene_num:02d}] 에러 발생: {str(e)}")
         return None
 
 # ==========================================
@@ -923,28 +939,45 @@ if start_btn:
             except: pass
         os.makedirs(USER_DIR, exist_ok=True)
 
-        status_box = st.status("🚀 대본 분석 및 이미지 동시 생성 중... (속도 최적화 모드)", expanded=True)
-        progress_bar = st.progress(0)
-
-        # 1. 대본 분할
-        chunks = split_script_by_time(script_input, chars_per_chunk=chars_limit)
-        total_scenes = len(chunks)
-        status_box.write(f"✅ {total_scenes}개 장면으로 분할 완료.")
+        # ------------------------------------------------------------------
+        # [UX 개선] 상태창 및 실시간 로그 설정
+        # ------------------------------------------------------------------
+        status_container = st.status("🚀 작업을 시작합니다...", expanded=True)
         
+        with status_container:
+            st.write("1️⃣ 대본 분석 중...")
+            chunks = split_script_by_time(script_input, chars_per_chunk=chars_limit)
+            total_scenes = len(chunks)
+            st.write(f"✅ 총 {total_scenes}개 장면으로 분할 완료.")
+            
+            st.write(f"2️⃣ AI 이미지 생성 시작 (동시 작업: {max_workers}개)")
+            
+            # 프로그래스 바와 상태 텍스트
+            progress_bar = st.progress(0)
+            status_text = st.empty() 
+            
+            # ------------------------------------------------------------------
+            # [UX 핵심] 실시간 세부 로그를 위한 Expander 생성
+            # ------------------------------------------------------------------
+            with st.expander("📜 실시간 작업 로그 (프롬프트 & 이미지)", expanded=True):
+                # 이 컨테이너에 작업 스레드들이 직접 글을 쓰게 됩니다.
+                realtime_log_container = st.container()
+                realtime_log_container.info("작업 대기 중... 잠시 후 로그가 올라옵니다.")
+
         current_video_title = st.session_state.get('video_title', "").strip()
         if not current_video_title:
             current_video_title = "전반적인 대본 분위기에 어울리는 배경"
 
-        # 2. 통합 병렬 처리 (프롬프트 + 이미지 동시 진행)
         results = []
         completed_cnt = 0
-        
-        # UI에 실시간으로 이미지를 보여주기 위한 빈 공간 확보
-        result_container = st.container()
+        start_time = time.time()
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = []
             for i, chunk in enumerate(chunks):
+                # --------------------------------------------------------------
+                # [변경점] 함수 호출 시 realtime_log_container 전달
+                # --------------------------------------------------------------
                 futures.append(executor.submit(
                     process_full_scene,
                     api_key, i, chunk, 
@@ -954,26 +987,51 @@ if start_btn:
                     target_language,
                     USER_DIR,
                     SELECTED_IMAGE_MODEL,
-                    target_ratio
+                    target_ratio,
+                    realtime_log_container # <--- 로그 컨테이너 전달
                 ))
             
-            # 하나씩 완료될 때마다 처리
+            # 초기 대기 상태 안내
+            status_text.markdown(f"""
+                Running... 🏃‍♂️
+                - **아래 '실시간 작업 로그'에서 진행 상황을 확인하세요.**
+                - 첫 번째 결과가 나올 때까지 약 10~20초 정도 걸립니다.
+            """)
+
+            # 하나씩 완료될 때마다 UI 업데이트
             for future in as_completed(futures):
                 res = future.result()
-                if res: # 결과가 있는 경우만
-                    results.append(res)
-                    
-                    # [UX 개선] 완료 알림
-                    with result_container:
-                        st.toast(f"✅ Scene {res['scene']} 생성 완료!", icon="📸")
                 
                 completed_cnt += 1
-                progress_bar.progress(completed_cnt / total_scenes)
-                status_box.write(f"⏳ 진행 중... ({completed_cnt}/{total_scenes})")
+                progress_percent = completed_cnt / total_scenes
+                progress_bar.progress(progress_percent)
 
+                # ETA(남은 시간) 계산
+                elapsed_time = time.time() - start_time
+                avg_time_per_item = elapsed_time / completed_cnt if completed_cnt > 0 else 0
+                remaining_items = total_scenes - completed_cnt
+                eta_seconds = int(avg_time_per_item * remaining_items)
+                
+                # 상태 텍스트 업데이트
+                status_text.markdown(f"""
+                    ### ⏳ 전체 진행률: {int(progress_percent * 100)}% ({completed_cnt}/{total_scenes})
+                    - ⏱️ 경과 시간: {int(elapsed_time)}초 / 🔮 남은 시간: 약 {eta_seconds}초
+                """)
+
+                if res: 
+                    results.append(res)
+                    # [UX 개선] 이미지 완료 로그도 같은 공간에 출력
+                    realtime_log_container.success(f"📸 **[Scene {res['scene']:02d}] 최종 이미지 생성 완료!**")
+                    st.toast(f"Scene {res['scene']} 완료!", icon="✅")
+                else:
+                    realtime_log_container.error(f"❌ [Scene {completed_cnt}] 최종 생성 실패")
+
+        # 완료 처리
         results.sort(key=lambda x: x['scene'])
         st.session_state['generated_results'] = results
-        status_box.update(label="✅ 모든 작업 완료!", state="complete", expanded=False)
+        status_container.update(label=f"✅ 모든 작업 완료! ({int(time.time() - start_time)}초 소요)", state="complete", expanded=False)
+        st.success("모든 이미지 생성이 완료되었습니다! 아래에서 결과를 확인하세요.")
+        time.sleep(1) 
         st.rerun() # 완료 후 화면 리로드
 
 # ==========================================
