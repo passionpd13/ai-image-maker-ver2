@@ -571,7 +571,8 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         """
 
     max_retries = 3
-    target_models = ["gemini-2.0-flash", "gemini-1.5-flash"] # 모델명 업데이트 가능성 고려
+    # [수정됨] 모델명 Gemini 3 Pro 버전으로 복구
+    target_models = ["gemini-3-pro-preview", "gemini-2.5-flash"] 
 
     for attempt in range(1, max_retries + 1):
         for model_name in target_models:
@@ -687,10 +688,11 @@ with st.sidebar:
         index=0,
         label_visibility="collapsed"
     )
+    # [수정됨] 모델명 Gemini 3 Pro 버전으로 복구
     if "프로" in model_choice:
-        SELECTED_IMAGE_MODEL = "gemini-2.0-flash-exp" # 실제 모델명은 환경에 맞게 조정 필요
+        SELECTED_IMAGE_MODEL = "gemini-3-pro-image-preview"
     else:
-        SELECTED_IMAGE_MODEL = "gemini-2.0-flash"
+        SELECTED_IMAGE_MODEL = "gemini-2.5-flash-image"
 
     st.markdown("---")
 
