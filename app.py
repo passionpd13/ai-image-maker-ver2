@@ -191,6 +191,23 @@ st.markdown("""
         color: #FFFFFF !important;
     }
 
+    /* [긴급 패치] 로그 박스(Code Block) 가독성 해결 */
+    div[data-testid="stStatusWidget"] pre {
+        background-color: #000000 !important; /* 배경을 완전 검은색으로 강제 */
+        border: 1px solid #333 !important;
+        border-radius: 8px !important;
+        color: #00FF00 !important; /* 텍스트를 터미널 녹색으로 강제 */
+    }
+    div[data-testid="stStatusWidget"] code {
+        background-color: transparent !important;
+        color: #00FF00 !important; /* 코드 텍스트도 녹색 */
+        font-family: 'Courier New', monospace !important;
+    }
+    /* Bash 하이라이팅으로 인한 색상 덮어쓰기 방지 */
+    div[data-testid="stStatusWidget"] span {
+        color: #00FF00 !important;
+    }
+
     /* 사이드바 */
     [data-testid="stSidebar"] {
         background-color: #12141C;
@@ -281,13 +298,13 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
 
     # 1. 언어 설정
     if target_language == "Korean":
-        lang_guide = "화면 속 글씨는 **무조건 '한글(Korean)'로 표기**하십시오. (다른 언어 절대 금지)"
+        lang_guide = "화면 속 글씨는 **무조건 '한글'로 표기**하십시오. (다른 언어 절대 금지)"
         lang_example = "(예: 'New York' -> '뉴욕', 'Tokyo' -> '도쿄')"
     elif target_language == "English":
-        lang_guide = "화면 속 글씨는 **무조건 '영어(English)'로 표기**하십시오."
+        lang_guide = "화면 속 글씨는 **무조건 '영어'로 표기**하십시오."
         lang_example = "(예: '서울' -> 'Seoul', '독도' -> 'Dokdo')"
     elif target_language == "Japanese":
-        lang_guide = "화면 속 글씨는 **무조건 '일본어(Japanese)'로 표기**하십시오."
+        lang_guide = "화면 속 글씨는 **무조건 '일본어'로 표기**하십시오."
         lang_example = "(예: '서울' -> 'ソウル', 'New York' -> 'ニューヨーク')"
     else:
         lang_guide = f"화면 속 글씨는 **무조건 '{target_language}'로 표기**하십시오."
