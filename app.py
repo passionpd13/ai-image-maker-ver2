@@ -266,7 +266,7 @@ def create_zip_buffer(source_dir):
     return buffer
 
 # ==========================================
-# [함수] 2. 프롬프트 생성
+# [함수] 2. 프롬프트 생성 (수정: gemini-2.5-pro 적용)
 # ==========================================
 def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, genre_mode="info", target_language="Korean"):
     scene_num = index + 1
@@ -574,18 +574,22 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         """
 
     max_retries = 3
-    target_models = ["gemini-3-pro-preview", "gemini-2.5-flash"]
+    # [수정됨] 요청하신 대로 gemini-2.5-pro를 1순위로 설정
+    # 안정성을 위해 Flash를 2순위 백업으로 배치
+    target_models = ["gemini-2.5-pro", "gemini-2.5-flash"]
 
     for attempt in range(1, max_retries + 1):
         for model_name in target_models:
             try:
-                time.sleep(random.uniform(0.2, 0.5))
+                # Pro 모델 속도 제한(Rate Limit) 방지를 위해 대기 시간 조절
+                time.sleep(random.uniform(0.1, 0.3))
                 
                 response = client.models.generate_content(
                     model=model_name,
                     contents=full_instruction + f'\n\n[대본 내용]\n"{text_chunk}"',
                     config=types.GenerateContentConfig(
                         temperature=0.75,
+                        max_output_tokens=1000, # 속도 최적화를 위해 토큰 수 제한
                         safety_settings=[
                             types.SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_ONLY_HIGH"),
                             types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_ONLY_HIGH"),
@@ -601,6 +605,8 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
                     return (scene_num, result)
 
             except Exception as e:
+                # 에러 발생 시 로그 출력 후 잠시 대기
+                print(f"⚠️ 모델 지연 ({model_name}): {e}")
                 time.sleep(1)
 
     return (scene_num, f"주제 '{video_title}'에 어울리는 배경 일러스트 (Fallback).")
