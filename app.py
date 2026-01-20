@@ -574,7 +574,8 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         """
 
     max_retries = 3
-    target_models = ["gemini-3-pro-preview", "gemini-2.5-flash"]
+    # [설정 유지] 사용자가 원한 대로 Pro 모델을 1순위로 유지 (Flash 강제 아님)
+    target_models = ["gemini-3-pro-preview", "gemini-2.5-flash"] 
 
     for attempt in range(1, max_retries + 1):
         for model_name in target_models:
@@ -655,6 +656,44 @@ def generate_image(client, prompt, filename, output_dir, selected_model_name, st
         return None
 
     return None
+
+# ==========================================
+# [함수 추가] 프롬프트+이미지 통합 처리 함수 (파이프라인)
+# ==========================================
+def process_full_scene(api_key, index, chunk, style_instruction, video_title, genre_mode, target_language, output_dir, model_name, target_ratio):
+    try:
+        # 1. 프롬프트 생성 (사용자 요청: 고품질 Pro 모델 유지)
+        s_num, prompt_text = generate_prompt(
+            api_key, index, chunk, style_instruction, video_title, genre_mode, target_language
+        )
+        
+        if not prompt_text:
+            return None # 프롬프트 실패 시 중단
+
+        # 2. 파일명 생성
+        filename = make_filename(s_num, chunk)
+        
+        # 3. 이미지 생성 (바로 이어서 실행)
+        client = genai.Client(api_key=api_key)
+        image_path = generate_image(
+            client, prompt_text, filename, output_dir, 
+            model_name, style_instruction, target_ratio
+        )
+        
+        if image_path:
+            return {
+                "scene": s_num,
+                "path": image_path,
+                "filename": filename,
+                "script": chunk,
+                "prompt": prompt_text
+            }
+        else:
+            return None # 이미지 생성 실패
+
+    except Exception as e:
+        print(f"❌ Scene {index+1} 처리 중 에러: {e}")
+        return None
 
 # ==========================================
 # [UI] 사이드바 설정
@@ -831,9 +870,10 @@ MS 그림판(MS Paint)으로 그린 듯한 키치하고 단순한 느낌.
 
     st.markdown("---")
     st.subheader("⏱️ 설정")
-    chunk_duration = st.slider("장면 시간(초):", 5, 60, 30, 5)
+    # [설정 유지] 사용자가 원한 대로 기본값 30초 (디테일 유지)
+    chunk_duration = st.slider("장면 시간(초):", 5, 60, 30, 5) 
     chars_limit = chunk_duration * 8
-    max_workers = st.slider("작업 속도:", 1, 10, 5)
+    max_workers = st.slider("작업 속도 (동시 처리 수):", 1, 10, 4) # 너무 높으면 API 제한 걸릴 수 있음
 
 # ==========================================
 # [UI] 메인 화면
@@ -883,12 +923,10 @@ if start_btn:
             except: pass
         os.makedirs(USER_DIR, exist_ok=True)
 
-        client = genai.Client(api_key=api_key)
-        status_box = st.status("작업 진행 중...", expanded=True)
+        status_box = st.status("🚀 대본 분석 및 이미지 동시 생성 중... (속도 최적화 모드)", expanded=True)
         progress_bar = st.progress(0)
 
         # 1. 대본 분할
-        status_box.write(f"✂️ 대본 분할 중...")
         chunks = split_script_by_time(script_input, chars_per_chunk=chars_limit)
         total_scenes = len(chunks)
         status_box.write(f"✅ {total_scenes}개 장면으로 분할 완료.")
@@ -897,65 +935,46 @@ if start_btn:
         if not current_video_title:
             current_video_title = "전반적인 대본 분위기에 어울리는 배경"
 
-        # 2. 프롬프트 생성 (병렬)
-        status_box.write(f"📝 프롬프트 작성 중... (Mode: {SELECTED_GENRE_MODE}, Lang: {target_language})")
-        prompts = []
+        # 2. 통합 병렬 처리 (프롬프트 + 이미지 동시 진행)
+        results = []
+        completed_cnt = 0
+        
+        # UI에 실시간으로 이미지를 보여주기 위한 빈 공간 확보
+        result_container = st.container()
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = []
             for i, chunk in enumerate(chunks):
                 futures.append(executor.submit(
-                    generate_prompt,
+                    process_full_scene,
                     api_key, i, chunk, 
-                    style_instruction,
-                    current_video_title,
-                    SELECTED_GENRE_MODE, # 장르 전달
-                    target_language      # 언어 전달
+                    style_instruction, 
+                    current_video_title, 
+                    SELECTED_GENRE_MODE, 
+                    target_language,
+                    USER_DIR,
+                    SELECTED_IMAGE_MODEL,
+                    target_ratio
                 ))
             
-            for i, future in enumerate(as_completed(futures)):
-                prompts.append(future.result())
-                progress_bar.progress((i + 1) / (total_scenes * 2))
-
-        prompts.sort(key=lambda x: x[0])
-
-        # 3. 이미지 생성 (병렬)
-        status_box.write(f"🎨 이미지 생성 중 ({SELECTED_IMAGE_MODEL}, {target_ratio})...")
-        results = []
-
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            future_to_meta = {}
-            for s_num, prompt_text in prompts:
-                idx = s_num - 1
-                orig_text = chunks[idx]
-                fname = make_filename(s_num, orig_text)
-                time.sleep(0.05)
+            # 하나씩 완료될 때마다 처리
+            for future in as_completed(futures):
+                res = future.result()
+                if res: # 결과가 있는 경우만
+                    results.append(res)
+                    
+                    # [UX 개선] 완료 알림
+                    with result_container:
+                        st.toast(f"✅ Scene {res['scene']} 생성 완료!", icon="📸")
                 
-                # [수정] target_ratio 전달
-                future = executor.submit(
-                    generate_image,
-                    client, prompt_text, fname, USER_DIR,
-                    SELECTED_IMAGE_MODEL, 
-                    style_instruction,
-                    target_ratio # 비율 파라미터 추가
-                )
-                future_to_meta[future] = (s_num, fname, orig_text, prompt_text)
-
-            completed_cnt = 0
-            for future in as_completed(future_to_meta):
-                s_num, fname, orig_text, p_text = future_to_meta[future]
-                path = future.result()
-                if path:
-                    results.append({
-                        "scene": s_num, "path": path, "filename": fname, 
-                        "script": orig_text, "prompt": p_text
-                    })
                 completed_cnt += 1
-                progress_bar.progress(0.5 + (completed_cnt / total_scenes * 0.5))
+                progress_bar.progress(completed_cnt / total_scenes)
+                status_box.write(f"⏳ 진행 중... ({completed_cnt}/{total_scenes})")
 
         results.sort(key=lambda x: x['scene'])
         st.session_state['generated_results'] = results
-        status_box.update(label="✅ 생성 완료!", state="complete", expanded=False)
+        status_box.update(label="✅ 모든 작업 완료!", state="complete", expanded=False)
+        st.rerun() # 완료 후 화면 리로드
 
 # ==========================================
 # [결과 화면]
