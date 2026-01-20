@@ -28,7 +28,7 @@ if 'user_id' not in st.session_state:
     st.session_state['user_id'] = str(uuid.uuid4())
 
 # ==========================================
-# [디자인] 다크모드 & 가독성 완벽 패치
+# [디자인] 다크모드 & 가독성 완벽 패치 (로그창 수정 포함)
 # ==========================================
 st.markdown("""
     <style>
@@ -191,34 +191,40 @@ st.markdown("""
         color: #FFFFFF !important;
     }
 
-    /* [긴급 패치] 로그 박스(Code Block) 가독성 해결 */
-    div[data-testid="stStatusWidget"] pre {
-        background-color: #000000 !important; /* 배경을 완전 검은색으로 강제 */
+    /* ============================================================
+       [긴급 패치] Status Widget 내 로그 박스(Code Block) 스타일 강제 적용
+       ============================================================ */
+    /* 1. 코드 블록 컨테이너 */
+    div[data-testid="stStatusWidget"] div[data-testid="stCodeBlock"] {
+        background-color: #000000 !important;
         border: 1px solid #333 !important;
-        border-radius: 8px !important;
-        color: #00FF00 !important; /* 텍스트를 터미널 녹색으로 강제 */
+        border-radius: 5px !important;
     }
-    div[data-testid="stStatusWidget"] code {
-        background-color: transparent !important;
-        color: #00FF00 !important; /* 코드 텍스트도 녹색 */
+    
+    /* 2. 코드 블록 내부 pre 태그 (가장 중요) */
+    div[data-testid="stStatusWidget"] div[data-testid="stCodeBlock"] pre {
+        background-color: #000000 !important; /* 배경 완전 검정 */
+        color: #00FF00 !important;             /* 글씨 완전 녹색 */
+        border: none !important;
+    }
+    
+    /* 3. 코드 태그 */
+    div[data-testid="stStatusWidget"] div[data-testid="stCodeBlock"] code {
+        background-color: #000000 !important;
+        color: #00FF00 !important;
         font-family: 'Courier New', monospace !important;
     }
-    /* Bash 하이라이팅으로 인한 색상 덮어쓰기 방지 */
-    div[data-testid="stStatusWidget"] span {
+
+    /* 4. 구문 강조(Syntax Highlight) 덮어쓰기 - 알록달록 방지 */
+    div[data-testid="stStatusWidget"] div[data-testid="stCodeBlock"] span {
         color: #00FF00 !important;
+        background-color: transparent !important;
     }
 
     /* 사이드바 */
     [data-testid="stSidebar"] {
         background-color: #12141C;
         border-right: 1px solid #2C2F38;
-    }
-    
-    /* [NEW] 로그 텍스트 스타일 */
-    .log-text {
-        font-family: 'Courier New', monospace;
-        font-size: 0.9rem;
-        color: #00FF00 !important;
     }
     </style>
 
@@ -298,13 +304,13 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
 
     # 1. 언어 설정
     if target_language == "Korean":
-        lang_guide = "화면 속 글씨는 **무조건 '한글'로 표기**하십시오. (다른 언어 절대 금지)"
+        lang_guide = "화면 속 글씨는 **무조건 '한글(Korean)'로 표기**하십시오. (다른 언어 절대 금지)"
         lang_example = "(예: 'New York' -> '뉴욕', 'Tokyo' -> '도쿄')"
     elif target_language == "English":
-        lang_guide = "화면 속 글씨는 **무조건 '영어'로 표기**하십시오."
+        lang_guide = "화면 속 글씨는 **무조건 '영어(English)'로 표기**하십시오."
         lang_example = "(예: '서울' -> 'Seoul', '독도' -> 'Dokdo')"
     elif target_language == "Japanese":
-        lang_guide = "화면 속 글씨는 **무조건 '일본어'로 표기**하십시오."
+        lang_guide = "화면 속 글씨는 **무조건 '일본어(Japanese)'로 표기**하십시오."
         lang_example = "(예: '서울' -> 'ソウル', 'New York' -> 'ニューヨーク')"
     else:
         lang_guide = f"화면 속 글씨는 **무조건 '{target_language}'로 표기**하십시오."
