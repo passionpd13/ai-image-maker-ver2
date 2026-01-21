@@ -1177,18 +1177,33 @@ if start_btn:
         client = genai.Client(api_key=api_key)
         
         # [NEW] 상태 표시 컨테이너 및 로그 영역
+        # 사용자의 요청: 별도의 로그 박스가 아니라 st.status 내부에서 해결
         status_box = st.status("🚀 작업을 시작합니다...", expanded=True)
-        progress_bar = st.progress(0)
-        log_area = st.empty() # 로그가 출력될 공간
+        
+        # status_box 컨텍스트 내부에서 UI 구성
+        with status_box:
+            st.write("작업 대기 중...") # 초기 메시지
+            progress_bar = st.progress(0)
+            # [핵심] 고정된 높이의 로그 영역 생성 (초기값 빈 상태)
+            log_placeholder = st.empty() 
 
-        # 로그 출력 함수 정의
+        # 로그 출력 헬퍼 함수 (status_box 내부의 placeholder를 업데이트)
         def add_log(message):
             timestamp = datetime.datetime.now().strftime("%H:%M:%S")
             log_msg = f"[{timestamp}] {message}"
             st.session_state['log_history'].append(log_msg)
-            # 최신 로그가 아래로 오도록 출력
-            log_text = "\n".join(st.session_state['log_history'])
-            log_area.code(log_text, language="log")
+            
+            # 최신 로그가 맨 위로 오게 할지, 아래로 쌓을지 결정 (여기선 아래로 쌓임)
+            full_log = "\n".join(st.session_state['log_history'])
+            
+            # text_area를 사용하여 스크롤 가능한 고정 영역 구현
+            log_placeholder.text_area(
+                label="실시간 상세 로그", 
+                value=full_log, 
+                height=200, 
+                disabled=True,
+                key=f"log_view_{len(st.session_state['log_history'])}" # 키를 계속 바꿔서 강제 리프레시
+            )
 
         add_log("작업 초기화 완료.")
         
@@ -1205,7 +1220,7 @@ if start_btn:
             current_video_title = "전반적인 대본 분위기에 어울리는 배경 (Context based on the script)"
 
         # 2. 프롬프트 작성 (진행률 0% ~ 20%)
-        status_box.write(f"📝 프롬프트 작성 중 ({GEMINI_TEXT_MODEL_NAME}) - 모드: {SELECTED_GENRE_MODE} / 비율: {TARGET_RATIO}...") 
+        status_box.write(f"📝 프롬프트 생성 (gemini-2.5-pro) - 모드: {SELECTED_GENRE_MODE} / 비율: {TARGET_RATIO}...") 
         add_log(f"프롬프트 생성 시작 (병렬 처리)...")
         
         prompts = []
@@ -1242,7 +1257,7 @@ if start_btn:
         add_log("모든 프롬프트 작성 완료. 이미지 생성 준비 중...")
         
         # 3. 이미지 생성 (진행률 20% ~ 100%)
-        status_box.write(f"🎨 이미지 생성 중 ({SELECTED_IMAGE_MODEL})... (API 보호를 위해 천천히 진행됩니다)")
+        status_box.write(f"🎨 이미지 생성 ({SELECTED_IMAGE_MODEL})... (API 보호를 위해 천천히 진행됩니다)")
         results = []
         
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -1283,7 +1298,7 @@ if start_btn:
                         "script": orig_text,
                         "prompt": p_text
                     })
-                    add_log(f"✅ [Scene {s_num:02d}] 이미지 생성 성공 ({fname})")
+                    add_log(f"✅ [Scene {s_num:02d}] 이미지 생성 성공")
                 else:
                     error_reason = result.replace("ERROR_DETAILS:", "") if result else "원인 불명 (None 반환)"
                     st.error(f"🚨 Scene {s_num} 실패!\n이유: {error_reason}")
