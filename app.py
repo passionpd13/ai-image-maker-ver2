@@ -772,6 +772,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
 
     [❌ 절대 금지 키워드 (Negative Constraints)]
     - **Photorealistic, Live Action, Real Photo, 3D Render.** (실사, 사진, 3D 느낌 금지)
+    
 
     [필수 연출 지침]
     1. **[핵심] 다이내믹한 카메라 앵글 (Cinematic Camera Angles):**
@@ -798,11 +799,12 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
 
     [작성 요구사항]
     - **분량:** 최소 7문장 이상으로 **카메라 각도, 캐릭터의 전신 포즈, 구체적인 배경**을 상세하게 서술.
-    - 절대 분활화면 연출하지 않는다. 전체 대본 내용에 어울리는 하나의 완결된 장면(Cinematic Shot)으로 묘사.
+    - **[중요]**  절대 분활화면 연출하지 않는다. 전체 대본 내용에 어울리는 하나의 완결된 장면(Cinematic Shot)으로 묘사.
     - **[중요]** 프롬프트 시작은 반드시 **"Anime Style, Studio Ghibli Style, High Quality 2D Animation, Cinematic Angle"** 로 시작하십시오.
 
     [임무]
     대본을 분석하여 **'책상'을 벗어나**, 영화적인 앵글과 캐릭터의 생생한 감정이 느껴지는 **최상급 애니메이션 프롬프트**를 작성하십시오.
+    대본의 상황을 잘 나타내게 분활화면으로 말고 하나의 배경 장면으로 연출.
     - **한글**로만 출력하십시오.
         """
 
@@ -1057,7 +1059,8 @@ with st.sidebar:
 서정적인 느낌보다는 '정보량이 많고 밀도 높은' 고퀄리티 배경 작화 (High Density 2D Art).
 캐릭터의 표정과 행동을 '순간 포착'하듯 역동적으로 묘사.
 대본의 지문을 하나도 놓치지 않고 시각화하는 '철저한 디테일' 위주. (16:9)
-전체 대본에 어울리는 하나의 장면으로 연출."""
+대본의 상황을 잘 나타내게 분활화면으로 말고 하나의 장면으로 연출.
+자막 스타일 연출은 하지 않는다."""
 
 
     if 'style_prompt_area' not in st.session_state:
@@ -1575,5 +1578,6 @@ if st.session_state['generated_results']:
                     with open(item['path'], "rb") as file:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
                 except: pass
+
 
 
