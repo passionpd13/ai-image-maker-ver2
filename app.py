@@ -1034,7 +1034,7 @@ with st.sidebar:
 # ==========================================
 # [UI] 메인 화면: 이미지 생성
 # ==========================================
-st.title("🎬 AI 씬(장면) 생성기 (Pro)")
+st.title("🎬 열정피디 AI 장면 생성기 (Pro)")
 st.caption(f"대본을 넣으면 장면별 이미지를 생성합니다. | 🎨 Model: {SELECTED_IMAGE_MODEL}")
 
 st.subheader("📌 전체 영상 테마(제목) 설정")
@@ -1369,4 +1369,5 @@ if st.session_state['generated_results']:
                     with open(item['path'], "rb") as file:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
                 except: pass
+
 
