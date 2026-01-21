@@ -26,9 +26,8 @@ st.set_page_config(
 )
 
 # ==========================================
-# [세션 및 경로 설정] 사용자별 경로 분리 (핵심 수정)
+# [세션 및 경로 설정] 사용자별 경로 분리
 # ==========================================
-# [수정] 사용자마다 고유 폴더를 쓰도록 하여 세션 공유(이미지 섞임) 오류 해결
 if 'session_id' not in st.session_state:
     st.session_state['session_id'] = str(uuid.uuid4())
 
@@ -778,7 +777,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         - 대본에 있는 작은 지문 하나도 놓치지 말고 시각화하십시오.
         - "컵을 떨군다"는 대본이라면, 컵이 손에서 떠나 공중에 있는 순간과 튀어 오르는 물방울까지 묘사하십시오.
     4. **텍스트 처리:** {lang_guide} {lang_example}
-       
+        
     [작성 요구사항]
     - **분량:** 최소 7문장 이상으로 상세하게 묘사.
     - 절대 분활화면 연출하지 않는다. 전체 대본 내용에 어울리는 하나의 장면으로 묘사.
@@ -887,13 +886,15 @@ def generate_image(client, prompt, filename, output_dir, selected_model_name, ta
     # print(f"❌ [최종 실패] {filename}")
     return f"ERROR_DETAILS: {last_error_msg}"
 
-def create_zip_buffer(source_dir):
+# [수정] ZIP 생성 함수: results_list를 받아 한글 이름으로 매핑하여 압축
+def create_zip_buffer(results_list):
     buffer = BytesIO()
     with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-        for root, dirs, files in os.walk(source_dir):
-            for file in files:
-                file_path = os.path.join(root, file)
-                zip_file.write(file_path, os.path.basename(file_path))
+        for item in results_list:
+            file_path = item['path']      # 디스크에 저장된 영어 이름 경로
+            arcname = item['filename']    # 압축 파일 내부에 들어갈 한글 이름
+            if os.path.exists(file_path):
+                zip_file.write(file_path, arcname)
     buffer.seek(0)
     return buffer
 
@@ -1365,25 +1366,29 @@ if start_btn:
             for s_num, prompt_text in prompts:
                 idx = s_num - 1
                 orig_text = chunks[idx]
-                fname = make_filename(s_num, orig_text)
                 
-                # [수정] 작업 제출 간격 단축 (0.1 -> 0.05) : 동시 접속 폭주 방지는 유지하되 더 빠르게 투입
+                # [수정 핵심] 한글 파일명은 UI/다운로드용으로만 쓰고, 저장은 안전한 영문 이름으로 함
+                display_fname = make_filename(s_num, orig_text) # 한글 이름 (표시용)
+                safe_fname = f"scene_{s_num:03d}_{uuid.uuid4().hex[:8]}.png" # 영문 이름 (저장용)
+                
+                # [수정] 작업 제출 간격 단축
                 time.sleep(0.05) 
                 
                 future = executor.submit(
                     generate_image, 
                     client, 
                     prompt_text, 
-                    fname, 
+                    safe_fname, # 저장은 safe_fname으로 요청
                     IMAGE_OUTPUT_DIR, 
                     SELECTED_IMAGE_MODEL,
                     TARGET_RATIO 
                 )
-                future_to_meta[future] = (s_num, fname, orig_text, prompt_text)
+                # 메타데이터에는 원래 한글 이름(display_fname)을 기억해둠
+                future_to_meta[future] = (s_num, display_fname, safe_fname, orig_text, prompt_text)
             
             completed_imgs = 0
             for future in as_completed(future_to_meta):
-                s_num, fname, orig_text, p_text = future_to_meta[future]
+                s_num, fname_kr, fname_en, orig_text, p_text = future_to_meta[future]
                 
                 result = future.result() 
                 
@@ -1391,8 +1396,8 @@ if start_btn:
                     path = result 
                     results.append({
                         "scene": s_num,
-                        "path": path,
-                        "filename": fname,
+                        "path": path,          # 실제 경로 (영문)
+                        "filename": fname_kr,  # 다운로드할 때 쓸 이름 (한글)
                         "script": orig_text,
                         "prompt": p_text
                     })
@@ -1404,7 +1409,7 @@ if start_btn:
                 
                 completed_imgs += 1
                 
-                # [수정됨] 진행바 업데이트 (0.2 ~ 1.0 구간)
+                # 진행바 업데이트 (0.2 ~ 1.0 구간)
                 base_progress = 0.2
                 remain_progress = 0.8
                 current_progress = base_progress + ((completed_imgs / total_scenes) * remain_progress)
@@ -1430,21 +1435,22 @@ if st.session_state['generated_results']:
     st.header(f"📸 결과물 ({len(st.session_state['generated_results'])}장)")
     
     # ------------------------------------------------
-    # 1. 일괄 작업 버튼 영역 (수정됨: 꽉 차게)
+    # 1. 일괄 작업 버튼 영역
     # ------------------------------------------------
     st.write("---")
     st.subheader("⚡ 원클릭 일괄 다운로드")
     
-    # [수정] 동적 경로에서 ZIP 생성
-    zip_data = create_zip_buffer(IMAGE_OUTPUT_DIR)
-    # [수정] 전체 너비를 사용하여 버튼을 길게 배치
-    st.download_button(
-        label="📦 전체 이미지 ZIP 다운로드 (Click to Download All)", 
-        data=zip_data, 
-        file_name="all_images.zip", 
-        mime="application/zip", 
-        use_container_width=True # 전체 너비 사용
-    )
+    # [수정] 결과 리스트를 넘겨서, 내부에서 한글 이름으로 매핑하여 압축
+    if st.session_state['generated_results']:
+        zip_data = create_zip_buffer(st.session_state['generated_results'])
+        
+        st.download_button(
+            label="📦 전체 이미지 ZIP 다운로드 (Click to Download All)", 
+            data=zip_data, 
+            file_name="all_images.zip", 
+            mime="application/zip", 
+            use_container_width=True
+        )
 
     # ------------------------------------------------
     # 2. 개별 리스트 및 [재생성] 기능 (수정됨: 프롬프트 편집 반영)
@@ -1473,27 +1479,25 @@ if st.session_state['generated_results']:
                         with st.spinner(f"Scene {item['scene']} 다시 그리는 중..."):
                             client = genai.Client(api_key=api_key)
                             
-                            # [핵심 수정] 1. 프롬프트 가져오기 (사용자가 수정한 내용이 있으면 그것을 사용)
-                            # 텍스트 에어리어의 키를 통해 현재 상태 값을 가져옵니다.
+                            # 1. 프롬프트 가져오기
                             current_prompt_key = f"prompt_edit_{index}"
                             if current_prompt_key in st.session_state:
                                 final_prompt = st.session_state[current_prompt_key]
                             else:
                                 final_prompt = item['prompt']
 
-                            # [핵심 수정] 2. generate_prompt(AI생성) 단계를 건너뛰고 바로 이미지 생성
-                            # 사용자가 수정한 프롬프트를 반영하기 위함
-                            
+                            # [수정 핵심] 재생성 시에도 파일 시스템에는 영문 이름(safe filename)을 사용
+                            safe_filename = os.path.basename(item['path']) 
+
                             new_path = generate_image(
-                                client, final_prompt, item['filename'], 
+                                client, final_prompt, safe_filename,  # <-- 여기서 safe_filename 사용
                                 IMAGE_OUTPUT_DIR, SELECTED_IMAGE_MODEL,
                                 TARGET_RATIO 
                             )
                             
                             if new_path and "ERROR_DETAILS" not in new_path:
-                                # 3. 결과 업데이트
                                 st.session_state['generated_results'][index]['path'] = new_path
-                                st.session_state['generated_results'][index]['prompt'] = final_prompt # 프롬프트도 최신 상태 유지
+                                st.session_state['generated_results'][index]['prompt'] = final_prompt
                                 st.success("이미지가 변경되었습니다!")
                                 time.sleep(0.5)
                                 st.rerun()
