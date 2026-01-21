@@ -825,32 +825,53 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
 def generate_image(client, prompt, filename, output_dir, selected_model_name, target_ratio="16:9"):
     full_path = os.path.join(output_dir, filename)
     
-    max_retries = 3 # [수정] 재시도 횟수 5 -> 3으로 감소 (빠른 실패 확인)
+    max_retries = 3 
     
     last_error_msg = "알 수 없는 오류" 
 
+    safety_settings = [
+        types.SafetySetting(
+            category="HARM_CATEGORY_DANGEROUS_CONTENT",
+            threshold="BLOCK_ONLY_HIGH"
+        ),
+        types.SafetySetting(
+            category="HARM_CATEGORY_HARASSMENT",
+            threshold="BLOCK_ONLY_HIGH"
+        ),
+        types.SafetySetting(
+            category="HARM_CATEGORY_HATE_SPEECH",
+            threshold="BLOCK_ONLY_HIGH"
+        ),
+        types.SafetySetting(
+            category="HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            threshold="BLOCK_ONLY_HIGH"
+        ),
+    ]
+
     for attempt in range(1, max_retries + 1):
         try:
-            # [핵심 수정] 텍스트 생성용 generate_content 대신 이미지 전용 generate_images 사용
-            # [수정] config를 types.GenerateImageConfig 대신 딕셔너리로 직접 전달 (호환성 해결)
-            response = client.models.generate_images(
+            # [원복 & 수정] generate_content 사용 (사용자 요청 모델명 유지)
+            response = client.models.generate_content(
                 model=selected_model_name,
-                prompt=prompt,
-                config={
-                    'aspect_ratio': target_ratio,
-                    'number_of_images': 1,
-                    # 'safety_filter_level': 'block_some' # 필요시 추가
-                }
+                contents=[prompt],
+                config=types.GenerateContentConfig(
+                    image_config=types.ImageConfig(aspect_ratio=target_ratio), 
+                    safety_settings=safety_settings 
+                )
             )
             
-            # [핵심 수정] 응답 처리 방식 변경 (parts.inline_data -> generated_images)
-            if response.generated_images:
-                img_bytes = response.generated_images[0].image.image_bytes
-                image = Image.open(BytesIO(img_bytes))
-                image.save(full_path)
-                return full_path
-            
-            last_error_msg = "이미지 데이터 없음 (Blocked by Safety Filter?)"
+            if response.parts:
+                for part in response.parts:
+                    if part.inline_data:
+                        img_data = part.inline_data.data
+                        image = Image.open(BytesIO(img_data))
+                        image.save(full_path)
+                        return full_path
+                    # [핵심 수정] 모델이 이미지를 안 주고 '텍스트(거절)'로 응답했을 때 멈춤 방지
+                    elif part.text:
+                         return f"ERROR_DETAILS: 모델이 이미지를 생성하지 않고 텍스트를 반환했습니다 (Safety/Policy Refusal): {part.text[:200]}..."
+
+            last_error_msg = "이미지 데이터 없음 (Blocked by Safety Filter or No Output)"
             time.sleep(1) 
             
         except Exception as e:
@@ -858,11 +879,9 @@ def generate_image(client, prompt, filename, output_dir, selected_model_name, ta
             last_error_msg = error_msg 
             
             if "429" in error_msg or "ResourceExhausted" in error_msg:
-                # API 제한 시 대기
                 wait_time = (1 * attempt) + random.uniform(0.1, 0.5) 
                 time.sleep(wait_time)
             else:
-                # 그 외 에러는 즉시 중단하지 않고 짧게 대기 후 재시도
                 time.sleep(1) 
             
     return f"ERROR_DETAILS: {last_error_msg}"
@@ -893,6 +912,7 @@ with st.sidebar:
     st.subheader("🖼️ 이미지 모델 선택")
     model_choice = st.radio("사용할 AI 모델:", ("Premium (Gemini 3 Pro)", "Fast (Gemini-2.5-pro)"), index=0)
     
+    # [원복] 사용자가 원하던 그 모델명 그대로 유지
     if "Gemini 3 Pro" in model_choice:
         SELECTED_IMAGE_MODEL = "gemini-3-pro-image-preview" 
     else:
