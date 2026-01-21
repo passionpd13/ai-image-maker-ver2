@@ -1259,42 +1259,42 @@ if start_btn:
         
         client = genai.Client(api_key=api_key)
         
-        # [NEW] 상태 표시 컨테이너 및 로그 영역
-        # 사용자의 요청: 별도의 로그 박스가 아니라 st.status 내부에서 해결
+        # [수정됨] 1. 진행바를 상태창 밖으로 뺍니다 (가시성 확보)
+        progress_text = st.empty()
+        progress_bar = st.progress(0)
+        
+        # 2. 상태창 생성
         status_box = st.status("🚀 작업을 시작합니다...", expanded=True)
         
-        # status_box 컨텍스트 내부에서 UI 구성
+        # 3. 로그 영역 생성 (상태창 내부)
         with status_box:
-            st.write("작업 대기 중...") # 초기 메시지
-            progress_bar = st.progress(0)
-            # [핵심] 고정된 높이의 로그 영역 생성 (초기값 빈 상태)
             log_placeholder = st.empty() 
 
-        # 로그 출력 헬퍼 함수 (status_box 내부의 placeholder를 업데이트)
         def add_log(message):
             timestamp = datetime.datetime.now().strftime("%H:%M:%S")
             log_msg = f"[{timestamp}] {message}"
             st.session_state['log_history'].append(log_msg)
-            
-            # 최신 로그가 맨 위로 오게 할지, 아래로 쌓을지 결정 (여기선 아래로 쌓임)
             full_log = "\n".join(st.session_state['log_history'])
-            
-            # text_area를 사용하여 스크롤 가능한 고정 영역 구현
             log_placeholder.text_area(
                 label="실시간 상세 로그", 
                 value=full_log, 
                 height=200, 
                 disabled=True,
-                key=f"log_view_{len(st.session_state['log_history'])}" # 키를 계속 바꿔서 강제 리프레시
+                key=f"log_view_{len(st.session_state['log_history'])}"
             )
 
         add_log("작업 초기화 완료.")
         
+        # ----------------------------------------------------
         # 1. 대본 분할
+        # ----------------------------------------------------
+        progress_text.text("✂️ 대본 분할 중...") # 텍스트 업데이트
         status_box.write(f"✂️ 대본 분할 중...")
         add_log("대본 분할 시작...")
+        
         chunks = split_script_by_time(script_input, chars_per_chunk=chars_limit)
         total_scenes = len(chunks)
+        
         status_box.write(f"✅ {total_scenes}개 장면으로 분할 완료.")
         add_log(f"대본 분할 완료: 총 {total_scenes}개 씬.")
         
@@ -1302,7 +1302,10 @@ if start_btn:
         if not current_video_title:
             current_video_title = "전반적인 대본 분위기에 어울리는 배경 (Context based on the script)"
 
+        # ----------------------------------------------------
         # 2. 프롬프트 작성 (진행률 0% ~ 20%)
+        # ----------------------------------------------------
+        progress_text.text(f"📝 프롬프트 생성 중... (0% -> 20%)")
         status_box.write(f"📝 프롬프트 생성 (gemini-2.5-pro) - 모드: {SELECTED_GENRE_MODE} / 비율: {TARGET_RATIO}...") 
         add_log(f"프롬프트 생성 시작 (병렬 처리)...")
         
@@ -1329,7 +1332,8 @@ if start_btn:
                 prompts.append(result)
                 
                 completed_prompts += 1
-                # [NEW] 프롬프트 진행률: 전체의 20% 배정
+                
+                # [수정됨] 진행바 업데이트 (0.0 ~ 0.2 구간)
                 current_progress = (completed_prompts / total_scenes) * 0.2
                 progress_bar.progress(current_progress)
                 
@@ -1339,7 +1343,10 @@ if start_btn:
         prompts.sort(key=lambda x: x[0])
         add_log("모든 프롬프트 작성 완료. 이미지 생성 준비 중...")
         
+        # ----------------------------------------------------
         # 3. 이미지 생성 (진행률 20% ~ 100%)
+        # ----------------------------------------------------
+        progress_text.text(f"🎨 이미지 생성 중... (20% -> 100%)")
         status_box.write(f"🎨 이미지 생성 ({SELECTED_IMAGE_MODEL})... (API 보호를 위해 천천히 진행됩니다)")
         results = []
         
@@ -1349,9 +1356,6 @@ if start_btn:
                 idx = s_num - 1
                 orig_text = chunks[idx]
                 fname = make_filename(s_num, orig_text)
-                
-                # 로그에 시작 알림 (스레드 제출 전)
-                # add_log(f"🎨 [Scene {s_num:02d}] 이미지 생성 대기열 등록...")
                 
                 time.sleep(0.1) 
                 
@@ -1386,17 +1390,23 @@ if start_btn:
                     error_reason = result.replace("ERROR_DETAILS:", "") if result else "원인 불명 (None 반환)"
                     st.error(f"🚨 Scene {s_num} 실패!\n이유: {error_reason}")
                     add_log(f"❌ [Scene {s_num:02d}] 이미지 생성 실패: {error_reason}")
-                    st.caption(f"문제의 파일명: {fname}")
-
+                
                 completed_imgs += 1
-                # [NEW] 이미지 진행률: 20%에서 시작하여 나머지 80% 채움
-                current_progress = 0.2 + ((completed_imgs / total_scenes) * 0.8)
+                
+                # [수정됨] 진행바 업데이트 (0.2 ~ 1.0 구간)
+                base_progress = 0.2
+                remain_progress = 0.8
+                current_progress = base_progress + ((completed_imgs / total_scenes) * remain_progress)
+                
                 if current_progress > 1.0: current_progress = 1.0
                 progress_bar.progress(current_progress)
         
         results.sort(key=lambda x: x['scene'])
         st.session_state['generated_results'] = results
         
+        # 완료 처리
+        progress_bar.progress(1.0) # 100% 확정
+        progress_text.text("🎉 작업 완료!")
         add_log("🎉 모든 작업이 완료되었습니다!")
         status_box.update(label="✅ 모든 작업 완료!", state="complete", expanded=False)
         st.session_state['is_processing'] = False
