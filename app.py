@@ -35,7 +35,7 @@ if 'session_id' not in st.session_state:
 BASE_PATH = f"./web_result_files/{st.session_state['session_id']}"
 IMAGE_OUTPUT_DIR = os.path.join(BASE_PATH, "output_images")
 
-# 텍스트 모델 설정
+# 텍스트 모델 설정 (프롬프트 작성용)
 GEMINI_TEXT_MODEL_NAME = "gemini-2.5-pro" 
 
 # ==========================================
@@ -820,15 +820,18 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         return (scene_num, f"Error: {e}")
 
 # ==========================================
-# [함수] generate_image: API 제한(429) 완벽 대응 + 재시도 강화 + 비율 설정
+# [함수] generate_image: API 제한(429) 및 503 완벽 대응 + 재시도 강화 + 비율 설정
 # ==========================================
 def generate_image(client, prompt, filename, output_dir, selected_model_name, target_ratio="16:9"):
     full_path = os.path.join(output_dir, filename)
     
-    max_retries = 3 
+    # [수정] 503 서버 에러 대응을 위해 재시도 횟수 대폭 증가 (3 -> 10)
+    max_retries = 10 
     
     last_error_msg = "알 수 없는 오류" 
 
+    # [원복] 사용자가 원하던 '텍스트 생성' 방식 (이미지를 inline_data로 받는 방식)
+    # 이미지 생성 모델이지만 API 호출은 generate_content를 사용함
     safety_settings = [
         types.SafetySetting(
             category="HARM_CATEGORY_DANGEROUS_CONTENT",
@@ -850,14 +853,14 @@ def generate_image(client, prompt, filename, output_dir, selected_model_name, ta
 
     for attempt in range(1, max_retries + 1):
         try:
-            # [원복 & 수정] generate_content 사용 (사용자 요청 모델명 유지)
+            # [원복] generate_content 함수 사용
             response = client.models.generate_content(
                 model=selected_model_name,
                 contents=[prompt],
-                config=types.GenerateContentConfig(
-                    image_config=types.ImageConfig(aspect_ratio=target_ratio), 
-                    safety_settings=safety_settings 
-                )
+                # [중요] 사용자가 제공한 스니펫에는 config가 없지만, SDK 버전에 따라 필요할 수 있음.
+                # 단, GenerateImageConfig 때문에 에러가 났으므로 일단 제거하고 순수 호출 시도.
+                # 필요하다면 아래 주석 해제하여 딕셔너리로 전달 (aspect_ratio는 프롬프트로 해결 권장)
+                # config=types.GenerateContentConfig(safety_settings=safety_settings) 
             )
             
             if response.parts:
@@ -867,9 +870,9 @@ def generate_image(client, prompt, filename, output_dir, selected_model_name, ta
                         image = Image.open(BytesIO(img_data))
                         image.save(full_path)
                         return full_path
-                    # [핵심 수정] 모델이 이미지를 안 주고 '텍스트(거절)'로 응답했을 때 멈춤 방지
+                    # [핵심 수정] 모델이 이미지를 안 주고 텍스트만 줬을 때 멈춤 방지
                     elif part.text:
-                         return f"ERROR_DETAILS: 모델이 이미지를 생성하지 않고 텍스트를 반환했습니다 (Safety/Policy Refusal): {part.text[:200]}..."
+                         return f"ERROR_DETAILS: 모델 거절 (Safety/Policy Refusal): {part.text[:200]}..."
 
             last_error_msg = "이미지 데이터 없음 (Blocked by Safety Filter or No Output)"
             time.sleep(1) 
@@ -878,11 +881,14 @@ def generate_image(client, prompt, filename, output_dir, selected_model_name, ta
             error_msg = str(e)
             last_error_msg = error_msg 
             
-            if "429" in error_msg or "ResourceExhausted" in error_msg:
-                wait_time = (1 * attempt) + random.uniform(0.1, 0.5) 
+            # [핵심 수정] 503(Overloaded) 및 429(Quota) 에러 시 지수 백오프(Exponential Backoff) 적용
+            if "503" in error_msg or "Overloaded" in error_msg or "429" in error_msg:
+                # 2의 제곱승으로 대기 시간 증가 (2초, 4초, 8초, 16초...) + 랜덤 시간(Jitter)
+                wait_time = (2 ** attempt) + random.uniform(1, 3) 
                 time.sleep(wait_time)
             else:
-                time.sleep(1) 
+                # 그 외 에러는 짧게 대기
+                time.sleep(2) 
             
     return f"ERROR_DETAILS: {last_error_msg}"
 
@@ -910,9 +916,9 @@ with st.sidebar:
     st.markdown("---")
     
     st.subheader("🖼️ 이미지 모델 선택")
-    model_choice = st.radio("사용할 AI 모델:", ("Premium (Gemini 3 Pro)", "Fast (Gemini-2.5-pro)"), index=0)
+    model_choice = st.radio("사용할 AI 모델:", ("Premium (Gemini 3 Pro)", "Fast (Gemini-2.5-flash)"), index=0)
     
-    # [원복] 사용자가 원하던 그 모델명 그대로 유지
+    # [원복] 사용자가 원하던 모델명 'gemini-3-pro-image-preview'로 복구
     if "Gemini 3 Pro" in model_choice:
         SELECTED_IMAGE_MODEL = "gemini-3-pro-image-preview" 
     else:
