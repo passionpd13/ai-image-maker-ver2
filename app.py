@@ -298,7 +298,7 @@ def create_zip_buffer(source_dir):
     return buffer
 
 # ==========================================
-# [함수] 2. 프롬프트 생성 (수정: gemini-2.5-pro 적용)
+# [수정됨] 2. 프롬프트 생성 (시스템 지침 분리 적용)
 # ==========================================
 def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, genre_mode="info", target_language="Korean"):
     scene_num = index + 1
@@ -318,7 +318,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         lang_guide = f"화면 속 글씨는 **무조건 '{target_language}'로 표기**하십시오."
         lang_example = ""
 
-    # 2. 장르별 프롬프트 분기
+    # 2. 장르별 프롬프트 분기 (기존 내용 100% 유지)
     if genre_mode == "history":
         full_instruction = f"""
     [역할]
@@ -460,7 +460,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
        - 대본에 있는 작은 지문 하나도 놓치지 말고 시각화하십시오.
        - "컵을 떨군다"는 대본이라면, 컵이 손에서 떠나 공중에 있는 순간과 튀어 오르는 물방울까지 묘사하십시오.
     4. **텍스트 처리:** {lang_guide} {lang_example}
-      
+    
     [작성 요구사항]
     - **분량:** 최소 7문장 이상으로 상세하게 묘사.
     - 절대 분활화면 연출하지 않는다. 전체 대본 내용에 어울리는 하나의 장면으로 묘사.
@@ -532,7 +532,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
 
     [핵심 비주얼 스타일 가이드 - 절대 준수]
     1. **캐릭터(Character):** - **얼굴이 둥근 하얀색 스틱맨(Round-headed white stickman)**을 사용하십시오.
-       - 하지만 선은 굵고 부드러우며, **그림자(Shading)**가 들어가 입체감이 느껴져야 합니다.
+       - 하지만 선은 굵고 부드러우며, **그림자(Shading)**가 들어가 입체감이 느껴지는 2d여야 합니다.
        - **의상:** 대본 상황에 맞는 현실적인 의상(정장, 군복, 잠옷, 작업복 등)을 스틱맨 위에 입혀 '캐릭터성'을 부여하십시오.
        - 얼굴이 크게 잘 보이게 연출. 장면도 잘 드러나게.
        
@@ -606,9 +606,9 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         """
 
     max_retries = 3
-    # [수정됨] 요청하신 대로 gemini-2.5-pro를 1순위로 설정
-    # 안정성을 위해 Flash를 2순위 백업으로 배치
-    target_models = ["gemini-2.5-pro", "gemini-2.5-flash"]
+    # [사용자 요청] gemini-2.5-pro 적용 (사용 가능 여부와 관계없이 코드상 유지)
+    # 혹시 작동하지 않는다면 gemini-1.5-pro 등으로 모델명을 변경해보세요.
+    target_models = ["gemini-2.5-pro", "gemini-2.5-flash"] 
 
     for attempt in range(1, max_retries + 1):
         for model_name in target_models:
@@ -616,12 +616,24 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
                 # Pro 모델 속도 제한(Rate Limit) 방지를 위해 대기 시간 조절
                 time.sleep(random.uniform(0.1, 0.3))
                 
+                # ================================================================
+                # [수정 핵심] system_instruction을 config에 넣고, contents엔 대본만 전달
+                # ================================================================
                 response = client.models.generate_content(
                     model=model_name,
-                    contents=full_instruction + f'\n\n[대본 내용]\n"{text_chunk}"',
+                    # contents는 오직 '입력 데이터'에 집중시킵니다.
+                    contents=f"""
+[지시사항]
+시스템 프롬프트(System Instruction)에 정의된 페르소나와 규칙을 완벽히 수행하여, 아래 [대본]에 맞는 이미지 생성 프롬프트를 작성하시오.
+
+[대본 내용]
+"{text_chunk}"
+""",
                     config=types.GenerateContentConfig(
                         temperature=0.75,
-                        max_output_tokens=1000, # 속도 최적화를 위해 토큰 수 제한
+                        max_output_tokens=1000, 
+                        # ★★★ 여기가 핵심입니다. 역할을 시스템 레벨로 주입합니다. ★★★
+                        system_instruction=full_instruction, 
                         safety_settings=[
                             types.SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_ONLY_HIGH"),
                             types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_ONLY_HIGH"),
@@ -1073,3 +1085,4 @@ if st.session_state['generated_results']:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
 
                 except: pass
+
