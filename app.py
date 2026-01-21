@@ -1361,16 +1361,21 @@ if start_btn:
                 else:
                     error_reason = result.replace("ERROR_DETAILS:", "") if result else "원인 불명 (None 반환)"
                     
-                    # [수정된 부분] API 한도 초과 에러 메시지 감지 및 친절한 안내
-                    if "RESOURCE_EXHAUSTED" in error_reason or "Quota exceeded" in error_reason:
-                        st.error(f"🚨 Scene {s_num} 실패! (API 한도 초과)")
-                        st.warning(
-                            "⚠️ **Google API 일일 할당량(Quota)이 초과되었습니다.**\n\n"
-                            "이 오류는 하루에 생성 가능한 이미지 횟수를 모두 소진했을 때 발생합니다.\n"
-                            "**해결 방법:**\n"
-                            "1. 내일 다시 시도해주세요.\n"
-                            "2. 혹은 다른 구글 계정의 API Key를 발급받아 교체해주세요."
-                        )
+                    # [UPDATE] 상세 에러 가이드 추가
+                    if "429" in error_reason or "ResourceExhausted" in error_reason or "Quota" in error_reason:
+                        st.error(f"🚨 Scene {s_num} 생성 실패! (일일 사용량 초과)")
+                        st.warning("""
+                            ⚠️ **구글 API 하루 사용량이 초과되었습니다 (429 Error).**
+                            - 무료 API 키는 하루에 생성할 수 있는 이미지 횟수에 제한이 있습니다.
+                            - **해결책:** 내일 다시 시도하거나, 다른 구글 계정의 API Key를 사용하세요.
+                        """)
+                    elif "503" in error_reason or "ServiceUnavailable" in error_reason or "Overloaded" in error_reason:
+                        st.error(f"🚨 Scene {s_num} 생성 실패! (서버 과부하)")
+                        st.warning("""
+                            ⚠️ **구글 서버가 현재 매우 바쁩니다 (503 Error).**
+                            - 사용자가 몰려 일시적으로 처리가 불가능한 상태입니다.
+                            - **해결책:** 잠시 후 '이 장면만 이미지 다시 생성' 버튼을 눌러보세요.
+                        """)
                     else:
                         st.error(f"🚨 Scene {s_num} 실패!\n이유: {error_reason}")
                         
