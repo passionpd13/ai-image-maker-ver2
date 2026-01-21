@@ -8,6 +8,7 @@ import re
 import shutil
 import zipfile
 import datetime
+import uuid  # [수정] 고유 세션 ID 생성을 위한 모듈 추가
 from io import BytesIO
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from PIL import Image
@@ -23,6 +24,10 @@ st.set_page_config(
     page_icon="🎬",
     initial_sidebar_state="expanded"
 )
+
+# [수정] 사용자별 고유 세션 ID 생성 (서버 동시 접속 시 파일 충돌 방지)
+if 'user_session_id' not in st.session_state:
+    st.session_state['user_session_id'] = str(uuid.uuid4())
 
 # ==========================================
 # [디자인] 다크모드 & Expander/버튼/Status 가독성 최종 수정 (CSS)
@@ -45,7 +50,7 @@ st.markdown("""
     .st-emotion-cache-1lsfsc6.e1x5aka44 {
         background-color: #262730 !important;
     }
-    
+     
     section[data-testid="stSidebar"] * {
         color: #FFFFFF !important;
     }
@@ -194,9 +199,10 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# 파일 저장 경로 설정
+# [수정] 파일 저장 경로 설정 (사용자별 ID를 포함하여 동적 할당)
 BASE_PATH = "./web_result_files"
-IMAGE_OUTPUT_DIR = os.path.join(BASE_PATH, "output_images")
+# IMAGE_OUTPUT_DIR = os.path.join(BASE_PATH, "output_images") # <-- 기존 고정 경로 (문제 원인)
+# 사용자별 경로는 아래 로직에서 동적으로 생성합니다.
 
 # 텍스트 모델 설정
 GEMINI_TEXT_MODEL_NAME = "gemini-2.5-pro" 
@@ -205,16 +211,16 @@ GEMINI_TEXT_MODEL_NAME = "gemini-2.5-pro"
 # [함수] 3. 이미지 생성 관련 로직
 # ==========================================
 
-def init_folders():
-    for path in [IMAGE_OUTPUT_DIR]:
-        if not os.path.exists(path):
-            os.makedirs(path, exist_ok=True)
+# [수정] 폴더 초기화 함수가 특정 경로를 인자로 받도록 수정
+def init_folders(target_path):
+    if not os.path.exists(target_path):
+        os.makedirs(target_path, exist_ok=True)
 
 def split_script_by_time(script, chars_per_chunk=100):
     temp_script = script.replace(".", ".|").replace("?", "?|").replace("!", "!|") \
                         .replace("。", "。|").replace("？", "？|").replace("！", "！|") \
                         .replace("\n", "\n|") 
-
+    
     temp_sentences = temp_script.split("|")
                               
     chunks = []
@@ -770,7 +776,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         - 대본에 있는 작은 지문 하나도 놓치지 말고 시각화하십시오.
         - "컵을 떨군다"는 대본이라면, 컵이 손에서 떠나 공중에 있는 순간과 튀어 오르는 물방울까지 묘사하십시오.
     4. **텍스트 처리:** {lang_guide} {lang_example}
-      
+       
     [작성 요구사항]
     - **분량:** 최소 7문장 이상으로 상세하게 묘사.
     - 절대 분활화면 연출하지 않는다. 전체 대본 내용에 어울리는 하나의 장면으로 묘사.
@@ -816,6 +822,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
 # [함수] generate_image: API 제한(429) 완벽 대응 + 재시도 강화 + 비율 설정
 # ==========================================
 def generate_image(client, prompt, filename, output_dir, selected_model_name, target_ratio="16:9"):
+    # [수정] output_dir이 이미 사용자 고유 경로로 전달됨
     full_path = os.path.join(output_dir, filename)
     
     max_retries = 5
@@ -1240,6 +1247,9 @@ if 'log_history' not in st.session_state:
 
 start_btn = st.button("🚀 이미지 생성 시작", type="primary", width="stretch", on_click=clear_generated_results)
 
+# [수정] 사용자별 출력 경로 생성 (세션 ID 사용)
+USER_IMAGE_OUTPUT_DIR = os.path.join(BASE_PATH, st.session_state['user_session_id'])
+
 if start_btn:
     if not api_key:
         st.error("⚠️ Google API Key를 입력해주세요.")
@@ -1250,12 +1260,13 @@ if start_btn:
         st.session_state['is_processing'] = True
         st.session_state['log_history'] = [] # 로그 초기화
         
-        if os.path.exists(IMAGE_OUTPUT_DIR):
+        # [수정] 사용자 전용 폴더 초기화 (다른 사람 폴더 건드리지 않음)
+        if os.path.exists(USER_IMAGE_OUTPUT_DIR):
             try:
-                shutil.rmtree(IMAGE_OUTPUT_DIR)
+                shutil.rmtree(USER_IMAGE_OUTPUT_DIR)
             except:
                 pass
-        init_folders() 
+        init_folders(USER_IMAGE_OUTPUT_DIR) 
         
         client = genai.Client(api_key=api_key)
         
@@ -1283,7 +1294,7 @@ if start_btn:
                 key=f"log_view_{len(st.session_state['log_history'])}"
             )
 
-        add_log("작업 초기화 완료.")
+        add_log(f"작업 초기화 완료. (Session: {st.session_state['user_session_id']})")
         
         # ----------------------------------------------------
         # 1. 대본 분할
@@ -1364,7 +1375,7 @@ if start_btn:
                     client, 
                     prompt_text, 
                     fname, 
-                    IMAGE_OUTPUT_DIR, 
+                    USER_IMAGE_OUTPUT_DIR, # [수정] 사용자 전용 경로 전달
                     SELECTED_IMAGE_MODEL,
                     TARGET_RATIO 
                 )
@@ -1383,7 +1394,8 @@ if start_btn:
                         "path": path,
                         "filename": fname,
                         "script": orig_text,
-                        "prompt": p_text
+                        "prompt": p_text,
+                        "output_dir": USER_IMAGE_OUTPUT_DIR # [수정] 결과에 경로 저장
                     })
                     add_log(f"✅ [Scene {s_num:02d}] 이미지 생성 성공")
                 else:
@@ -1418,13 +1430,17 @@ if st.session_state['generated_results']:
     st.divider()
     st.header(f"📸 결과물 ({len(st.session_state['generated_results'])}장)")
     
+    # [수정] 결과물이 있는 경우 경로 확인 (첫 번째 결과물의 경로 사용)
+    current_output_dir = st.session_state['generated_results'][0].get('output_dir', USER_IMAGE_OUTPUT_DIR)
+
     # ------------------------------------------------
     # 1. 일괄 작업 버튼 영역 (수정됨: 꽉 차게)
     # ------------------------------------------------
     st.write("---")
     st.subheader("⚡ 원클릭 일괄 다운로드")
     
-    zip_data = create_zip_buffer(IMAGE_OUTPUT_DIR)
+    # [수정] 사용자 전용 경로에서 zip 파일 생성
+    zip_data = create_zip_buffer(current_output_dir)
     # [수정] 전체 너비를 사용하여 버튼을 길게 배치
     st.download_button(
         label="📦 전체 이미지 ZIP 다운로드 (Click to Download All)", 
@@ -1472,9 +1488,12 @@ if st.session_state['generated_results']:
                             # [핵심 수정] 2. generate_prompt(AI생성) 단계를 건너뛰고 바로 이미지 생성
                             # 사용자가 수정한 프롬프트를 반영하기 위함
                             
+                            # [수정] 재생성 시에도 사용자 전용 경로 사용
+                            item_dir = item.get('output_dir', USER_IMAGE_OUTPUT_DIR)
+                            
                             new_path = generate_image(
                                 client, final_prompt, item['filename'], 
-                                IMAGE_OUTPUT_DIR, SELECTED_IMAGE_MODEL,
+                                item_dir, SELECTED_IMAGE_MODEL,
                                 TARGET_RATIO 
                             )
                             
