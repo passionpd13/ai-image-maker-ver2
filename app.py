@@ -774,7 +774,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         - 대본에 있는 작은 지문 하나도 놓치지 말고 시각화하십시오.
         - "컵을 떨군다"는 대본이라면, 컵이 손에서 떠나 공중에 있는 순간과 튀어 오르는 물방울까지 묘사하십시오.
     4. **텍스트 처리:** {lang_guide} {lang_example}
-       
+        
     [작성 요구사항]
     - **분량:** 최소 7문장 이상으로 상세하게 묘사.
     - 절대 분활화면 연출하지 않는다. 전체 대본 내용에 어울리는 하나의 장면으로 묘사.
@@ -1340,7 +1340,7 @@ if start_btn:
                     current_video_title, 
                     SELECTED_GENRE_MODE,
                     target_language,
-                    LAYOUT_KOREAN       
+                    LAYOUT_KOREAN        
                 ))
             
             completed_prompts = 0
@@ -1476,8 +1476,11 @@ if st.session_state['generated_results']:
                 except: 
                     st.error("이미지 없음")
                 
+                # [오류 해결 핵심] Key에 사용자 Session ID를 포함하여 중복 방지
+                unique_regen_key = f"regen_img_{st.session_state['user_session_id']}_{index}"
+
                 # [NEW] 이미지 개별 재생성 버튼
-                if st.button(f"🔄 이 장면만 이미지 다시 생성", key=f"regen_img_{index}", use_container_width=True):
+                if st.button(f"🔄 이 장면만 이미지 다시 생성", key=unique_regen_key, use_container_width=True):
                     if not api_key:
                         st.error("API Key가 필요합니다.")
                     else:
@@ -1486,7 +1489,9 @@ if st.session_state['generated_results']:
                             
                             # [핵심 수정] 1. 프롬프트 가져오기 (사용자가 수정한 내용이 있으면 그것을 사용)
                             # 텍스트 에어리어의 키를 통해 현재 상태 값을 가져옵니다.
-                            current_prompt_key = f"prompt_edit_{index}"
+                            # [오류 해결 핵심] Key에 사용자 Session ID 포함
+                            current_prompt_key = f"prompt_edit_{st.session_state['user_session_id']}_{index}"
+                            
                             if current_prompt_key in st.session_state:
                                 final_prompt = st.session_state[current_prompt_key]
                             else:
@@ -1527,8 +1532,8 @@ if st.session_state['generated_results']:
                 # [수정됨] 프롬프트 확인 및 수정 영역
                 with st.expander("프롬프트 확인 및 수정 (여기서 수정 후 재생성 가능)", expanded=False):
                     # st.text_area를 사용하여 수정 가능하게 변경
-                    # key를 부여하여 상태를 관리합니다.
-                    prompt_key = f"prompt_edit_{index}"
+                    # [오류 해결 핵심] Key에 사용자 Session ID를 포함하여 절대 중복되지 않게 함
+                    prompt_key = f"prompt_edit_{st.session_state['user_session_id']}_{index}"
                     
                     # 초기값 설정 (세션 스테이트에 아직 없다면)
                     if prompt_key not in st.session_state:
@@ -1546,5 +1551,7 @@ if st.session_state['generated_results']:
 
                 try:
                     with open(item['path'], "rb") as file:
-                        st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
+                        # [오류 해결 핵심] 다운로드 버튼 Key에도 Session ID 포함
+                        unique_down_key = f"btn_down_{st.session_state['user_session_id']}_{item['scene']}"
+                        st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=unique_down_key)
                 except: pass
