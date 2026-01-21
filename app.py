@@ -825,68 +825,45 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
 def generate_image(client, prompt, filename, output_dir, selected_model_name, target_ratio="16:9"):
     full_path = os.path.join(output_dir, filename)
     
-    max_retries = 5
+    max_retries = 3 # [수정] 재시도 횟수 5 -> 3으로 감소 (빠른 실패 확인)
     
     last_error_msg = "알 수 없는 오류" 
 
-    safety_settings = [
-        types.SafetySetting(
-            category="HARM_CATEGORY_DANGEROUS_CONTENT",
-            threshold="BLOCK_ONLY_HIGH"
-        ),
-        types.SafetySetting(
-            category="HARM_CATEGORY_HARASSMENT",
-            threshold="BLOCK_ONLY_HIGH"
-        ),
-        types.SafetySetting(
-            category="HARM_CATEGORY_HATE_SPEECH",
-            threshold="BLOCK_ONLY_HIGH"
-        ),
-        types.SafetySetting(
-            category="HARM_CATEGORY_SEXUALLY_EXPLICIT",
-            threshold="BLOCK_ONLY_HIGH"
-        ),
-    ]
-
     for attempt in range(1, max_retries + 1):
         try:
-            response = client.models.generate_content(
+            # [핵심 수정] 텍스트 생성용 generate_content 대신 이미지 전용 generate_images 사용
+            response = client.models.generate_images(
                 model=selected_model_name,
-                contents=[prompt],
-                config=types.GenerateContentConfig(
-                    image_config=types.ImageConfig(aspect_ratio=target_ratio), 
-                    safety_settings=safety_settings 
+                prompt=prompt,
+                config=types.GenerateImageConfig(
+                    aspect_ratio=target_ratio,
+                    number_of_images=1
+                    # safety_settings 제거 (이미지 생성 config와 호환성 문제 방지)
                 )
             )
             
-            if response.parts:
-                for part in response.parts:
-                    if part.inline_data:
-                        img_data = part.inline_data.data
-                        image = Image.open(BytesIO(img_data))
-                        image.save(full_path)
-                        return full_path
-                    # [수정] 모델이 이미지를 안 주고 '텍스트'로 뭐라고 하는지 체크 (거절 메시지 등)
-                    elif part.text:
-                         return f"ERROR_DETAILS: 모델 응답이 이미지가 아닙니다 (Text): {part.text[:100]}..."
-
-            last_error_msg = "이미지 데이터 없음 (Blocked by Safety Filter or No Output)"
-            # print(f"⚠️ [시도 {attempt}/{max_retries}] {last_error_msg} ({filename})") # UI 로그로 대체
-            time.sleep(1) # [수정] 대기 시간 2초 -> 1초로 단축
+            # [핵심 수정] 응답 처리 방식 변경 (parts.inline_data -> generated_images)
+            if response.generated_images:
+                img_bytes = response.generated_images[0].image.image_bytes
+                image = Image.open(BytesIO(img_bytes))
+                image.save(full_path)
+                return full_path
+            
+            last_error_msg = "이미지 데이터 없음 (Blocked by Safety Filter?)"
+            time.sleep(1) 
             
         except Exception as e:
             error_msg = str(e)
             last_error_msg = error_msg 
             
             if "429" in error_msg or "ResourceExhausted" in error_msg:
-                # [수정] API 제한 시 대기 시간 단축 (빠른 재시도)
+                # API 제한 시 대기
                 wait_time = (1 * attempt) + random.uniform(0.1, 0.5) 
                 time.sleep(wait_time)
             else:
-                # print(f"⚠️ [에러] {error_msg} ({filename}) - 5초 대기")
-                time.sleep(2) # [수정] 일반 에러 대기 시간 5초 -> 2초로 단축
+                # 그 외 에러는 즉시 중단하지 않고 짧게 대기 후 재시도
+                time.sleep(1) 
             
-    # print(f"❌ [최종 실패] {filename}")
     return f"ERROR_DETAILS: {last_error_msg}"
 
 # [수정] ZIP 생성 함수: results_list를 받아 한글 이름으로 매핑하여 압축
