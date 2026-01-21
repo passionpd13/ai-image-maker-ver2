@@ -763,49 +763,46 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         full_instruction = f"""
     {common_header}
     [역할]
-    당신은 **작화 퀄리티가 극도로 높은 '대작 극장판 애니메이션'의 총괄 감독이자 촬영 감독**입니다.
-    단순한 삽화가 아니라, **영화적인 카메라 워킹과 다채로운 장소 전환**을 통해 대본의 긴장감을 시각화해야 합니다.
+    당신은 **대작 극장판 귀여운 지브리 애니메이션의 '총괄 촬영 감독(Cinematographer)'**입니다.
+    대본의 내용을 **'영화적인 카메라 워킹'과 '다양한 장소', '역동적인 인물 연기'**로 재해석하여 시각화해야 합니다.
+    단순히 앉아서 말하는 장면은 지양하고, **화면을 넓고 입체적으로 활용**하십시오.
 
     [전체 영상 주제] "{video_title}"
     [스타일 가이드] {style_instruction}
 
     [❌ 절대 금지 키워드 (Negative Constraints)]
-    - **Photorealistic, Live Action, Real Photo, 8k Photography, 3D Render, Unreal Engine.**
-    - 실사, 사진, 3D 느낌 금지. 무조건 **2D 셀 애니메이션(Cell Animation)** 느낌 유지.
-    - **[중요 금지]** 특별한 이유 없이 **'책상에 앉아있는 구도', '정적인 회의실'** 장면을 반복해서 그리지 마십시오.
+    - **Photorealistic, Live Action, Real Photo, 3D Render.** (실사, 사진, 3D 느낌 금지)
 
     [필수 연출 지침]
-    1. **[핵심] 다이내믹한 카메라 앵글 (Cinematic Angles):**
-        - 단조로운 정면 샷(Front view)이나 아이 레벨(Eye-level)을 피하십시오.
-        - **로우 앵글(Low Angle):** 캐릭터를 웅장하거나 위압적으로 보이게.
-        - **하이 앵글(High Angle):** 상황의 심각성이나 고립감을 표현.
-        - **더치 앵글(Dutch Angle):** 불안감이나 혼란스러운 상황 연출.
-        - **광각 렌즈(Wide Lens):** 캐릭터와 배경을 동시에 넓게 담아 공간감을 극대화.
+    1. **[핵심] 다이내믹한 카메라 앵글 (Cinematic Camera Angles):**
+        - **평범한 아이 레벨(Eye-level) 금지.** 대본의 감정에 맞춰 앵글을 비트십시오.
+        - **로우 앵글(Low Angle):** 캐릭터의 위엄, 공포, 압도감을 표현하거나 웅장한 배경을 강조.
+        - **하이 앵글(High Angle):** 캐릭터의 고립감, 초라함, 혹은 상황의 전모를 보여줌.
+        - **광각(Wide Lens) & 딥 포커스:** 인물만 크게 잡지 말고, **배경의 깊이감(Depth)**이 느껴지도록 공간을 넓게 잡으십시오.
 
-    2. **[핵심] 장소의 다양성 (Diverse Locations):**
-        - 대본이 추상적이더라도 좁은 방 안이나 책상 위로 한정 짓지 마십시오.
-        - **상상력을 발휘하여 장소를 확장하십시오.** (예: 경제 위기 -> 무너지는 증권가 거리, 폭풍우 치는 바다 위 배, 거대한 시계탑 내부, 꽉 막힌 도심 한복판 등)
-        - 배경은 **'지브리(Ghibli)'나 '신카이 마코토' 스타일**처럼 밀도 높고 아름답게(High Detail Background) 묘사하십시오.
+    2. **[핵심] 장소와 공간의 확장 (Diverse Locations):**
+        - 대본이 추상적(예: '갈등', '고뇌')이라도, 이를 시각적으로 보여줄 수 있는 **'구체적인 장소'**를 설정하십시오.
+        - (예: 꽉 막힌 실내 대신 → **비 내리는 옥상, 노을 지는 교실 복도, 인파가 가득한 횡단보도, 웅장한 도서관, 바람 부는 언덕** 등)
+        - 배경 작화는 **지브리(Ghibli) 스타일의 고밀도 디테일(High Detail)**을 유지하십시오.
 
-    3. **[핵심] 역동적인 전신 연기 (Dynamic Full-Body Acting):**
-        - 캐릭터가 가만히 서서 말만 하게 하지 마십시오.
-        - **달리기, 넘어지기, 무언가를 집어 던지기, 하늘을 향해 손 뻗기** 등 **'동적인 포즈(Dynamic Pose)'**를 취해야 합니다.
-        - 머리카락과 옷자락이 바람에 날리는 등의 물리적 움직임을 포함하십시오.
+    3. **[핵심] 전신 연기와 역동적인 포즈 (Dynamic Full-Body Acting):**
+        - 캐릭터를 의자에 묶어두지 마십시오. **서 있거나(Standing), 걷거나, 뛰거나, 주저앉는 등** 온몸을 쓰는 연기를 지시하십시오.
+        - **감정의 시각화:** 화가 났다면 단순히 찡그린 얼굴뿐만 아니라, **주먹을 쥐거나, 벽을 치거나, 고개를 젖히는 등** 역동적인 제스처(Body Language)를 포함하십시오.
+        - 미세한 표정 변화(Micro-expressions)까지 구체적으로 묘사하여 감정을 극대화하십시오.
 
-    4. **작화 디테일 (High Detail 2D Art):**
-        - 선은 선명하고(Sharp Lines), 채색은 깊이감 있게(Rich Coloring).
-        - 흐릿한 배경(Blur)보다는 배경의 간판, 나뭇잎, 건물의 질감까지 집요하게 묘사하는 **고밀도 작화**를 추구하십시오.
+    4. **대본 충실도 및 사실적 연출 (Realistic Direction):**
+        - 그림체는 애니메이션이지만, **연출과 물리는 사실적(Realistic)**이어야 합니다.
+        - 대본의 상황을 정확히 묘사하되, 소품(Props)의 배치와 상태(깨진 유리, 흩날리는 서류, 쏟아진 커피 등)까지 디테일하게 묘사하여 현장감을 높이십시오.
 
     5. **텍스트 처리:** {lang_guide} {lang_example}
-        
+
     [작성 요구사항]
-    - **분량:** 최소 7문장 이상으로 상황과 배경, 카메라 각도를 상세하게 묘사.
+    - **분량:** 최소 7문장 이상으로 **카메라 각도, 캐릭터의 전신 포즈, 구체적인 배경**을 상세하게 서술.
     - 절대 분활화면 연출하지 않는다. 전체 대본 내용에 어울리는 하나의 완결된 장면(Cinematic Shot)으로 묘사.
-    - **[중요]** 프롬프트 시작은 반드시 **"Anime Style, Studio Ghibli Style, High Quality 2D Animation, Dynamic Angle"** 로 시작하도록 작성하십시오.
+    - **[중요]** 프롬프트 시작은 반드시 **"Anime Style, Studio Ghibli Style, High Quality 2D Animation, Cinematic Angle"** 로 시작하십시오.
 
     [임무]
-    대본을 분석하여 **'책상'을 벗어나**, 영화적인 앵글과 역동적인 장소가 돋보이는 **최상급 애니메이션 프롬프트**를 작성하십시오.
-    - "Dynamic angle, extreme perspective, detailed background, atmospheric lighting, emotional acting" 키워드가 반영되도록 하십시오.
+    대본을 분석하여 **'책상'을 벗어나**, 영화적인 앵글과 캐릭터의 생생한 감정이 느껴지는 **최상급 애니메이션 프롬프트**를 작성하십시오.
     - **한글**로만 출력하십시오.
         """
 
@@ -1578,4 +1575,5 @@ if st.session_state['generated_results']:
                     with open(item['path'], "rb") as file:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
                 except: pass
+
 
