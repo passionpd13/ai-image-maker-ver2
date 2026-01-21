@@ -191,17 +191,16 @@ st.markdown("""
 # 파일 저장 경로 설정
 BASE_PATH = "./web_result_files"
 IMAGE_OUTPUT_DIR = os.path.join(BASE_PATH, "output_images")
-# 오디오/비디오 경로 삭제됨
 
 # 텍스트 모델 설정
 GEMINI_TEXT_MODEL_NAME = "gemini-2.5-pro" 
 
 # ==========================================
-# [함수] 3. 이미지 생성 관련 로직 (기타 분석/대본 생성 함수 삭제됨)
+# [함수] 3. 이미지 생성 관련 로직
 # ==========================================
 
 def init_folders():
-    for path in [IMAGE_OUTPUT_DIR]: # 오디오/비디오 경로 삭제
+    for path in [IMAGE_OUTPUT_DIR]:
         if not os.path.exists(path):
             os.makedirs(path, exist_ok=True)
 
@@ -728,8 +727,13 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     2. **[필수 - 캐릭터] 투명/반투명 해골 (Translucent Skeleton)**:
         - **재질:** 겉은 매끄러운 투명 플라스틱/유리 재질이지만, **'내부의 뼈 구조(Internal Bone Structure)'**가 은은하고 디테일하게 비쳐 보여야 합니다. (단순한 투명 덩어리 X)
         - **눈(Eyes) - 가장 중요:** - 해골의 눈구멍이 비어있으면 절대 안 됩니다. 
-            - 반드시 **'선명한 하얀색 눈알(Bright White Eyeballs)'**을 끼워 넣으십시오.
-            - 눈알 위에는 **작은 검은색 동공(Small Black Pupils)**을 그려 넣어, **멍청하거나(Goofy) 놀란 표정**을 명확히 만드십시오.
+            - 반드시 **'선명하고 하얀 눈동자(Bright White Eyeballs)'**가 박혀 있어야 함. (검은색 작은 동공). 멍청하고 우스꽝스러운 표정 필수.[자세 및 연출]
+            - **자세(Pose):** 기본적으로 **'소파(Sofa)'나 '책상(Desk) 의자'에 앉아있는(Sitting)'** 모습 위주. (상황에 따라 서 있거나 춤추는 연출 가능).
+            - 거만하거나 힙(Hip)하게 걸터앉은 자세.
+        - [소품 및 배경]
+        - 가구: 벨벳 소파, 게이밍 의자, 고급 책상 등 가구의 디테일한 묘사.
+        - 소품: 대본 속 물건(돈, 음식, 기계)을 사실적으로 표현.
+        - 배경: 무조건 **'단색 핑크(Solid Pink)'** 유지.
 
     3. **[필수 - 자세 및 가구 (Pose & Furniture)]**:
         - **자세:** 해골은 공중에 떠 있는 것이 아니라, **'푹신한 소파(Sofa)', '고급 가죽 의자', '책상(Desk)'** 등에 **앉아 있는(Sitting)** 구도를 우선적으로 사용하십시오.
@@ -883,12 +887,8 @@ def create_zip_buffer(source_dir):
 with st.sidebar:
     st.header("⚙️ 환경 설정")
     
-    # 1. Google API Key 자동 로드
-    if "general" in st.secrets and "google_api_key" in st.secrets["general"]:
-        api_key = st.secrets["general"]["google_api_key"]
-        st.success("🔑 Google API Key가 로드되었습니다.")
-    else:
-        api_key = st.text_input("🔑 Google API Key", type="password", help="secrets.toml이 없으면 직접 입력하세요.")
+    # 1. Google API Key 직접 입력 (서버 로드 제거)
+    api_key = st.text_input("🔑 Google API Key", type="password", help="Google AI Studio에서 발급받은 키를 입력하세요.")
 
     st.markdown("---")
     
