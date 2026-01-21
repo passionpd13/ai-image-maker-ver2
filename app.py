@@ -7,6 +7,7 @@ import os
 import re
 import shutil
 import zipfile
+import datetime
 from io import BytesIO
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from PIL import Image
@@ -800,7 +801,7 @@ def generate_image(client, prompt, filename, output_dir, selected_model_name, ta
                         return full_path
             
             last_error_msg = "이미지 데이터 없음 (Blocked by Safety Filter?)"
-            print(f"⚠️ [시도 {attempt}/{max_retries}] {last_error_msg} ({filename})")
+            # print(f"⚠️ [시도 {attempt}/{max_retries}] {last_error_msg} ({filename})") # UI 로그로 대체
             time.sleep(2)
             
         except Exception as e:
@@ -809,13 +810,13 @@ def generate_image(client, prompt, filename, output_dir, selected_model_name, ta
             
             if "429" in error_msg or "ResourceExhausted" in error_msg:
                 wait_time = (2 * attempt) + random.uniform(0.5, 2.0)
-                print(f"🛑 [API 제한] {filename} - {wait_time:.1f}초 대기 후 재시도... (시도 {attempt})")
+                # print(f"🛑 [API 제한] {filename} - {wait_time:.1f}초 대기 후 재시도... (시도 {attempt})")
                 time.sleep(wait_time)
             else:
-                print(f"⚠️ [에러] {error_msg} ({filename}) - 5초 대기")
+                # print(f"⚠️ [에러] {error_msg} ({filename}) - 5초 대기")
                 time.sleep(5)
             
-    print(f"❌ [최종 실패] {filename}")
+    # print(f"❌ [최종 실패] {filename}")
     return f"ERROR_DETAILS: {last_error_msg}"
 
 def create_zip_buffer(source_dir):
@@ -1034,7 +1035,7 @@ with st.sidebar:
 # ==========================================
 # [UI] 메인 화면: 이미지 생성
 # ==========================================
-st.title("🎬 열정피디 AI 장면 생성기 (Pro)")
+st.title("🎬 AI 씬(장면) 생성기 (Pro)")
 st.caption(f"대본을 넣으면 장면별 이미지를 생성합니다. | 🎨 Model: {SELECTED_IMAGE_MODEL}")
 
 st.subheader("📌 전체 영상 테마(제목) 설정")
@@ -1150,6 +1151,10 @@ if 'is_processing' not in st.session_state:
 def clear_generated_results():
     st.session_state['generated_results'] = []
 
+# [NEW] 로그 및 히스토리 관리용
+if 'log_history' not in st.session_state:
+    st.session_state['log_history'] = []
+
 start_btn = st.button("🚀 이미지 생성 시작", type="primary", width="stretch", on_click=clear_generated_results)
 
 if start_btn:
@@ -1160,6 +1165,7 @@ if start_btn:
     else:
         st.session_state['generated_results'] = [] 
         st.session_state['is_processing'] = True
+        st.session_state['log_history'] = [] # 로그 초기화
         
         if os.path.exists(IMAGE_OUTPUT_DIR):
             try:
@@ -1170,19 +1176,38 @@ if start_btn:
         
         client = genai.Client(api_key=api_key)
         
-        status_box = st.status("작업 진행 중...", expanded=True)
+        # [NEW] 상태 표시 컨테이너 및 로그 영역
+        status_box = st.status("🚀 작업을 시작합니다...", expanded=True)
         progress_bar = st.progress(0)
+        log_area = st.empty() # 로그가 출력될 공간
+
+        # 로그 출력 함수 정의
+        def add_log(message):
+            timestamp = datetime.datetime.now().strftime("%H:%M:%S")
+            log_msg = f"[{timestamp}] {message}"
+            st.session_state['log_history'].append(log_msg)
+            # 최신 로그가 아래로 오도록 출력
+            log_text = "\n".join(st.session_state['log_history'])
+            log_area.code(log_text, language="log")
+
+        add_log("작업 초기화 완료.")
         
+        # 1. 대본 분할
         status_box.write(f"✂️ 대본 분할 중...")
+        add_log("대본 분할 시작...")
         chunks = split_script_by_time(script_input, chars_per_chunk=chars_limit)
         total_scenes = len(chunks)
         status_box.write(f"✅ {total_scenes}개 장면으로 분할 완료.")
+        add_log(f"대본 분할 완료: 총 {total_scenes}개 씬.")
         
         current_video_title = st.session_state.get('video_title', "").strip()
         if not current_video_title:
             current_video_title = "전반적인 대본 분위기에 어울리는 배경 (Context based on the script)"
 
+        # 2. 프롬프트 작성 (진행률 0% ~ 20%)
         status_box.write(f"📝 프롬프트 작성 중 ({GEMINI_TEXT_MODEL_NAME}) - 모드: {SELECTED_GENRE_MODE} / 비율: {TARGET_RATIO}...") 
+        add_log(f"프롬프트 생성 시작 (병렬 처리)...")
+        
         prompts = []
         with ThreadPoolExecutor(max_workers=10) as executor:
             futures = []
@@ -1200,12 +1225,23 @@ if start_btn:
                     LAYOUT_KOREAN      
                 ))
             
+            completed_prompts = 0
             for i, future in enumerate(as_completed(futures)):
-                prompts.append(future.result())
-                progress_bar.progress((i + 1) / (total_scenes * 2))
+                result = future.result()
+                prompts.append(result)
+                
+                completed_prompts += 1
+                # [NEW] 프롬프트 진행률: 전체의 20% 배정
+                current_progress = (completed_prompts / total_scenes) * 0.2
+                progress_bar.progress(current_progress)
+                
+                s_num = result[0]
+                add_log(f"📝 [Scene {s_num:02d}] 프롬프트 작성 완료")
         
         prompts.sort(key=lambda x: x[0])
+        add_log("모든 프롬프트 작성 완료. 이미지 생성 준비 중...")
         
+        # 3. 이미지 생성 (진행률 20% ~ 100%)
         status_box.write(f"🎨 이미지 생성 중 ({SELECTED_IMAGE_MODEL})... (API 보호를 위해 천천히 진행됩니다)")
         results = []
         
@@ -1215,6 +1251,9 @@ if start_btn:
                 idx = s_num - 1
                 orig_text = chunks[idx]
                 fname = make_filename(s_num, orig_text)
+                
+                # 로그에 시작 알림 (스레드 제출 전)
+                # add_log(f"🎨 [Scene {s_num:02d}] 이미지 생성 대기열 등록...")
                 
                 time.sleep(0.1) 
                 
@@ -1229,7 +1268,7 @@ if start_btn:
                 )
                 future_to_meta[future] = (s_num, fname, orig_text, prompt_text)
             
-            completed_cnt = 0
+            completed_imgs = 0
             for future in as_completed(future_to_meta):
                 s_num, fname, orig_text, p_text = future_to_meta[future]
                 
@@ -1244,18 +1283,24 @@ if start_btn:
                         "script": orig_text,
                         "prompt": p_text
                     })
+                    add_log(f"✅ [Scene {s_num:02d}] 이미지 생성 성공 ({fname})")
                 else:
                     error_reason = result.replace("ERROR_DETAILS:", "") if result else "원인 불명 (None 반환)"
                     st.error(f"🚨 Scene {s_num} 실패!\n이유: {error_reason}")
+                    add_log(f"❌ [Scene {s_num:02d}] 이미지 생성 실패: {error_reason}")
                     st.caption(f"문제의 파일명: {fname}")
 
-                completed_cnt += 1
-                progress_bar.progress(0.5 + (completed_cnt / total_scenes * 0.5))
+                completed_imgs += 1
+                # [NEW] 이미지 진행률: 20%에서 시작하여 나머지 80% 채움
+                current_progress = 0.2 + ((completed_imgs / total_scenes) * 0.8)
+                if current_progress > 1.0: current_progress = 1.0
+                progress_bar.progress(current_progress)
         
         results.sort(key=lambda x: x['scene'])
         st.session_state['generated_results'] = results
         
-        status_box.update(label="✅ 완료되었습니다!", state="complete", expanded=False)
+        add_log("🎉 모든 작업이 완료되었습니다!")
+        status_box.update(label="✅ 모든 작업 완료!", state="complete", expanded=False)
         st.session_state['is_processing'] = False
         
 # ==========================================
@@ -1359,7 +1404,7 @@ if st.session_state['generated_results']:
                         label="프롬프트 (수정 후 왼쪽 '다시 생성' 버튼 클릭)",
                         value=st.session_state[prompt_key],
                         key=prompt_key,
-                        height=300
+                        height=400 
                     )
                     
                     # 텍스트 영역이 수정될 때마다 메인 데이터에도 동기화 (선택 사항이지만 권장)
@@ -1369,5 +1414,3 @@ if st.session_state['generated_results']:
                     with open(item['path'], "rb") as file:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
                 except: pass
-
-
