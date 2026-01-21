@@ -832,14 +832,15 @@ def generate_image(client, prompt, filename, output_dir, selected_model_name, ta
     for attempt in range(1, max_retries + 1):
         try:
             # [핵심 수정] 텍스트 생성용 generate_content 대신 이미지 전용 generate_images 사용
+            # [수정] config를 types.GenerateImageConfig 대신 딕셔너리로 직접 전달 (호환성 해결)
             response = client.models.generate_images(
                 model=selected_model_name,
                 prompt=prompt,
-                config=types.GenerateImageConfig(
-                    aspect_ratio=target_ratio,
-                    number_of_images=1
-                    # safety_settings 제거 (이미지 생성 config와 호환성 문제 방지)
-                )
+                config={
+                    'aspect_ratio': target_ratio,
+                    'number_of_images': 1,
+                    # 'safety_filter_level': 'block_some' # 필요시 추가
+                }
             )
             
             # [핵심 수정] 응답 처리 방식 변경 (parts.inline_data -> generated_images)
