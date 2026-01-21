@@ -8,7 +8,7 @@ import re
 import shutil
 import zipfile
 import datetime
-import uuid  # [수정] 고유 세션 ID를 위한 모듈
+import uuid  # 고유 세션 ID (멀티 유저용)
 from io import BytesIO
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from PIL import Image
@@ -25,20 +25,20 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# [수정 1] 사용자별 고유 세션 ID 생성 (서버 동시 접속 시 파일 충돌 방지)
+# [사용자 식별] 고유 세션 ID 생성
 if 'user_session_id' not in st.session_state:
     st.session_state['user_session_id'] = str(uuid.uuid4())
 
 # 파일 저장 경로 설정 (기본 경로)
 BASE_PATH = "./web_result_files"
-# [수정 2] 사용자 전용 출력 경로 정의 (여기서 정의해야 전역에서 사용 가능)
+# [사용자 전용 출력 경로]
 USER_IMAGE_OUTPUT_DIR = os.path.join(BASE_PATH, st.session_state['user_session_id'])
 
 # 텍스트 모델 설정
 GEMINI_TEXT_MODEL_NAME = "gemini-2.5-pro" 
 
 # ==========================================
-# [디자인] 다크모드 & CSS (원본 유지)
+# [디자인] CSS 스타일 (원본 유지)
 # ==========================================
 st.markdown("""
     <style>
@@ -210,7 +210,6 @@ st.markdown("""
 # [함수] 3. 이미지 생성 관련 로직
 # ==========================================
 
-# [수정] 경로를 인자로 받도록 수정
 def init_folders(path):
     if not os.path.exists(path):
         os.makedirs(path, exist_ok=True)
@@ -824,7 +823,7 @@ def generate_image(client, prompt, filename, output_dir, selected_model_name, ta
     # [수정] output_dir이 이미 사용자 고유 경로로 전달됨
     full_path = os.path.join(output_dir, filename)
     
-    # [수정: 안정성 강화] 요청하신 대로 재시도 7회
+    # [수정: 안정성 강화] 요청하신 대로 재시도 7회로 설정
     max_retries = 7
     
     last_error_msg = "알 수 없는 오류" 
@@ -868,27 +867,26 @@ def generate_image(client, prompt, filename, output_dir, selected_model_name, ta
                         return full_path
             
             last_error_msg = "이미지 데이터 없음 (Blocked by Safety Filter?)"
-            # print(f"⚠️ [시도 {attempt}/{max_retries}] {last_error_msg} ({filename})") # UI 로그로 대체
-            time.sleep(2)
+            # [수정] 필터링 등으로 실패 시 너무 오래 대기하지 않도록 수정 (2초 -> 1초)
+            time.sleep(1)
             
         except Exception as e:
             error_msg = str(e)
             last_error_msg = error_msg 
             
-            # [수정: 안정성 강화] 503 및 429 에러 대응 로직
+            # [수정: 안정성 강화] 503 및 429 에러 대응 로직 (지수 백오프)
             if "503" in error_msg:
-                # 503은 서버 과부하이므로 조금 더 길게 대기 (지수 백오프 적용)
-                wait_time = (3 * attempt) + random.uniform(1.0, 3.0)
+                wait_time = (2 * attempt) + random.uniform(1.0, 3.0)
                 # print(f"🛑 [503] {filename} - {wait_time:.1f}s 대기 (Attempt {attempt})")
                 time.sleep(wait_time)
             
             elif "429" in error_msg or "ResourceExhausted" in error_msg:
-                wait_time = (2 ** attempt) + random.uniform(1.0, 2.0)
+                wait_time = (1.5 ** attempt) + random.uniform(0.5, 1.5)
                 # print(f"🛑 [429] {filename} - {wait_time:.1f}s 대기 (Attempt {attempt})")
                 time.sleep(wait_time)
             else:
-                # print(f"⚠️ [에러] {error_msg} ({filename}) - 3초 대기")
-                time.sleep(3)
+                # print(f"⚠️ [에러] {error_msg} ({filename}) - 2초 대기")
+                time.sleep(2)
             
     # print(f"❌ [최종 실패] {filename}")
     return f"ERROR_DETAILS: {last_error_msg}"
@@ -915,6 +913,7 @@ with st.sidebar:
     st.markdown("---")
     
     st.subheader("🖼️ 이미지 모델 선택")
+    # [수정] 사용자의 요청대로 'Premium (Gemini 3 Pro)' (Index 0)를 기본값으로 유지
     model_choice = st.radio("사용할 AI 모델:", ("Premium (Gemini 3 Pro)", "Fast (Gemini-2.5-pro)"), index=0)
     
     if "Gemini 3 Pro" in model_choice:
@@ -999,7 +998,7 @@ with st.sidebar:
 
     PRESET_COMIC_REAL = """Hyper-Realistic Environment with Comic Elements.
 배경과 사물, 사람/동물의 몸체: '언리얼 엔진 5' 수준의 8K 실사(Photorealistic). 털, 피부 질감, 조명 완벽 구현.
-사람 얼굴: 몸은 실사지만 얼굴만 '릭 앤 모티(Rick and Morty) 애니메이션 스타일'의 2D 카툰으로 합성. (참조: 큰 흰색 눈, 검은 점 눈동자,굵은 눈썹, 단순한 입).
+사람 얼굴: 몸은 실사지만 얼굴만 '릭 앤 모티(Rick and Morty) 애니메이션 스타일'의 2D 카툰으로 합성. (참조: 큰 흰색 눈, 검은 점 눈동자, 굵은 눈썹, 단순한 입).
 - **표정:** 당황, 공포, 혼란, 술에 취한 듯한 '병맛' 표정 강조.
 동물 눈: 털과 몸은 다큐멘터리급 실사지만, 눈만 '흰색 흰자와 검은 점 눈동자'로 된 2D 만화 눈으로 연출.
 분위기: 고퀄리티 다큐멘터리인 척하는 병맛 코미디. 진지한 상황일수록 표정을 더 단순하고 멍청하게(Derp) 연출.
@@ -1254,6 +1253,9 @@ if 'log_history' not in st.session_state:
 
 start_btn = st.button("🚀 이미지 생성 시작", type="primary", width="stretch", on_click=clear_generated_results)
 
+# [수정] 사용자별 출력 경로 생성 (세션 ID 사용)
+USER_IMAGE_OUTPUT_DIR = os.path.join(BASE_PATH, st.session_state['user_session_id'])
+
 if start_btn:
     if not api_key:
         st.error("⚠️ Google API Key를 입력해주세요.")
@@ -1372,8 +1374,8 @@ if start_btn:
                 orig_text = chunks[idx]
                 fname = make_filename(s_num, orig_text)
                 
-                # [수정: 안정성 강화] 0.2초 대기로 변경 (빠른 속도 + 최소한의 방어)
-                time.sleep(0.2) 
+                # [수정: 속도 향상] 0.05초 대기로 변경 (빠른 속도)
+                time.sleep(0.05) 
                 
                 future = executor.submit(
                     generate_image, 
