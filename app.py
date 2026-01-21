@@ -346,7 +346,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
 
     [그림 스타일 가이드 - 절대 준수]
     {style_instruction}
-    
+     
     [필수 연출 지침]
     1. **조명(Lighting):** 무조건 **'몰입감있는 조명(High Key Lighting)'**을 사용하십시오.
     2. **색감(Colors):** 선명한 색상을 사용하여 시인성을 높이십시오. (칙칙하거나 회색조 톤 금지)
@@ -362,7 +362,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
 
     [임무]
     제공된 대본 조각(Script Segment)을 바탕으로, 이미지 생성 AI가 그릴 수 있는 **구체적인 묘사 프롬프트**를 작성하십시오.
-    
+     
     [작성 요구사항]
     - **분량:** 최소 7문장 이상으로 상세하게 묘사.
     - **세로 모드 시:** 캐릭터나 사물이 작아 보이지 않게 줌인(Zoom-in)하여 묘사하십시오.
@@ -372,7 +372,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         - **시각적 은유:** 추상적인 내용일 경우, 이를 설명할 수 있는 시각적 아이디어 (예: 돈이 날아가는 모습, 그래프가 하락하는 모습 등).
           한글 뒤에 (영어)를 넣어서 프롬프트에 쓰지 않는다. ex) 색감(Colors) x ,구성(Composition) x
 
-    
+     
     [출력 형식]
     - **무조건 한국어(한글)**로만 작성하십시오.
     - 부가적인 설명 없이 **오직 프롬프트 텍스트만** 출력하십시오.
@@ -388,7 +388,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     당신은 **'넷플릭스 2D 애니메이션 감독'**입니다. 
     **반드시 '2D 그림(Digital Art)' 스타일**이어야 하며, **실사(Photorealism)나 3D 렌더링 느낌이 나면 절대 안 됩니다.**
     단순한 얼굴이 둥근 스틱맨들을 주인공으로 사용하여, 배경과 조명만 영화처럼 분위기 있게 연출합니다.
-    
+     
     [전체 영상 주제] "{video_title}"
     [유저 스타일 선호] {style_instruction}
 
@@ -402,26 +402,26 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         - 하지만 선은 굵고 부드러우며, **그림자(Shading)**가 들어가 입체감이 느껴져야 합니다.
         - **의상:** 대본 상황에 맞는 현실적인 의상(정장, 군복, 잠옷, 작업복 등)을 스틱맨 위에 입혀 '캐릭터성'을 부여하십시오.
         - 얼굴이 크게 잘 보이게 연출. 장면도 잘 드러나게.
-        
+         
     2. **배경(Background) - 가장 중요:**
         - 단순한 그라데이션이나 단색 배경을 **절대 금지**합니다.
         - **고해상도 컨셉 아트(High-quality Concept Art)** 수준으로 배경을 그리십시오.
         - 예: 사무실이라면 책상의 서류 더미, 창밖의 풍경, 커피잔의 김, 벽의 질감까지 묘사해야 합니다.
-        
+         
     3. **조명(Lighting):**
         - 2D지만 **입체적인 조명(Volumetric Lighting)**과 그림자를 사용하여 깊이감을 만드십시오.
         - 상황에 따라 따뜻한 햇살, 차가운 네온사, 어두운 방의 스탠드 조명 등을 명확히 구분하십시오.
-        
+         
     4. **연기(Acting):**
         - 인포그래픽처럼 정보를 나열하지 말고, **캐릭터가 행동(Action)하는 장면**을 포착하십시오.
         - 감정 표현: 얼굴 표정은 단순하게 가되, **어깨의 처짐, 주먹 쥔 손, 다급한 달리기, 무릎 꿇기 등 '몸짓(Body Language)'**으로 감정을 전달하십시오.
 
-    5. **언어(Text):** {lang_guide} {lang_example} (자막 연출보다는 배경 속 간판, 서류, 화면 등 자연스러운 텍스트 위주로)
+    5. **언어(Text):** {lang_guide} {lang_example} (자막 연출보다는 배경 속 간판, 서류, 화면 등 자연스럽게 텍스트 위주로)
     6. **구도:** 분할 화면(Split Screen) 금지. **{target_layout}** 꽉 찬 구도 사용.
 
     [임무]
     제공된 대본 조각(Script Segment)을 읽고, 그 상황을 가장 잘 보여주는 **한 장면의 영화 스틸컷** 같은 프롬프트를 작성하십시오.
-    
+     
     [작성 팁]
     - "A cinematic 2D shot of a round-headed stickman..." 으로 시작하는 느낌으로 작성.
     - 대본이 추상적(예: 경제 위기)이라면, 스틱맨이 텅 빈 지갑을 보며 좌절하는 구체적인 상황으로 치환하여 묘사하십시오.
@@ -450,7 +450,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
 
     [전체 영상 주제] "{video_title}"
     [그림 스타일 가이드 - 유저 지정 (최우선 준수)] {style_instruction}
-    
+     
     [필수 연출 지침]
     1. **[매우 중요] 매체(Medium):** 무조건 **평면적인 '2D 스틱맨 일러스트레이션'** 스타일로 표현하십시오. (3D, 실사, 모델링 느낌 절대 금지)
     2. **[매우 중요] 텍스트 현지화(Localization):** 배경이 서양, 중국, 일본 등 어디든 상관없이, {lang_guide}
@@ -467,10 +467,10 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     9. **[매우 중요] 배경보다 **'인물(Character)'이 무조건 우선**입니다. 캐릭터가 화면을 장악해야 합니다.
     10. 상호작용하는 소품 (Interactive Props): 스틱맨 캐릭터가 대본 속 중요한 사물과 어떻게 상호작용하는지 명확히 그리십시오. 사물은 단순하지만 그 특징이 명확해야 합니다.
     11. 캐릭터 연출 : 스틱맨은 시대를 반영하는 의상과 헤어스타일을 연출한다.
-    
+     
     [임무]
     제공된 대본 조각(Script Segment)을 바탕으로, 이미지 생성 AI가 그릴 수 있는 **구체적인 묘사 프롬프트**를 작성하십시오.
-    
+     
     [작성 요구사항]
     - **분량:** 최소 7문장 이상으로 상세하게 묘사.
     - 9:16 비율일 경우, 역사적 인물(스틱맨)의 **상반신 위주**로 묘사하여 표정(눈매)이나 손짓이 잘 보이게 하십시오.
@@ -485,17 +485,17 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
             - **감정은 몸짓으로 표현하십시오.** (예: 고개를 깊이 숙인 모습, 얼굴을 감싸 쥔 손, 힘없이 축 늘어진 어깨, 무릎 꿇고 기도하는 자세 등 정적인 동작 위주)
         - 배경 보다는 대본에 어울리는 인물들과 상황 연출에 더 초점을 맞춘다.
         - 자막 같은 연출 하지 않는다. ("화면 하단 중앙에는 명조체로 **'필리핀, 1944년'**이라는 한글 텍스트가 선명하게 새겨져 있다" 이런 연출 하면 안된다) 
-    
+     
     [🎭 캐릭터 감정 연기 지침 (Character Acting Guide) - 중요]
     **얼굴 표정이 단순한 스틱맨이므로, '몸짓(Body Language)'으로 감정을 표현하는 데 집중하십시오.**
-    
+     
     - 금지: 피(Blood), 출혈, 시체(Corpse, Dead body), 잘린 머리(Decapitation), 고문, 자살, 뼈/해골(Skeleton), 내장, 리얼한 총/칼(Weapon).
     - **추가 금지:** 과도하게 일그러진 얼굴 표정, 공포에 질려 비명 지르는 입 모양 등 자극적인 얼굴 묘사.
     - 금지: 나치(Nazi), 욱일기 등 정치적으로 극도로 민감한 심볼.
-    
+     
     [🛡️ 검열 회피를 위한 '시각적 은유(Visual Metaphors)' 가이드]
     대본 내용이 비극적이거나 폭력적일 경우, 반드시 아래의 **부드러운 상징물**로 대체하여 묘사하십시오.
-    
+     
     [출력 형식]
     - **무조건 한국어**로만 작성하십시오.
     - 부가적인 설명 없이 **오직 프롬프트 텍스트만** 출력하십시오.
@@ -544,7 +544,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
 
     [임무]
     제공된 대본 조각(Script Segment)을 바탕으로, 위 스타일이 적용된 이미지 생성 프롬프트를 작성하십시오.
-    
+     
     [작성 팁]
     - 프롬프트 시작 부분에 반드시 **"언리얼 엔진 5 스타일, Realistic 3D game screenshot, Smooth white featureless mannequin head character"** 키워드가 포함되도록 문장을 구성하십시오.
     - 대본의 상황(좌절, 성공, 회의, 폭락 등)을 마네킹 캐릭터가 연기하도록 묘사하십시오.
@@ -588,7 +588,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
 
     [임무]
     제공된 대본 조각(Script Segment)을 바탕으로, 마치 공학 교육 영상의 한 장면 같은 3D 프롬프트를 작성하십시오.
-    
+     
     [작성 팁]
     - 프롬프트 시작 부분에 반드시 **"3D technical animation, Blender Cycles render, Clean studio lighting, Cutaway view"** 키워드를 포함하십시오.
     - **인물 등장 시 행동 묘사 예시:** "안전모를 쓴 엔지니어가 거대한 터빈의 단면을 손으로 가리키고 있다", "과학자가 실험 장비를 조작하며 데이터를 확인하는 모습".
@@ -636,7 +636,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         - 추상적인 개념을 시각화하는 **은유(Metaphor)**를 적극 활용하십시오.
             - (예: '압박감' -> 스틱맨 머리 위에 거대한 쇳덩이 추가)
         - 만화적 기호(화살표 →, 물음표 ?, 느낌표 !, 땀방울 💦, 반짝임 ✨, 스피드 선)를 그림 옆에 적극적으로 추가하여 상황 전달력을 극대화하십시오.
-    
+     
     5. **[색상 사용]:**
         - 전체적으로 밝고 선명한 플랫 컬러를 다양하게 사용하되, 복잡해 보이지 않게 정돈된 색감을 유지하십시오.
         - 핵심적인 사물이나 강조점에는 채도가 높은 원색(빨강, 노랑, 파랑)을 사용하여 시선을 집중시키십시오.
@@ -686,14 +686,14 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         - **Face Style Keywords:** "Simple 2D cartoon face pasted on real body", "Exaggerated expression with bold lines".
         - 윤곽선 (Outlines): 굵기가 일정한 검은색 라인으로 단순하게 처리되었습니다. 명암이나 질감 묘사가 전혀 없는 전형적인 2D 드로잉 방식입니다.
         - 채색 (Coloring): 그라데이션이나 그림자 없이 단색(Flat color)으로 채워져 있다.
-        
+         
     3. **[반전 포인트 2: 동물 눈 (Animal Eyes)]:**
         - 맘모스, 사자, 공룡 등 위협적인 동물이라도 **눈(Eyes)은 반드시 '단순한 2D 만화 눈'**이어야 합니다.
         - **Eye Style Keywords:** "2D cartoon eyes", "Simple white sclera with black dot pupils", "Silly expression".
         - **[참조 스타일]** 제공된 매머드 이미지처럼, 실사 눈 대신 **흰색 흰자와 검은색 점 눈동자로 된 단순한 만화 눈**을 적용하십시오.
 
     4. **조명 및 분위기:** - 조명은 **매우 진지하고 웅장하게(Cinematic & Epic)** 연출하여, 우스꽝스러운 얼굴과 대비를 극대화하십시오.
-    
+     
     5. **[텍스트]:** {lang_guide} {lang_example}
         - [필수] 텍스트는 간판 이런게 아닌이상 거의 연출하지 않는다. 특히 그래픽 같이 자연스럽지 않게 텍스트는 절대 나오지 않는다.
         - 말풍선 연출하지 않는다.
@@ -1360,7 +1360,20 @@ if start_btn:
                     })
                 else:
                     error_reason = result.replace("ERROR_DETAILS:", "") if result else "원인 불명 (None 반환)"
-                    st.error(f"🚨 Scene {s_num} 실패!\n이유: {error_reason}")
+                    
+                    # [수정된 부분] API 한도 초과 에러 메시지 감지 및 친절한 안내
+                    if "RESOURCE_EXHAUSTED" in error_reason or "Quota exceeded" in error_reason:
+                        st.error(f"🚨 Scene {s_num} 실패! (API 한도 초과)")
+                        st.warning(
+                            "⚠️ **Google API 일일 할당량(Quota)이 초과되었습니다.**\n\n"
+                            "이 오류는 하루에 생성 가능한 이미지 횟수를 모두 소진했을 때 발생합니다.\n"
+                            "**해결 방법:**\n"
+                            "1. 내일 다시 시도해주세요.\n"
+                            "2. 혹은 다른 구글 계정의 API Key를 발급받아 교체해주세요."
+                        )
+                    else:
+                        st.error(f"🚨 Scene {s_num} 실패!\n이유: {error_reason}")
+                        
                     st.caption(f"문제의 파일명: {fname}")
 
                 completed_cnt += 1
