@@ -8,6 +8,7 @@ import re
 import shutil
 import zipfile
 import datetime
+import uuid  # [수정] 세션 분리를 위한 UUID 라이브러리 추가
 from io import BytesIO
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from PIL import Image
@@ -25,7 +26,21 @@ st.set_page_config(
 )
 
 # ==========================================
-# [디자인] 다크모드 & Expander/버튼/Status 가독성 최종 수정 (CSS)
+# [세션 및 경로 설정] 사용자별 경로 분리 (핵심 수정)
+# ==========================================
+# [수정] 사용자마다 고유 폴더를 쓰도록 하여 세션 공유(이미지 섞임) 오류 해결
+if 'session_id' not in st.session_state:
+    st.session_state['session_id'] = str(uuid.uuid4())
+
+# 파일 저장 경로 설정 (사용자별 고유 ID 포함)
+BASE_PATH = f"./web_result_files/{st.session_state['session_id']}"
+IMAGE_OUTPUT_DIR = os.path.join(BASE_PATH, "output_images")
+
+# 텍스트 모델 설정
+GEMINI_TEXT_MODEL_NAME = "gemini-2.5-pro" 
+
+# ==========================================
+# [디자인] 다크모드 & CSS (원본 유지)
 # ==========================================
 st.markdown("""
     <style>
@@ -45,7 +60,7 @@ st.markdown("""
     .st-emotion-cache-1lsfsc6.e1x5aka44 {
         background-color: #262730 !important;
     }
-     
+      
     section[data-testid="stSidebar"] * {
         color: #FFFFFF !important;
     }
@@ -193,19 +208,12 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-
-# 파일 저장 경로 설정
-BASE_PATH = "./web_result_files"
-IMAGE_OUTPUT_DIR = os.path.join(BASE_PATH, "output_images")
-
-# 텍스트 모델 설정
-GEMINI_TEXT_MODEL_NAME = "gemini-2.5-pro" 
-
 # ==========================================
 # [함수] 3. 이미지 생성 관련 로직
 # ==========================================
 
 def init_folders():
+    # [수정] 세션별 경로가 없으면 생성
     for path in [IMAGE_OUTPUT_DIR]:
         if not os.path.exists(path):
             os.makedirs(path, exist_ok=True)
@@ -770,7 +778,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         - 대본에 있는 작은 지문 하나도 놓치지 말고 시각화하십시오.
         - "컵을 떨군다"는 대본이라면, 컵이 손에서 떠나 공중에 있는 순간과 튀어 오르는 물방울까지 묘사하십시오.
     4. **텍스트 처리:** {lang_guide} {lang_example}
-      
+       
     [작성 요구사항]
     - **분량:** 최소 7문장 이상으로 상세하게 묘사.
     - 절대 분활화면 연출하지 않는다. 전체 대본 내용에 어울리는 하나의 장면으로 묘사.
@@ -862,19 +870,19 @@ def generate_image(client, prompt, filename, output_dir, selected_model_name, ta
             
             last_error_msg = "이미지 데이터 없음 (Blocked by Safety Filter?)"
             # print(f"⚠️ [시도 {attempt}/{max_retries}] {last_error_msg} ({filename})") # UI 로그로 대체
-            time.sleep(2)
+            time.sleep(1) # [수정] 대기 시간 2초 -> 1초로 단축
             
         except Exception as e:
             error_msg = str(e)
             last_error_msg = error_msg 
             
             if "429" in error_msg or "ResourceExhausted" in error_msg:
-                wait_time = (2 * attempt) + random.uniform(0.5, 2.0)
-                # print(f"🛑 [API 제한] {filename} - {wait_time:.1f}초 대기 후 재시도... (시도 {attempt})")
+                # [수정] API 제한 시 대기 시간 단축 (빠른 재시도)
+                wait_time = (1 * attempt) + random.uniform(0.1, 0.5) 
                 time.sleep(wait_time)
             else:
                 # print(f"⚠️ [에러] {error_msg} ({filename}) - 5초 대기")
-                time.sleep(5)
+                time.sleep(2) # [수정] 일반 에러 대기 시간 5초 -> 2초로 단축
             
     # print(f"❌ [최종 실패] {filename}")
     return f"ERROR_DETAILS: {last_error_msg}"
@@ -1113,7 +1121,8 @@ with st.sidebar:
     )
 
     st.markdown("---")
-    max_workers = st.slider("작업 속도(병렬 수)", 1, 10, 5)
+    # [수정] 기본 작업 속도 향상 (기본값 5 -> 10)
+    max_workers = st.slider("작업 속도(병렬 수)", 1, 20, 10)
 
 # ==========================================
 # [UI] 메인 화면: 이미지 생성
@@ -1250,6 +1259,7 @@ if start_btn:
         st.session_state['is_processing'] = True
         st.session_state['log_history'] = [] # 로그 초기화
         
+        # [수정] 세션별 경로 사용으로 다른 사용자 파일 삭제 방지
         if os.path.exists(IMAGE_OUTPUT_DIR):
             try:
                 shutil.rmtree(IMAGE_OUTPUT_DIR)
@@ -1347,7 +1357,7 @@ if start_btn:
         # 3. 이미지 생성 (진행률 20% ~ 100%)
         # ----------------------------------------------------
         progress_text.text(f"🎨 이미지 생성 중... (20% -> 100%)")
-        status_box.write(f"🎨 이미지 생성 ({SELECTED_IMAGE_MODEL})... (API 보호를 위해 천천히 진행됩니다)")
+        status_box.write(f"🎨 이미지 생성 ({SELECTED_IMAGE_MODEL})... (최대 속도 진행)")
         results = []
         
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -1357,7 +1367,8 @@ if start_btn:
                 orig_text = chunks[idx]
                 fname = make_filename(s_num, orig_text)
                 
-                time.sleep(0.1) 
+                # [수정] 작업 제출 간격 단축 (0.1 -> 0.05) : 동시 접속 폭주 방지는 유지하되 더 빠르게 투입
+                time.sleep(0.05) 
                 
                 future = executor.submit(
                     generate_image, 
@@ -1424,6 +1435,7 @@ if st.session_state['generated_results']:
     st.write("---")
     st.subheader("⚡ 원클릭 일괄 다운로드")
     
+    # [수정] 동적 경로에서 ZIP 생성
     zip_data = create_zip_buffer(IMAGE_OUTPUT_DIR)
     # [수정] 전체 너비를 사용하여 버튼을 길게 배치
     st.download_button(
