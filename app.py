@@ -216,7 +216,7 @@ def split_script_by_time(script, chars_per_chunk=100):
                         .replace("\n", "\n|") 
 
     temp_sentences = temp_script.split("|")
-                                        
+                              
     chunks = []
     current_chunk = ""
     
@@ -721,6 +721,66 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     - **한글**로만 작성하십시오.
         """
 
+    elif genre_mode == "webtoon":
+        full_instruction = f"""
+    {common_header}
+    [역할]
+    당신은 네이버 웹툰 스타일의 **'인기 웹툰 메인 작화가'**입니다.
+    독자들이 1초 만에 이해하고 클릭하고 싶게 만드는 **'트렌디하고 역동적인 웹툰 컷'**을 그려야 합니다.
+
+    [전체 영상 주제] "{video_title}"
+    [그림 스타일 가이드] {style_instruction}
+
+    [필수 연출 지침]
+    1. **작화 스타일:** 한국 웹툰(K-Webtoon) 특유의 **선명한 외곽선(Sharp Outlines)**과 **화려한 채색(Vibrant Coloring)**을 사용하십시오.
+    2. **캐릭터 디자인:** **스틱맨 절대 금지.** 8등신 비율의 **'매력적인 웹툰 주인공(Anime/Manhwa Style)'**으로 묘사하십시오.
+    3. **[핵심 - 배경 및 상황 강화]:**
+        - 캐릭터 얼굴만 크게 그리지 말고, 캐릭터가 어디에 있는지, 주변에 무엇이 있는지 **'배경과 상황(Context & Background)'을 매우 구체적으로 묘사**하십시오.
+        - 예: 방 안이라면 가구와 조명, 거리라면 건물과 행인들, 사무실이라면 책상 위의 서류까지 디테일하게 그리십시오.
+    4. **[핵심 - 효과 절제]:**
+        - **집중선(Speed lines)이나 과도한 이펙트는 남발하지 마십시오.** (정말 충격적인 장면에서만 가끔 사용)
+        - 대신 **공간감(Depth of Field)**과 **현실적인 배경 디테일**로 상황을 설명하십시오.
+    5. **카메라 앵글:** 하이 앵글, 로우 앵글, 광각 렌즈 등을 사용하되, 배경이 잘 보이도록 구도를 잡으십시오.
+    6. **텍스트 처리:** {lang_guide} {lang_example}
+        - 웹툰 말풍선 느낌이나 배경 오브젝트(간판, 스마트폰)에 자연스럽게 녹여내십시오.
+
+    [임무]
+    제공된 대본을 바탕으로 이미지 생성 프롬프트를 작성하십시오. (한글 출력)
+    - "집중선이 배경에 깔리며..." 같은 표현은 자제하고, **"디테일한 사무실 배경을 뒤로 하고...", "비 내리는 거리 한복판에서..."** 처럼 공간 묘사를 우선하십시오.
+        """
+
+    elif genre_mode == "manga":
+        full_instruction = f"""
+    {common_header}
+    [역할]
+    당신은 **작화 퀄리티가 극도로 높은 '대작 귀여운 지브리풍 애니메이션'의 총괄 작화 감독**입니다.
+    단순히 예쁜 그림이 아니라, **대본의 상황, 행동, 감정을 '소름 돋을 정도로 구체적이고 디테일하게' 묘사**해야 합니다.
+
+    [전체 영상 주제] "{video_title}"
+    [스타일 가이드] {style_instruction}
+
+    [필수 연출 지침]
+    1. **작화 스타일 (High Detail):**
+        - **서정적이고 몽환적인 느낌 금지.** 대신 **선명하고, 사실적이니지만 인물은 귀여운, 정보량이 많은(High Information Density)** 작화를 추구하십시오.
+        - 배경은 흐릿하게 처리하지 말고, 간판의 글씨, 책상의 소품, 벽의 질감까지 **집요할 정도로 디테일하게** 묘사하십시오. (예: 'MAPPA', 'Ufotable' 제작사의 고퀄리티 작화 스타일)
+    2. **행동 및 감정 묘사 (Action & Emotion):**
+        - 대본에 묘사된 캐릭터의 행동을 **'순간 포착'** 하듯 역동적으로 그리십시오.
+        - **표정 연기:** 눈썹의 각도, 입 모양, 눈동자의 흔들림까지 구체적으로 지시하여 캐릭터의 심리를 완벽하게 표현하십시오.
+    3. **대본 충실도 (Script Fidelity):**
+        - 대본에 있는 작은 지문 하나도 놓치지 말고 시각화하십시오.
+        - "컵을 떨군다"는 대본이라면, 컵이 손에서 떠나 공중에 있는 순간과 튀어 오르는 물방울까지 묘사하십시오.
+    4. **텍스트 처리:** {lang_guide} {lang_example}
+      
+    [작성 요구사항]
+    - **분량:** 최소 7문장 이상으로 상세하게 묘사.
+    - 절대 분활화면 연출하지 않는다. 전체 대본 내용에 어울리는 하나의 장면으로 묘사.
+
+    [임무]
+    대본을 분석하여 AI가 그릴 수 있는 **최상급 귀여운 지브리풍 퀄리티의 애니메이션 프롬프트**를 작성하십시오.
+    - "Masterpiece, best quality, ultra-detailed, intricate background, dynamic pose, expressive face" 등의 키워드가 반영되도록 하십시오.
+    - **한글**로만 출력하십시오.
+        """
+
     else: # Fallback
         full_instruction = f"스타일: {style_instruction}. 비율: {target_layout}. 대본 내용: {text_chunk}. 이미지 프롬프트 작성."
 
@@ -942,6 +1002,19 @@ with st.sidebar:
 - 소품: 대본 속 물건(돈, 음식, 기계)을 사실적으로 표현.
 - 배경: 무조건 **'단색 핑크(Solid Pink)'** 유지."""
 
+    PRESET_WEBTOON = """한국 인기 웹툰 스타일의 고퀄리티 2D 일러스트레이션 (Korean Webtoon Style).
+선명한 펜선과 화려한 채색. 집중선(Speed lines)은 정말 중요한 순간에만 가끔 사용.
+캐릭터는 8등신 웹툰 주인공 스타일. 캐릭터 주변의 '상황'과 '배경(장소)'을 아주 구체적이고 밀도 있게 묘사.
+단순 인물 컷보다는 주변 사물과 배경이 함께 보이는 구도 선호. 
+전체적으로 배경 디테일이 살아있는 네이버 웹툰 썸네일 스타일. (16:9)"""
+
+    PRESET_MANGA = """일본 대작 귀여운 지브리풍 애니메이션 스타일 (High-Budget Anime Style).
+서정적인 느낌보다는 '정보량이 많고 치밀한' 고밀도 배경 작화 (High Detail Backgrounds).
+캐릭터의 표정과 행동을 '순간 포착'하듯 역동적으로 묘사.
+대본의 지문을 하나도 놓치지 않고 시각화하는 '철저한 디테일' 위주. (16:9)
+전체 대본에 어울리는 하나의 장면으로 연출."""
+
+
     if 'style_prompt_area' not in st.session_state:
         st.session_state['style_prompt_area'] = PRESET_INFO
     
@@ -952,8 +1025,10 @@ with st.sidebar:
     OPT_SCIFI = "과학/엔지니어링 (3D Tech & Character)"
     OPT_PAINT = "심플 그림판/졸라맨 (The Paint Explainer Style)" 
     OPT_COMIC_REAL = "실사 + 코믹 페이스 (Hyper Realism + Comic Face)" 
-    OPT_CUSTOM = "직접 입력 (Custom Style)"
     OPT_SKULL = "핑크 3D 해골 (Helix Style Pink Skeleton)"
+    OPT_WEBTOON = "K-웹툰 (Trendy & Detailed)"
+    OPT_MANGA = "지브리/대작 애니 (High Detail & Emotional)"
+    OPT_CUSTOM = "직접 입력 (Custom Style)"
 
     def update_text_from_radio():
         selection = st.session_state.genre_radio_key
@@ -973,13 +1048,17 @@ with st.sidebar:
             st.session_state['style_prompt_area'] = PRESET_COMIC_REAL
         elif selection == OPT_SKULL: 
             st.session_state['style_prompt_area'] = PRESET_SKULL
+        elif selection == OPT_WEBTOON:
+            st.session_state['style_prompt_area'] = PRESET_WEBTOON
+        elif selection == OPT_MANGA:
+            st.session_state['style_prompt_area'] = PRESET_MANGA
 
     def set_radio_to_custom():
         st.session_state.genre_radio_key = OPT_CUSTOM
 
     genre_select = st.radio(
         "콘텐츠 성격 선택:",
-        (OPT_INFO, OPT_REALISTIC, OPT_HISTORY, OPT_3D, OPT_SCIFI, OPT_PAINT, OPT_COMIC_REAL, OPT_SKULL, OPT_CUSTOM),
+        (OPT_INFO, OPT_REALISTIC, OPT_HISTORY, OPT_3D, OPT_SCIFI, OPT_PAINT, OPT_COMIC_REAL, OPT_SKULL, OPT_WEBTOON, OPT_MANGA, OPT_CUSTOM),
         index=0,
         key="genre_radio_key",
         on_change=update_text_from_radio,
@@ -1002,6 +1081,10 @@ with st.sidebar:
         SELECTED_GENRE_MODE = "comic_realism"
     elif genre_select == OPT_SKULL:
         SELECTED_GENRE_MODE = "pink_skull"
+    elif genre_select == OPT_WEBTOON:
+        SELECTED_GENRE_MODE = "webtoon"
+    elif genre_select == OPT_MANGA:
+        SELECTED_GENRE_MODE = "manga"
     else:
         current_text = st.session_state.get('style_prompt_area', "")
         if "3D" in current_text or "Unreal" in current_text or "Realistic" in current_text:
@@ -1237,7 +1320,7 @@ if start_btn:
                     current_video_title, 
                     SELECTED_GENRE_MODE,
                     target_language,
-                    LAYOUT_KOREAN      
+                    LAYOUT_KOREAN       
                 ))
             
             completed_prompts = 0
