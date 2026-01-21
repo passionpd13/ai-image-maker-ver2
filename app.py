@@ -13,26 +13,18 @@ from PIL import Image
 from google import genai
 from google.genai import types
 
-# [NEW] 동영상 생성을 위한 라이브러리 (오디오 제거 버전)
-try:
-    from moviepy.editor import ImageClip, VideoFileClip, concatenate_videoclips, vfx
-    import numpy as np 
-except ImportError:
-    st.error("⚠️ 'moviepy' 라이브러리가 없습니다. 터미널에 'pip install moviepy numpy'를 입력하세요.")
-    st.stop()
-
 # ==========================================
 # [설정] 페이지 기본 설정
 # ==========================================
 st.set_page_config(
-    page_title="열정피디 AI 씬 생성기 (Pro)", 
+    page_title="열정피디 AI 씬 생성기 (Image Only)", 
     layout="wide", 
-    page_icon="🎬",
+    page_icon="🎨",
     initial_sidebar_state="expanded"
 )
 
 # ==========================================
-# [디자인] 다크모드 & CSS 스타일 (원본 유지)
+# [디자인] 다크모드 & CSS 스타일 (원본 100% 유지)
 # ==========================================
 st.markdown("""
     <style>
@@ -203,7 +195,6 @@ st.markdown("""
 # 파일 저장 경로 설정
 BASE_PATH = "./web_result_files"
 IMAGE_OUTPUT_DIR = os.path.join(BASE_PATH, "output_images")
-VIDEO_OUTPUT_DIR = os.path.join(BASE_PATH, "output_video") 
 
 # 텍스트 모델 설정
 GEMINI_TEXT_MODEL_NAME = "gemini-2.5-pro" 
@@ -212,15 +203,15 @@ GEMINI_TEXT_MODEL_NAME = "gemini-2.5-pro"
 # [함수] 1. 유틸리티 함수
 # ==========================================
 def init_folders():
-    for path in [IMAGE_OUTPUT_DIR, VIDEO_OUTPUT_DIR]:
-        if not os.path.exists(path):
-            os.makedirs(path, exist_ok=True)
+    # 동영상 폴더 생성 로직 제거
+    if not os.path.exists(IMAGE_OUTPUT_DIR):
+        os.makedirs(IMAGE_OUTPUT_DIR, exist_ok=True)
 
 def split_script_by_time(script, chars_per_chunk=100):
-    # [수정됨] 일본어 구두점 및 줄바꿈(\n)도 확실하게 분리하도록 개선
+    # 일본어 구두점 및 줄바꿈(\n)도 확실하게 분리하도록 개선
     temp_script = script.replace(".", ".|").replace("?", "?|").replace("!", "!|") \
                         .replace("。", "。|").replace("？", "？|").replace("！", "！|") \
-                        .replace("\n", "\n|")  # 줄바꿈도 강제 분리 기준으로 추가
+                        .replace("\n", "\n|")
 
     temp_sentences = temp_script.split("|")
                               
@@ -248,20 +239,14 @@ def split_script_by_time(script, chars_per_chunk=100):
     return chunks
 
 def make_filename(scene_num, text_chunk):
-    # 1. 줄바꿈을 공백으로 변경하고 양쪽 공백 제거
     clean_line = text_chunk.replace("\n", " ").strip()
-    
-    # 2. 파일명에 쓸 수 없는 특수문자 제거
     clean_line = re.sub(r'[\\/:*?"<>|]', "", clean_line)
     
-    # [안전장치] 만약 정제 후 내용이 없다면 기본값 반환
     if not clean_line:
         return f"S{scene_num:03d}_Scene.png"
     
-    # [수정됨] 일본어/긴 문자열 대응 로직
     words = clean_line.split()
     
-    # 조건: 단어가 1개뿐이거나(일본어), 아시아권 문자가 포함된 경우
     if len(words) <= 1 or any(ord(c) > 12000 for c in clean_line[:10]): 
         if len(clean_line) > 16:
             summary = f"{clean_line[:10]}...{clean_line[-10:]}"
@@ -278,7 +263,6 @@ def make_filename(scene_num, text_chunk):
             if len(summary) > 50:
                 summary = summary[:50]
     
-    # 최종 파일명 생성
     filename = f"S{scene_num:03d}_{summary}.png"
     return filename
 
@@ -293,7 +277,7 @@ def create_zip_buffer(source_dir):
     return buffer
 
 # ==========================================
-# [함수] 2. 프롬프트 생성 (캐릭터 일관성 제거됨)
+# [함수] 2. 프롬프트 생성 (원본 로직 유지)
 # ==========================================
 def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, genre_mode="info", target_language="Korean", target_layout="16:9 와이드 비율"):
     scene_num = index + 1
@@ -314,7 +298,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         lang_guide = f"화면 속 글씨는 **무조건 '{target_language}'로 표기**하십시오."
         lang_example = ""
 
-    # [수정됨] 9:16 강력 보정 로직
+    # [9:16 강력 보정 로직]
     vertical_force_prompt = ""
     if "9:16" in target_layout:
         vertical_force_prompt = """
@@ -332,7 +316,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     """
 
     # ---------------------------------------------------------
-    # 모드별 프롬프트 로직 (원본 유지)
+    # 모드별 프롬프트 로직
     # ---------------------------------------------------------
     if genre_mode == "info":
         full_instruction = f"""
@@ -684,82 +668,12 @@ def generate_image(client, prompt, filename, output_dir, selected_model_name, ta
     return f"ERROR_DETAILS: {last_error_msg}"
 
 # ==========================================
-# [함수] 4. 비디오 생성 (오디오 제거 버전)
-# ==========================================
-def create_video_clip_silent(image_path, duration_sec, output_folder, scene_num, is_zoom_in=True):
-    """이미지를 사용하여 오디오 없는 비디오 클립 생성 (Zoom 효과 포함)"""
-    try:
-        # 이미지 로드
-        img_clip = ImageClip(image_path).set_duration(duration_sec)
-        
-        # 줌 효과 (Ken Burns)
-        w, h = img_clip.size
-        
-        if is_zoom_in:
-            # 1.0 -> 1.15 확대
-            def resize_func(t):
-                scale = 1 + 0.15 * (t / duration_sec)
-                return scale
-        else:
-            # 1.15 -> 1.0 축소
-            def resize_func(t):
-                scale = 1.15 - 0.15 * (t / duration_sec)
-                return scale
-
-        # 중앙 크롭 로직 (확대 시 화면 꽉 차게)
-        clip_zoomed = img_clip.resize(resize_func).set_position('center', 'center')
-        
-        # 30fps로 합성
-        final_clip = clip_zoomed.set_fps(30)
-        
-        output_filename = f"scene_{scene_num:03d}.mp4"
-        output_path = os.path.join(output_folder, output_filename)
-        
-        final_clip.write_videofile(
-            output_path, 
-            codec='libx264', 
-            fps=30, 
-            verbose=False, 
-            logger=None,
-            audio=False # 오디오 없음
-        )
-        
-        return output_path
-        
-    except Exception as e:
-        return f"Error: {e}"
-
-def merge_videos(video_paths, output_folder):
-    """생성된 비디오 클립들을 하나로 합치기"""
-    try:
-        clips = []
-        for path in video_paths:
-            if os.path.exists(path):
-                clips.append(VideoFileClip(path))
-        
-        if not clips:
-            return "Error: 병합할 비디오가 없습니다."
-            
-        final_clip = concatenate_videoclips(clips, method="compose")
-        final_output_path = os.path.join(output_folder, "FINAL_FULL_VIDEO.mp4")
-        
-        final_clip.write_videofile(
-            final_output_path,
-            codec='libx264',
-            fps=30,
-            audio=False
-        )
-        return final_output_path
-    except Exception as e:
-        return f"Error merging videos: {e}"
-
-# ==========================================
 # [UI] 사이드바 (설정)
 # ==========================================
 with st.sidebar:
     st.header("⚙️ 환경 설정")
     
-    # [수정됨] API Key 직접 입력만 허용
+    # API Key 직접 입력
     api_key = st.text_input("🔑 Google API Key (직접 입력)", type="password")
 
     st.markdown("---")
@@ -796,12 +710,7 @@ with st.sidebar:
         LAYOUT_KOREAN = "16:9 와이드 비율."
 
     st.markdown("---")
-    st.subheader("⏱️ 장면 분할 및 재생 시간")
-    chunk_duration = st.slider("한 장면당 영상 지속 시간 (초)", 3, 60, 5, 1)
-    # 글자수 제한은 대략적으로 설정 (TTS가 없으므로 엄격하지 않음)
-    chars_limit = 100 
-    
-    st.markdown("---")
+    # 동영상 재생 시간 관련 슬라이더 제거됨 (이미지 전용)
     
     # ---------------------------------------------------------------------------
     # 스마트 장르 선택 & 직접 입력 로직
@@ -976,7 +885,7 @@ with st.sidebar:
 # [UI] 메인 화면: 이미지 생성
 # ==========================================
 st.title("🎬 AI 씬(장면) 생성기 (Pro)")
-st.caption(f"대본을 넣으면 장면별 이미지를 생성합니다. (TTS 기능 제거됨) | 🎨 Model: {SELECTED_IMAGE_MODEL}")
+st.caption(f"대본을 넣으면 장면별 이미지를 생성합니다. (이미지 전용 모드) | 🎨 Model: {SELECTED_IMAGE_MODEL}")
 
 st.subheader("📌 전체 영상 테마(제목) 설정")
 
@@ -1175,8 +1084,7 @@ if start_btn:
                         "path": path,
                         "filename": fname,
                         "script": orig_text,
-                        "prompt": p_text,
-                        "video_path": None 
+                        "prompt": p_text
                     })
                 else:
                     error_reason = result.replace("ERROR_DETAILS:", "") if result else "원인 불명 (None 반환)"
@@ -1203,77 +1111,11 @@ if st.session_state['generated_results']:
     # 1. 일괄 작업 버튼 영역
     # ------------------------------------------------
     st.write("---")
-    st.subheader("⚡ 원클릭 일괄 생성 작업")
+    st.subheader("⚡ 원클릭 일괄 다운로드")
     
-    c_btn1, c_btn3, c_btn4 = st.columns(3)
-    
-    with c_btn1:
-        zip_data = create_zip_buffer(IMAGE_OUTPUT_DIR)
-        st.download_button("📦 전체 이미지 ZIP 다운로드", data=zip_data, file_name="all_images.zip", mime="application/zip", use_container_width=True)
-
-    # 비디오 전체 생성 (Silent)
-    with c_btn3:
-        if st.button("🎬 비디오(무음) 전체 일괄 생성", use_container_width=True):
-            final_merged_file = os.path.join(VIDEO_OUTPUT_DIR, "FINAL_FULL_VIDEO.mp4")
-            if os.path.exists(final_merged_file):
-                try: os.remove(final_merged_file)
-                except: pass
-            
-            status_box = st.status("🎬 비디오 렌더링 중...", expanded=True)
-            progress_bar = status_box.progress(0)
-            
-            total_files = len(st.session_state['generated_results'])
-            completed_cnt = 0
-            
-            with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                future_to_idx = {}
-                for i, item in enumerate(st.session_state['generated_results']):
-                    is_zoom_in = (i % 2 == 0)
-                    future = executor.submit(create_video_clip_silent, item['path'], chunk_duration, VIDEO_OUTPUT_DIR, item['scene'], is_zoom_in)
-                    future_to_idx[future] = i
-                
-                for future in as_completed(future_to_idx):
-                    idx = future_to_idx[future]
-                    try:
-                        vid_path = future.result()
-                        if vid_path and "Error" not in vid_path:
-                            st.session_state['generated_results'][idx]['video_path'] = vid_path
-                        elif vid_path:
-                            st.write(f"⚠️ Scene {idx+1} 렌더링 오류: {vid_path}")
-                    except Exception as e:
-                        st.write(f"⚠️ Scene {idx+1} 시스템 오류: {e}")
-                    
-                    completed_cnt += 1
-                    progress_bar.progress(completed_cnt / total_files)
-            
-            status_box.update(label="✅ 비디오 생성 완료!", state="complete", expanded=False)
-            time.sleep(1)
-            st.rerun()
-
-    # 전체 병합
-    with c_btn4:
-        video_paths = [item.get('video_path') for item in st.session_state['generated_results'] if item.get('video_path')]
-        final_path = os.path.join(VIDEO_OUTPUT_DIR, "FINAL_FULL_VIDEO.mp4")
-        
-        if video_paths:
-            if st.button("🎞️ 전체 영상 합치기 (새로고침)", use_container_width=True):
-                with st.spinner("모든 비디오를 하나로 합치는 중..."):
-                    if os.path.exists(final_path):
-                        try: os.remove(final_path)
-                        except: pass
-                        
-                    merged_result = merge_videos(video_paths, VIDEO_OUTPUT_DIR)
-                    if "Error" in merged_result:
-                        st.error(merged_result)
-                    else:
-                        st.success("병합 완료!")
-                        st.rerun()
-
-            if os.path.exists(final_path):
-                 with open(final_path, "rb") as f:
-                    st.download_button("💾 전체 영상 다운로드 (MP4)", data=f, file_name="final_video.mp4", mime="video/mp4", use_container_width=True)
-        else:
-            st.button("🎞️ 전체 영상 합치기", disabled=True, use_container_width=True)
+    # 동영상 관련 버튼 제거되고 ZIP 다운로드만 남음
+    zip_data = create_zip_buffer(IMAGE_OUTPUT_DIR)
+    st.download_button("📦 전체 이미지 ZIP 다운로드", data=zip_data, file_name="all_images.zip", mime="application/zip", use_container_width=True)
 
     # ------------------------------------------------
     # 2. 개별 리스트 및 [재생성] 기능
@@ -1321,7 +1163,6 @@ if st.session_state['generated_results']:
                             if new_path and "ERROR_DETAILS" not in new_path:
                                 st.session_state['generated_results'][index]['path'] = new_path
                                 st.session_state['generated_results'][index]['prompt'] = new_prompt
-                                st.session_state['generated_results'][index]['video_path'] = None
                                 st.success("이미지가 변경되었습니다!")
                                 time.sleep(0.5)
                                 st.rerun()
@@ -1329,33 +1170,14 @@ if st.session_state['generated_results']:
                                 err_msg = new_path.replace("ERROR_DETAILS:", "") if new_path else "Unknown Error"
                                 st.error(f"이미지 생성 실패: {err_msg}")
 
-            # [오른쪽] 정보 및 비디오 컨트롤
+            # [오른쪽] 정보 (동영상 컨트롤 제거됨)
             with cols[1]:
                 st.subheader(f"Scene {item['scene']:02d}")
                 st.caption(f"파일명: {item['filename']}")
                 st.write(f"**대본:** {item['script']}")
                 
                 st.markdown("---")
-                
-                if item.get('video_path') and os.path.exists(item['video_path']):
-                    st.video(item['video_path'])
-                    with open(item['video_path'], "rb") as vf:
-                        st.download_button("⬇️ 비디오 저장", data=vf, file_name=f"scene_{item['scene']}.mp4", mime="video/mp4", key=f"down_vid_{item['scene']}")
-                else:
-                    is_zoom_in_mode = (index % 2 == 0)
-                    button_label = f"🎬 비디오 생성 ({'줌인' if is_zoom_in_mode else '줌아웃'})"
-
-                    if st.button(button_label, key=f"gen_vid_{item['scene']}"):
-                        with st.spinner("렌더링 중..."):
-                            vid_path = create_video_clip_silent(
-                                item['path'], chunk_duration, VIDEO_OUTPUT_DIR, 
-                                item['scene'], is_zoom_in=is_zoom_in_mode
-                            )
-                            if "Error" in vid_path:
-                                st.error(vid_path)
-                            else:
-                                st.session_state['generated_results'][index]['video_path'] = vid_path
-                                st.rerun()
+                # 동영상 생성/재생 관련 UI 제거됨
 
                 with st.expander("프롬프트 확인"):
                     st.text(item['prompt'])
