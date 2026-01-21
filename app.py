@@ -40,6 +40,14 @@ st.markdown("""
         background-color: #12141C !important;
         border-right: 1px solid #2C2F38;
     }
+
+    .st-emotion-cache-1lsfsc6.e1x5aka44 {
+        background-color: #262730 !important;
+        /* 필요하다면 글자색이나 테두리도 조정 */
+        /* color: white !important; */
+        /* border: 1px solid #4A4A4A !important; */
+    }
+    
     section[data-testid="stSidebar"] * {
         color: #FFFFFF !important;
     }
@@ -1448,3 +1456,4 @@ if st.session_state['generated_results']:
                     with open(item['path'], "rb") as file:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
                 except: pass
+
