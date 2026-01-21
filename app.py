@@ -8,7 +8,7 @@ import re
 import shutil
 import zipfile
 import datetime
-import uuid  # [수정] 세션 분리를 위한 UUID 라이브러리 추가
+import uuid
 from io import BytesIO
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from PIL import Image
@@ -866,8 +866,11 @@ def generate_image(client, prompt, filename, output_dir, selected_model_name, ta
                         image = Image.open(BytesIO(img_data))
                         image.save(full_path)
                         return full_path
-            
-            last_error_msg = "이미지 데이터 없음 (Blocked by Safety Filter?)"
+                    # [수정] 모델이 이미지를 안 주고 '텍스트'로 뭐라고 하는지 체크 (거절 메시지 등)
+                    elif part.text:
+                         return f"ERROR_DETAILS: 모델 응답이 이미지가 아닙니다 (Text): {part.text[:100]}..."
+
+            last_error_msg = "이미지 데이터 없음 (Blocked by Safety Filter or No Output)"
             # print(f"⚠️ [시도 {attempt}/{max_retries}] {last_error_msg} ({filename})") # UI 로그로 대체
             time.sleep(1) # [수정] 대기 시간 2초 -> 1초로 단축
             
