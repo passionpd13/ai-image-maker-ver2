@@ -8,7 +8,7 @@ import re
 import shutil
 import zipfile
 import datetime
-import uuid  # 고유 세션 ID (멀티 유저용)
+import uuid  # [수정] 고유 세션 ID 생성을 위한 모듈 추가
 from io import BytesIO
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from PIL import Image
@@ -25,20 +25,12 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# [사용자 식별] 고유 세션 ID 생성
+# [수정] 사용자별 고유 세션 ID 생성 (서버 동시 접속 시 파일 충돌 방지)
 if 'user_session_id' not in st.session_state:
     st.session_state['user_session_id'] = str(uuid.uuid4())
 
-# 파일 저장 경로 설정 (기본 경로)
-BASE_PATH = "./web_result_files"
-# [사용자 전용 출력 경로]
-USER_IMAGE_OUTPUT_DIR = os.path.join(BASE_PATH, st.session_state['user_session_id'])
-
-# 텍스트 모델 설정
-GEMINI_TEXT_MODEL_NAME = "gemini-2.5-pro" 
-
 # ==========================================
-# [디자인] CSS 스타일 (원본 유지)
+# [디자인] 다크모드 & Expander/버튼/Status 가독성 최종 수정 (CSS)
 # ==========================================
 st.markdown("""
     <style>
@@ -206,13 +198,23 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+
+# [수정] 파일 저장 경로 설정 (사용자별 ID를 포함하여 동적 할당)
+BASE_PATH = "./web_result_files"
+# IMAGE_OUTPUT_DIR = os.path.join(BASE_PATH, "output_images") # <-- 기존 고정 경로 (문제 원인)
+# 사용자별 경로는 아래 로직에서 동적으로 생성합니다.
+
+# 텍스트 모델 설정
+GEMINI_TEXT_MODEL_NAME = "gemini-2.5-pro" 
+
 # ==========================================
 # [함수] 3. 이미지 생성 관련 로직
 # ==========================================
 
-def init_folders(path):
-    if not os.path.exists(path):
-        os.makedirs(path, exist_ok=True)
+# [수정] 폴더 초기화 함수가 특정 경로를 인자로 받도록 수정
+def init_folders(target_path):
+    if not os.path.exists(target_path):
+        os.makedirs(target_path, exist_ok=True)
 
 def split_script_by_time(script, chars_per_chunk=100):
     temp_script = script.replace(".", ".|").replace("?", "?|").replace("!", "!|") \
@@ -244,14 +246,8 @@ def split_script_by_time(script, chars_per_chunk=100):
         
     return chunks
 
-# ==========================================
-# [수정] 파일명 생성 (원본 로직 복구: 앞 단어...뒷 단어 + 한글 유지)
-# ==========================================
 def make_filename(scene_num, text_chunk):
-    # 1. 줄바꿈과 불필요한 공백 제거
     clean_line = text_chunk.replace("\n", " ").strip()
-    
-    # 2. 파일 시스템에서 못 쓰는 특수문자만 제거 (\/:*?"<>|) -> 한글은 100% 유지됨
     clean_line = re.sub(r'[\\/:*?"<>|]', "", clean_line)
     
     if not clean_line:
@@ -259,24 +255,22 @@ def make_filename(scene_num, text_chunk):
     
     words = clean_line.split()
     
-    # [핵심 요청사항 반영] 앞의 글자(단어) ... 뒤의 글자(단어) 나오게 하기
-    if len(words) <= 1:
-        # 단어가 1개면 그냥 씀 (너무 길면 자름)
-        summary = clean_line[:20]
-    elif len(words) <= 6:
-        # 단어가 6개 이하면 전체 다 연결 (공백은 언더바_로)
-        summary = "_".join(words)
+    if len(words) <= 1 or any(ord(c) > 12000 for c in clean_line[:10]): 
+        if len(clean_line) > 16:
+            summary = f"{clean_line[:10]}...{clean_line[-10:]}"
+        else:
+            summary = clean_line
     else:
-        # [여기!] 단어가 많으면 "앞 3단어" ... "뒤 3단어" 연결
-        start_part = "_".join(words[:3]) # 앞 3개
-        end_part = "_".join(words[-3:])   # 뒤 3개
-        summary = f"{start_part}...{end_part}"
+        if len(words) <= 6:
+            summary = " ".join(words)
+        else:
+            start_part = " ".join(words[:3])
+            end_part = " ".join(words[-3:])
+            summary = f"{start_part}...{end_part}"
+            
+            if len(summary) > 50:
+                summary = summary[:50]
     
-    # 4. 전체 파일명 길이가 너무 길어지지 않게 안전장치 (60자 제한)
-    if len(summary) > 60:
-        summary = summary[:60]
-        
-    # 5. 최종 파일명 생성
     filename = f"S{scene_num:03d}_{summary}.png"
     return filename
 
@@ -782,7 +776,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         - 대본에 있는 작은 지문 하나도 놓치지 말고 시각화하십시오.
         - "컵을 떨군다"는 대본이라면, 컵이 손에서 떠나 공중에 있는 순간과 튀어 오르는 물방울까지 묘사하십시오.
     4. **텍스트 처리:** {lang_guide} {lang_example}
-        
+       
     [작성 요구사항]
     - **분량:** 최소 7문장 이상으로 상세하게 묘사.
     - 절대 분활화면 연출하지 않는다. 전체 대본 내용에 어울리는 하나의 장면으로 묘사.
@@ -825,14 +819,13 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         return (scene_num, f"Error: {e}")
 
 # ==========================================
-# [함수] generate_image: API 제한(429/503) 완벽 대응 + 재시도 강화 + 비율 설정
+# [함수] generate_image: API 제한(429) 완벽 대응 + 재시도 강화 + 비율 설정
 # ==========================================
 def generate_image(client, prompt, filename, output_dir, selected_model_name, target_ratio="16:9"):
     # [수정] output_dir이 이미 사용자 고유 경로로 전달됨
     full_path = os.path.join(output_dir, filename)
     
-    # [수정: 안정성 강화] 요청하신 대로 재시도 7회로 설정
-    max_retries = 7
+    max_retries = 5
     
     last_error_msg = "알 수 없는 오류" 
 
@@ -875,40 +868,31 @@ def generate_image(client, prompt, filename, output_dir, selected_model_name, ta
                         return full_path
             
             last_error_msg = "이미지 데이터 없음 (Blocked by Safety Filter?)"
-            # [수정] 필터링 등으로 실패 시 너무 오래 대기하지 않도록 수정 (2초 -> 1초)
-            time.sleep(1)
+            # print(f"⚠️ [시도 {attempt}/{max_retries}] {last_error_msg} ({filename})") # UI 로그로 대체
+            time.sleep(2)
             
         except Exception as e:
             error_msg = str(e)
             last_error_msg = error_msg 
             
-            # [수정: 안정성 강화] 503 및 429 에러 대응 로직 (지수 백오프)
-            if "503" in error_msg:
-                wait_time = (2 * attempt) + random.uniform(1.0, 3.0)
-                # print(f"🛑 [503] {filename} - {wait_time:.1f}s 대기 (Attempt {attempt})")
-                time.sleep(wait_time)
-            
-            elif "429" in error_msg or "ResourceExhausted" in error_msg:
-                wait_time = (1.5 ** attempt) + random.uniform(0.5, 1.5)
-                # print(f"🛑 [429] {filename} - {wait_time:.1f}s 대기 (Attempt {attempt})")
+            if "429" in error_msg or "ResourceExhausted" in error_msg:
+                wait_time = (2 * attempt) + random.uniform(0.5, 2.0)
+                # print(f"🛑 [API 제한] {filename} - {wait_time:.1f}초 대기 후 재시도... (시도 {attempt})")
                 time.sleep(wait_time)
             else:
-                # print(f"⚠️ [에러] {error_msg} ({filename}) - 2초 대기")
-                time.sleep(2)
+                # print(f"⚠️ [에러] {error_msg} ({filename}) - 5초 대기")
+                time.sleep(5)
             
     # print(f"❌ [최종 실패] {filename}")
     return f"ERROR_DETAILS: {last_error_msg}"
 
-# [수정] ZIP 생성 시 '실제 파일 경로(영어)'를 '유저용 파일명(한글)'로 변경하여 압축
-def create_zip_buffer_from_results(results_list):
+def create_zip_buffer(source_dir):
     buffer = BytesIO()
     with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-        for item in results_list:
-            if os.path.exists(item['path']):
-                # item['path']: 서버에 저장된 영어/숫자 파일명 (오류 방지용)
-                # item['filename']: 유저가 원하는 한글 파일명 (S001_앞글자...뒷글자.png)
-                # arcname 옵션을 사용하여 압축 파일 내부 이름을 '한글'로 설정
-                zip_file.write(item['path'], arcname=item['filename'])
+        for root, dirs, files in os.walk(source_dir):
+            for file in files:
+                file_path = os.path.join(root, file)
+                zip_file.write(file_path, os.path.basename(file_path))
     buffer.seek(0)
     return buffer
 
@@ -924,7 +908,6 @@ with st.sidebar:
     st.markdown("---")
     
     st.subheader("🖼️ 이미지 모델 선택")
-    # [수정] 사용자의 요청대로 'Premium (Gemini 3 Pro)' (Index 0)를 기본값으로 유지
     model_choice = st.radio("사용할 AI 모델:", ("Premium (Gemini 3 Pro)", "Fast (Gemini-2.5-pro)"), index=0)
     
     if "Gemini 3 Pro" in model_choice:
@@ -1351,7 +1334,7 @@ if start_btn:
                     current_video_title, 
                     SELECTED_GENRE_MODE,
                     target_language,
-                    LAYOUT_KOREAN        
+                    LAYOUT_KOREAN       
                 ))
             
             completed_prompts = 0
@@ -1383,31 +1366,24 @@ if start_btn:
             for s_num, prompt_text in prompts:
                 idx = s_num - 1
                 orig_text = chunks[idx]
+                fname = make_filename(s_num, orig_text)
                 
-                # [핵심 수정] 
-                # korean_filename: 유저에게 보여줄 한글 이름 (S001_앞글자...뒷글자.png)
-                # safe_filename: 서버에 저장할 안전한 영어/숫자 이름 (UUID 사용)
-                korean_filename = make_filename(s_num, orig_text)
-                safe_filename = f"S{s_num:03d}_{uuid.uuid4().hex[:8]}.png" 
-                
-                # [수정: 속도 향상] 0.05초 대기로 변경 (빠른 속도)
-                time.sleep(0.05) 
+                time.sleep(0.1) 
                 
                 future = executor.submit(
                     generate_image, 
                     client, 
                     prompt_text, 
-                    safe_filename,  # 서버에는 'safe_filename'(영어)으로 저장 요청
-                    USER_IMAGE_OUTPUT_DIR, 
+                    fname, 
+                    USER_IMAGE_OUTPUT_DIR, # [수정] 사용자 전용 경로 전달
                     SELECTED_IMAGE_MODEL,
                     TARGET_RATIO 
                 )
-                # 메타데이터에는 'korean_filename'을 함께 저장
-                future_to_meta[future] = (s_num, korean_filename, safe_filename, orig_text, prompt_text)
+                future_to_meta[future] = (s_num, fname, orig_text, prompt_text)
             
             completed_imgs = 0
             for future in as_completed(future_to_meta):
-                s_num, k_fname, s_fname, orig_text, p_text = future_to_meta[future]
+                s_num, fname, orig_text, p_text = future_to_meta[future]
                 
                 result = future.result() 
                 
@@ -1415,11 +1391,11 @@ if start_btn:
                     path = result 
                     results.append({
                         "scene": s_num,
-                        "path": path,          # 실제 디스크 경로 (영어 이름)
-                        "filename": k_fname,   # 유저 표시용 이름 (한글 이름)
+                        "path": path,
+                        "filename": fname,
                         "script": orig_text,
                         "prompt": p_text,
-                        "output_dir": USER_IMAGE_OUTPUT_DIR
+                        "output_dir": USER_IMAGE_OUTPUT_DIR # [수정] 결과에 경로 저장
                     })
                     add_log(f"✅ [Scene {s_num:02d}] 이미지 생성 성공")
                 else:
@@ -1463,11 +1439,8 @@ if st.session_state['generated_results']:
     st.write("---")
     st.subheader("⚡ 원클릭 일괄 다운로드")
     
-    # [수정] ZIP 파일 생성 시 'create_zip_buffer' 대신 새로 만든 함수 사용
-    # 기존: zip_data = create_zip_buffer(current_output_dir)
-    # 변경: 결과 리스트를 통째로 넘겨서 이름을 매핑함
-    zip_data = create_zip_buffer_from_results(st.session_state['generated_results'])
-    
+    # [수정] 사용자 전용 경로에서 zip 파일 생성
+    zip_data = create_zip_buffer(current_output_dir)
     # [수정] 전체 너비를 사용하여 버튼을 길게 배치
     st.download_button(
         label="📦 전체 이미지 ZIP 다운로드 (Click to Download All)", 
@@ -1496,11 +1469,8 @@ if st.session_state['generated_results']:
                 except: 
                     st.error("이미지 없음")
                 
-                # [오류 해결 핵심] Key에 사용자 Session ID를 포함하여 중복 방지
-                unique_regen_key = f"regen_img_{st.session_state['user_session_id']}_{index}"
-
                 # [NEW] 이미지 개별 재생성 버튼
-                if st.button(f"🔄 이 장면만 이미지 다시 생성", key=unique_regen_key, use_container_width=True):
+                if st.button(f"🔄 이 장면만 이미지 다시 생성", key=f"regen_img_{index}", use_container_width=True):
                     if not api_key:
                         st.error("API Key가 필요합니다.")
                     else:
@@ -1509,9 +1479,7 @@ if st.session_state['generated_results']:
                             
                             # [핵심 수정] 1. 프롬프트 가져오기 (사용자가 수정한 내용이 있으면 그것을 사용)
                             # 텍스트 에어리어의 키를 통해 현재 상태 값을 가져옵니다.
-                            # [오류 해결 핵심] Key에 사용자 Session ID 포함
-                            current_prompt_key = f"prompt_edit_{st.session_state['user_session_id']}_{index}"
-                            
+                            current_prompt_key = f"prompt_edit_{index}"
                             if current_prompt_key in st.session_state:
                                 final_prompt = st.session_state[current_prompt_key]
                             else:
@@ -1523,11 +1491,8 @@ if st.session_state['generated_results']:
                             # [수정] 재생성 시에도 사용자 전용 경로 사용
                             item_dir = item.get('output_dir', USER_IMAGE_OUTPUT_DIR)
                             
-                            # [수정] 재생성 시 파일명은 기존에 저장된 'path'의 파일명(safe_filename)을 재사용
-                            safe_filename_only = os.path.basename(item['path'])
-                            
                             new_path = generate_image(
-                                client, final_prompt, safe_filename_only, # 안전한 이름으로 저장 
+                                client, final_prompt, item['filename'], 
                                 item_dir, SELECTED_IMAGE_MODEL,
                                 TARGET_RATIO 
                             )
@@ -1546,7 +1511,6 @@ if st.session_state['generated_results']:
             # [오른쪽] 정보 및 프롬프트 수정
             with cols[1]:
                 st.subheader(f"Scene {item['scene']:02d}")
-                # [수정] 화면에는 'filename'(한글)을 보여줌
                 st.caption(f"파일명: {item['filename']}")
                 
                 st.write(f"**대본:** {item['script']}")
@@ -1556,8 +1520,8 @@ if st.session_state['generated_results']:
                 # [수정됨] 프롬프트 확인 및 수정 영역
                 with st.expander("프롬프트 확인 및 수정 (여기서 수정 후 재생성 가능)", expanded=False):
                     # st.text_area를 사용하여 수정 가능하게 변경
-                    # [오류 해결 핵심] Key에 사용자 Session ID를 포함하여 절대 중복되지 않게 함
-                    prompt_key = f"prompt_edit_{st.session_state['user_session_id']}_{index}"
+                    # key를 부여하여 상태를 관리합니다.
+                    prompt_key = f"prompt_edit_{index}"
                     
                     # 초기값 설정 (세션 스테이트에 아직 없다면)
                     if prompt_key not in st.session_state:
@@ -1575,8 +1539,5 @@ if st.session_state['generated_results']:
 
                 try:
                     with open(item['path'], "rb") as file:
-                        # [오류 해결 핵심] 다운로드 버튼 Key에도 Session ID 포함
-                        unique_down_key = f"btn_down_{st.session_state['user_session_id']}_{item['scene']}"
-                        # [수정] 다운로드 시에는 'filename'(한글)을 사용
-                        st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=unique_down_key)
+                        st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
                 except: pass
