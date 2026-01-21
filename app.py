@@ -244,8 +244,14 @@ def split_script_by_time(script, chars_per_chunk=100):
         
     return chunks
 
+# ==========================================
+# [수정] 파일명 생성 (원본 로직 복구: 앞 단어...뒷 단어 + 한글 유지)
+# ==========================================
 def make_filename(scene_num, text_chunk):
+    # 1. 줄바꿈과 불필요한 공백 제거
     clean_line = text_chunk.replace("\n", " ").strip()
+    
+    # 2. 파일 시스템에서 못 쓰는 특수문자만 제거 (\/:*?"<>|) -> 한글은 100% 유지됨
     clean_line = re.sub(r'[\\/:*?"<>|]', "", clean_line)
     
     if not clean_line:
@@ -253,22 +259,24 @@ def make_filename(scene_num, text_chunk):
     
     words = clean_line.split()
     
-    if len(words) <= 1 or any(ord(c) > 12000 for c in clean_line[:10]): 
-        if len(clean_line) > 16:
-            summary = f"{clean_line[:10]}...{clean_line[-10:]}"
-        else:
-            summary = clean_line
+    # [핵심 요청사항 반영] 앞의 글자(단어) ... 뒤의 글자(단어) 나오게 하기
+    if len(words) <= 1:
+        # 단어가 1개면 그냥 씀 (너무 길면 자름)
+        summary = clean_line[:20]
+    elif len(words) <= 6:
+        # 단어가 6개 이하면 전체 다 연결 (공백은 언더바_로)
+        summary = "_".join(words)
     else:
-        if len(words) <= 6:
-            summary = " ".join(words)
-        else:
-            start_part = " ".join(words[:3])
-            end_part = " ".join(words[-3:])
-            summary = f"{start_part}...{end_part}"
-            
-            if len(summary) > 50:
-                summary = summary[:50]
+        # [여기!] 단어가 많으면 "앞 3단어" ... "뒤 3단어" 연결
+        start_part = "_".join(words[:3]) # 앞 3개
+        end_part = "_".join(words[-3:])   # 뒤 3개
+        summary = f"{start_part}...{end_part}"
     
+    # 4. 전체 파일명 길이가 너무 길어지지 않게 안전장치 (60자 제한)
+    if len(summary) > 60:
+        summary = summary[:60]
+        
+    # 5. 최종 파일명 생성
     filename = f"S{scene_num:03d}_{summary}.png"
     return filename
 
@@ -891,13 +899,16 @@ def generate_image(client, prompt, filename, output_dir, selected_model_name, ta
     # print(f"❌ [최종 실패] {filename}")
     return f"ERROR_DETAILS: {last_error_msg}"
 
-def create_zip_buffer(source_dir):
+# [수정] ZIP 생성 시 '실제 파일 경로(영어)'를 '유저용 파일명(한글)'로 변경하여 압축
+def create_zip_buffer_from_results(results_list):
     buffer = BytesIO()
     with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-        for root, dirs, files in os.walk(source_dir):
-            for file in files:
-                file_path = os.path.join(root, file)
-                zip_file.write(file_path, os.path.basename(file_path))
+        for item in results_list:
+            if os.path.exists(item['path']):
+                # item['path']: 서버에 저장된 영어/숫자 파일명 (오류 방지용)
+                # item['filename']: 유저가 원하는 한글 파일명 (S001_앞글자...뒷글자.png)
+                # arcname 옵션을 사용하여 압축 파일 내부 이름을 '한글'로 설정
+                zip_file.write(item['path'], arcname=item['filename'])
     buffer.seek(0)
     return buffer
 
@@ -1372,7 +1383,12 @@ if start_btn:
             for s_num, prompt_text in prompts:
                 idx = s_num - 1
                 orig_text = chunks[idx]
-                fname = make_filename(s_num, orig_text)
+                
+                # [핵심 수정] 
+                # korean_filename: 유저에게 보여줄 한글 이름 (S001_앞글자...뒷글자.png)
+                # safe_filename: 서버에 저장할 안전한 영어/숫자 이름 (UUID 사용)
+                korean_filename = make_filename(s_num, orig_text)
+                safe_filename = f"S{s_num:03d}_{uuid.uuid4().hex[:8]}.png" 
                 
                 # [수정: 속도 향상] 0.05초 대기로 변경 (빠른 속도)
                 time.sleep(0.05) 
@@ -1381,16 +1397,17 @@ if start_btn:
                     generate_image, 
                     client, 
                     prompt_text, 
-                    fname, 
-                    USER_IMAGE_OUTPUT_DIR, # [수정] 사용자 전용 경로 전달
+                    safe_filename,  # 서버에는 'safe_filename'(영어)으로 저장 요청
+                    USER_IMAGE_OUTPUT_DIR, 
                     SELECTED_IMAGE_MODEL,
                     TARGET_RATIO 
                 )
-                future_to_meta[future] = (s_num, fname, orig_text, prompt_text)
+                # 메타데이터에는 'korean_filename'을 함께 저장
+                future_to_meta[future] = (s_num, korean_filename, safe_filename, orig_text, prompt_text)
             
             completed_imgs = 0
             for future in as_completed(future_to_meta):
-                s_num, fname, orig_text, p_text = future_to_meta[future]
+                s_num, k_fname, s_fname, orig_text, p_text = future_to_meta[future]
                 
                 result = future.result() 
                 
@@ -1398,11 +1415,11 @@ if start_btn:
                     path = result 
                     results.append({
                         "scene": s_num,
-                        "path": path,
-                        "filename": fname,
+                        "path": path,          # 실제 디스크 경로 (영어 이름)
+                        "filename": k_fname,   # 유저 표시용 이름 (한글 이름)
                         "script": orig_text,
                         "prompt": p_text,
-                        "output_dir": USER_IMAGE_OUTPUT_DIR # [수정] 결과에 경로 저장
+                        "output_dir": USER_IMAGE_OUTPUT_DIR
                     })
                     add_log(f"✅ [Scene {s_num:02d}] 이미지 생성 성공")
                 else:
@@ -1446,8 +1463,11 @@ if st.session_state['generated_results']:
     st.write("---")
     st.subheader("⚡ 원클릭 일괄 다운로드")
     
-    # [수정] 사용자 전용 경로에서 zip 파일 생성
-    zip_data = create_zip_buffer(current_output_dir)
+    # [수정] ZIP 파일 생성 시 'create_zip_buffer' 대신 새로 만든 함수 사용
+    # 기존: zip_data = create_zip_buffer(current_output_dir)
+    # 변경: 결과 리스트를 통째로 넘겨서 이름을 매핑함
+    zip_data = create_zip_buffer_from_results(st.session_state['generated_results'])
+    
     # [수정] 전체 너비를 사용하여 버튼을 길게 배치
     st.download_button(
         label="📦 전체 이미지 ZIP 다운로드 (Click to Download All)", 
@@ -1503,8 +1523,11 @@ if st.session_state['generated_results']:
                             # [수정] 재생성 시에도 사용자 전용 경로 사용
                             item_dir = item.get('output_dir', USER_IMAGE_OUTPUT_DIR)
                             
+                            # [수정] 재생성 시 파일명은 기존에 저장된 'path'의 파일명(safe_filename)을 재사용
+                            safe_filename_only = os.path.basename(item['path'])
+                            
                             new_path = generate_image(
-                                client, final_prompt, item['filename'], 
+                                client, final_prompt, safe_filename_only, # 안전한 이름으로 저장 
                                 item_dir, SELECTED_IMAGE_MODEL,
                                 TARGET_RATIO 
                             )
@@ -1523,6 +1546,7 @@ if st.session_state['generated_results']:
             # [오른쪽] 정보 및 프롬프트 수정
             with cols[1]:
                 st.subheader(f"Scene {item['scene']:02d}")
+                # [수정] 화면에는 'filename'(한글)을 보여줌
                 st.caption(f"파일명: {item['filename']}")
                 
                 st.write(f"**대본:** {item['script']}")
@@ -1553,5 +1577,6 @@ if st.session_state['generated_results']:
                     with open(item['path'], "rb") as file:
                         # [오류 해결 핵심] 다운로드 버튼 Key에도 Session ID 포함
                         unique_down_key = f"btn_down_{st.session_state['user_session_id']}_{item['scene']}"
+                        # [수정] 다운로드 시에는 'filename'(한글)을 사용
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=unique_down_key)
                 except: pass
