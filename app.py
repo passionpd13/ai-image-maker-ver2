@@ -751,6 +751,9 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     6. **텍스트 처리:** {lang_guide} {lang_example}
         - 웹툰 말풍선 느낌이나 배경 오브젝트(간판, 스마트폰)에 자연스럽게 녹여내십시오.
 
+    [❌ 절대 금지 키워드]
+    - **Photorealistic, 8k, Unreal Engine, Live Action, Real photo, 3D Render.** (실사 느낌 절대 금지)
+
     [임무]
     제공된 대본을 바탕으로 이미지 생성 프롬프트를 작성하십시오. (한글 출력)
     - "집중선이 배경에 깔리며..." 같은 표현은 자제하고, **"디테일한 사무실 배경을 뒤로 하고...", "비 내리는 거리 한복판에서..."** 처럼 공간 묘사를 우선하십시오.
@@ -766,10 +769,14 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     [전체 영상 주제] "{video_title}"
     [스타일 가이드] {style_instruction}
 
+    [❌ 절대 금지 키워드 (Negative Constraints)]
+    - **Photorealistic, Live Action, Real Photo, 8k Photography, 3D Render, Unreal Engine.**
+    - 실사, 사진, 3D 느낌이 나면 절대 안 됩니다. 무조건 **2D 셀 애니메이션(Cell Animation)** 느낌이어야 합니다.
+
     [필수 연출 지침]
-    1. **작화 스타일 (High Detail):**
-        - **서정적이고 몽환적인 느낌 금지.** 대신 **선명하고, 사실적이니지만 인물은 귀여운, 정보량이 많은(High Information Density)** 작화를 추구하십시오.
-        - 배경은 흐릿하게 처리하지 말고, 간판의 글씨, 책상의 소품, 벽의 질감까지 **집요할 정도로 디테일하게** 묘사하십시오. (예: 'MAPPA', 'Ufotable' 제작사의 고퀄리티 작화 스타일)
+    1. **작화 스타일 (High Detail 2D Animation):**
+        - **서정적이고 몽환적인 느낌 금지.** 대신 **선명하고, 밀도 높은(High Information Density)** 2D 작화를 추구하십시오.
+        - 배경은 흐릿하게 처리하지 말고, 간판의 글씨, 책상의 소품, 벽의 질감까지 **집요할 정도로 디테일하게** 2D 그림으로 묘사하십시오. (예: 'MAPPA', 'Ufotable', 'Ghibli' 제작사의 고퀄리티 작화 스타일)
     2. **행동 및 감정 묘사 (Action & Emotion):**
         - 대본에 묘사된 캐릭터의 행동을 **'순간 포착'** 하듯 역동적으로 그리십시오.
         - **표정 연기:** 눈썹의 각도, 입 모양, 눈동자의 흔들림까지 구체적으로 지시하여 캐릭터의 심리를 완벽하게 표현하십시오.
@@ -781,6 +788,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     [작성 요구사항]
     - **분량:** 최소 7문장 이상으로 상세하게 묘사.
     - 절대 분활화면 연출하지 않는다. 전체 대본 내용에 어울리는 하나의 장면으로 묘사.
+    - **[중요]** 프롬프트 시작은 반드시 **"Anime Style, Studio Ghibli Style, High Quality 2D Animation"** 으로 시작하도록 작성하십시오.
 
     [임무]
     대본을 분석하여 AI가 그릴 수 있는 **최상급 귀여운 지브리풍 퀄리티의 애니메이션 프롬프트**를 작성하십시오.
@@ -802,6 +810,16 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
             try:
                 prompt = response.json()['candidates'][0]['content']['parts'][0]['text'].strip()
                 
+                # [수정됨] 장르별 강제 접두어(Prefix) 추가 - 스타일 고정용
+                if genre_mode == "manga":
+                     prompt = "Anime Style, Studio Ghibli Style, High Quality 2D Animation, " + prompt
+                elif genre_mode == "webtoon":
+                     prompt = "Korean Webtoon Style, Manhwa, 2D Illustration, " + prompt
+                elif genre_mode == "realistic_stickman":
+                     prompt = "2D Digital Art, Round-headed Stickman, Concept Art, " + prompt
+                elif genre_mode == "paint_explainer":
+                     prompt = "Simple 2D Flat Design, Clean vector line art, " + prompt
+
                 if "9:16" in target_layout:
                       prompt = "Vertical 9:16 smartphone wallpaper composition, Close-up shot, Portrait mode, (세로 화면 꽉 찬 구도), " + prompt
                       
@@ -1024,8 +1042,9 @@ with st.sidebar:
 단순 인물 컷보다는 주변 사물과 배경이 함께 보이는 구도 선호. 
 전체적으로 배경 디테일이 살아있는 네이버 웹툰 썸네일 스타일. (16:9)"""
 
+    # [수정됨] '사실적'이라는 단어 제거하고 '밀도 높은'으로 변경하여 실사 오류 방지
     PRESET_MANGA = """일본 대작 귀여운 지브리풍 애니메이션 스타일 (High-Budget Anime Style).
-서정적인 느낌보다는 '정보량이 많고 치밀한' 고밀도 배경 작화 (High Detail Backgrounds).
+서정적인 느낌보다는 '정보량이 많고 밀도 높은' 고퀄리티 배경 작화 (High Density 2D Art).
 캐릭터의 표정과 행동을 '순간 포착'하듯 역동적으로 묘사.
 대본의 지문을 하나도 놓치지 않고 시각화하는 '철저한 디테일' 위주. (16:9)
 전체 대본에 어울리는 하나의 장면으로 연출."""
@@ -1356,6 +1375,7 @@ if start_btn:
                 progress_bar.progress(current_progress)
                 
                 s_num = result[0]
+                s_num_display = s_num - 1 # 0부터 시작하는 인덱스 조정
                 add_log(f"📝 [Scene {s_num:02d}] 프롬프트 작성 완료")
         
         prompts.sort(key=lambda x: x[0])
