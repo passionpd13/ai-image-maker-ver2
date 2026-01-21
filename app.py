@@ -1359,7 +1359,7 @@ if st.session_state['generated_results']:
                         label="프롬프트 (수정 후 왼쪽 '다시 생성' 버튼 클릭)",
                         value=st.session_state[prompt_key],
                         key=prompt_key,
-                        height=150
+                        height=300
                     )
                     
                     # 텍스트 영역이 수정될 때마다 메인 데이터에도 동기화 (선택 사항이지만 권장)
@@ -1369,3 +1369,4 @@ if st.session_state['generated_results']:
                     with open(item['path'], "rb") as file:
                         st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
                 except: pass
+
