@@ -618,9 +618,11 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     **옵션 A. [극강의 심플함 (Focus on Subject)]: (비중 60%)**
     - 배경을 **완전한 단색(Solid Color)**으로 처리하고, 오직 **'인물(표정 연기)'** 또는 **'사물(아이콘)'** 하나만 큼직하게 그립니다.
     - 예: 스틱맨이 절규하는 모습만 클로즈업, 혹은 돈다발만 화면 중앙에 배치.
+    -배경은 기본은 하얀색이지만 상황에 따라 다른색으로 표현.
 
     **옵션 B. [미니멀한 공간 연출 (Minimal Context)]: (비중 40%)**
     - 대본에서 '장소'가 중요할 때는 **단순화된 배경**을 그립니다.
+    -배경은 기본은 하얀색이지만 상황에 따라 다른색으로 표현.
     - **인물 + 실내:** 인물이 서 있는데 뒤에 **'창문 하나', '책상 하나', '감옥 창살'** 등을 그려 여기가 어디인지 암시하십시오. (벽지 무늬 등 복잡한 디테일은 생략)
     - **장소 중심:** 건물을 그릴 때는 주변 풍경을 다 그리지 말고, **'건물(하나 또는 두개) 와 바닥(지평선)'** 정도만 깔끔하게 그리십시오.
 
@@ -650,6 +652,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     - 공간 연출 시에는 천장(조명)이나 바닥(가구)을 활용해 수직적 공간감을 주십시오.
 
     [임무]
+    - **분량:** 최소 7문장 이상으로 상세하게 묘사.
     대본을 보고 **'인물/사물만 강조할지'** 아니면 **'심플한 배경을 넣어줄지'** 판단하여 **History Matters 스타일의 프롬프트**를 작성하십시오.
     - **필수 키워드:** "History Matters style, OverSimplified style, minimalism, thick black outlines, flat colors, simple background context, funny expressions, vector art"
     - **한글**로만 출력하십시오.
@@ -1574,6 +1577,7 @@ if st.session_state['generated_results']:
                         with open(item['path'], "rb") as file:
                             st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
                 except: pass
+
 
 
 
