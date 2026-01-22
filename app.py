@@ -555,7 +555,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     - 부가 설명 없이 **오직 프롬프트 텍스트만** 출력하십시오.
     - (지문) 같은 부연설명 연출 지시어는 제외한다.
         """
-        
+      
     # ---------------------------------------------------------
     # [모드 4] 과학/엔지니어링 (Clean Technical + Characters) - [NEW! 재수정됨]
     # ---------------------------------------------------------
@@ -836,6 +836,53 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     - **한글**로만 출력하십시오.
         """
 
+    # ---------------------------------------------------------
+    # [모드 10] AI Reconstruction (건축/복원/시대재현) - [NEW!]
+    # ---------------------------------------------------------
+    elif genre_mode == "reconstruction":
+        full_instruction = f"""
+    {common_header}
+    [역할]
+    당신은 **'역사적 고증과 건축 시각화(Architectural Visualization)'를 전문으로 하는 AI 아티스트**입니다.
+    대본에 묘사된 장소의 **'과거, 현재, 혹은 미래의 모습'**을 마치 타임머신을 타고 가서 찍은 **고화질 사진(Photorealistic)**처럼 복원해야 합니다.
+
+    [전체 영상 주제] "{video_title}"
+    [스타일 가이드] {style_instruction}
+
+    [핵심 비주얼 스타일 가이드 - 절대 준수]
+    1. **화풍 (Art Style):** - 무조건 **'실사(Photorealistic)', '8K Resolution', 'Unreal Engine 5 Lumen Render'**.
+        - 그림, 만화, 일러스트 느낌이 나면 안 됩니다. **완벽한 사진**이어야 합니다.
+    
+    2. **건축 및 환경 (Architecture & Environment):**
+        - 이 모드의 주인공은 **'장소(Place)'**입니다.
+        - 건물의 재질(벽돌의 깨짐, 나무의 결, 금속의 녹슴), 도로의 상태(포장도로, 흙길, 빗물 고인 웅덩이), 하늘의 날씨 등을 집요하게 묘사하십시오.
+        - **시대적 고증(Historical Accuracy):** 대본이 1900년대를 말하면 그 시대의 간판, 가로등, 자동차, 마차 등을 정확히 배치하십시오.
+        - **장소의 변화:** 대본 내용에 따라 건물이 지어지는 중이거나, 파괴되었거나, 번영하는 모습을 극적으로 표현하십시오.
+
+    3. **인물 및 군중 (People & Crowd):**
+        - 인물은 **'자연스러운 배경'**처럼 연출하십시오. 카메라를 의식하고 포즈를 취하는 것이 아니라, 그 시대의 옷을 입고 **일상을 살아가는 모습(Walking, Talking, Working)**이어야 합니다.
+        - 인물보다는 **'인물이 있는 풍경'**이 중요합니다.
+    
+    4. **카메라 앵글 (Camera Angle):**
+        - 웅장함을 보여주는 **'광각(Wide Angle)'**, 거리의 깊이감을 주는 **'소실점 구도(Vanishing Point)'**, 혹은 전체를 조망하는 **'드론 샷(Drone Shot)'**을 적극 활용하십시오.
+
+    5. **조명 (Lighting):**
+        - 인공적인 스튜디오 조명이 아닌, **자연광(Natural Sunlight, Overcast, Sunset)**을 사용하여 사실감을 극대화하십시오.
+        - **대기 원근법(Atmospheric Perspective)**과 안개(Fog)를 사용하여 공간의 깊이를 만드십시오.
+
+    6. **텍스트 처리:** {lang_guide} {lang_example}
+        - 텍스트는 옛날 간판, 포스터, 현수막 등 **건축물과 환경에 자연스럽게 녹아든 형태**로만 연출하십시오. 인위적인 자막은 금지입니다.
+
+    [9:16 세로 모드 지침]
+    - 높은 건물의 **수직감(Verticality)**을 강조하거나, 좁은 골목길의 **깊이감(Depth)**을 표현하는 구도를 사용하십시오.
+    - 바닥부터 하늘까지 꽉 차게 묘사하십시오.
+
+    [임무]
+    대본을 분석하여, 그 시대와 장소를 완벽하게 복원하는 **'초고화질 건축 시각화 프롬프트'**를 작성하십시오.
+    - **필수 키워드:** "Hyper-realistic, 8k, Unreal Engine 5 render, Architectural visualization, Historical reconstruction, Detailed texture, Volumetric lighting"
+    - **한글**로만 작성하십시오.
+        """
+
     else: # Fallback
         full_instruction = f"스타일: {style_instruction}. 비율: {target_layout}. 대본 내용: {text_chunk}. 이미지 프롬프트 작성."
 
@@ -1088,6 +1135,15 @@ with st.sidebar:
 대본의 지문을 하나도 놓치지 않고 시각화하는 '철저한 디테일' 위주. (16:9)
 전체 대본에 어울리는 하나의 장면으로 연출."""
 
+    # [NEW] AI Reconstruction 프리셋 추가
+    PRESET_RECONSTRUCTION = """[AI Reconstruction / Architectural Visualization]
+과거, 현재, 미래의 특정 장소를 '완벽한 고증과 사실감'으로 복원(Reconstruction)하는 스타일.
+화풍: National Geographic 역사 다큐멘터리 사진, 8K Unreal Engine 5 Architectural Render.
+핵심 대상: 건축물(Architecture), 거리(Street), 환경(Environment), 시대적 분위기(Atmosphere).
+인물: 인물은 카메라를 보지 않고 그 시대의 일상 생활을 하는 '자연스러운 군중'으로 연출.
+조명: 자연광(Sunlight), 날씨 표현, 건물의 질감(벽돌, 나무, 콘크리트)을 극대화하는 라이팅.
+대본의 시대와 장소를 완벽하게 시각화하여, 마치 그 장소에 실제로 와 있는 듯한 현장감 부여."""
+
     # 세션 상태 초기화
     if 'style_prompt_area' not in st.session_state:
         st.session_state['style_prompt_area'] = PRESET_INFO
@@ -1104,6 +1160,9 @@ with st.sidebar:
     OPT_SKULL = "핑크 3D 해골 (Helix Style Pink Skeleton)"
     OPT_WEBTOON = "한국 웹툰 스타일 (K-Webtoon Style)"
     OPT_MANGA = "지브리풍 대작 애니메이션 (High-Budget Anime)"
+    
+    # [NEW] 옵션 이름 추가
+    OPT_RECONSTRUCTION = "AI 복원/건축 (AI Reconstruction)" 
 
     def update_text_from_radio():
         selection = st.session_state.genre_radio_key
@@ -1127,13 +1186,17 @@ with st.sidebar:
             st.session_state['style_prompt_area'] = PRESET_WEBTOON
         elif selection == OPT_MANGA:
             st.session_state['style_prompt_area'] = PRESET_MANGA
+        # [NEW] 라디오 버튼 선택 시 텍스트 업데이트 로직 추가
+        elif selection == OPT_RECONSTRUCTION:
+            st.session_state['style_prompt_area'] = PRESET_RECONSTRUCTION
 
     def set_radio_to_custom():
         st.session_state.genre_radio_key = OPT_CUSTOM
 
     genre_select = st.radio(
         "콘텐츠 성격 선택:",
-        (OPT_INFO, OPT_REALISTIC, OPT_HISTORY, OPT_3D, OPT_SCIFI, OPT_PAINT, OPT_COMIC_REAL, OPT_SKULL, OPT_WEBTOON, OPT_MANGA, OPT_CUSTOM),
+        # [NEW] 리스트에 OPT_RECONSTRUCTION 추가
+        (OPT_INFO, OPT_REALISTIC, OPT_HISTORY, OPT_3D, OPT_SCIFI, OPT_PAINT, OPT_COMIC_REAL, OPT_SKULL, OPT_WEBTOON, OPT_MANGA, OPT_RECONSTRUCTION, OPT_CUSTOM),
         index=0,
         key="genre_radio_key",
         on_change=update_text_from_radio,
@@ -1150,6 +1213,8 @@ with st.sidebar:
     elif genre_select == OPT_SKULL: SELECTED_GENRE_MODE = "pink_skull"
     elif genre_select == OPT_WEBTOON: SELECTED_GENRE_MODE = "webtoon"
     elif genre_select == OPT_MANGA: SELECTED_GENRE_MODE = "manga"
+    # [NEW] 모드 매핑 추가
+    elif genre_select == OPT_RECONSTRUCTION: SELECTED_GENRE_MODE = "reconstruction"
     else: SELECTED_GENRE_MODE = "info" # 기본값
 
     st.markdown("---")
@@ -1514,4 +1579,3 @@ if st.session_state['generated_results']:
                         with open(item['path'], "rb") as file:
                             st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
                 except: pass
-
