@@ -621,6 +621,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
 
     2. **[캐릭터 - 스토리 연기 (Storytelling through Acting)]:**
         - **디자인:** 하얀색 동그라미 머리의 스틱맨.
+        - 스틱맨은 항상 하얀색이든 피부색이든 얼굴이 채색되어 있어야 한다.
         - **연기(Acting):** 캐릭터가 차렷 자세로 서 있는 것은 금지입니다. 대본의 상황(갈등, 도망, 좌절, 환호)을 **'온몸'으로 연기**해야 합니다.
         - **표정:** 점 눈(Dot eyes)이지만, **눈 밑의 짙은 다크서클, 삐질 흘리는 땀방울, 찡그린 입** 등으로 캐릭터의 '심정'을 유머러스하게 보여주십시오.
 
@@ -628,6 +629,8 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         - **딱딱한 디지털 폰트(Arial, 고딕 등) 절대 금지.**
         - 사람이 마카펜으로 꾹꾹 눌러 쓴 듯한 **'삐뚤빼뚤하고 굵은 손글씨(Rough Bold Handwriting, Marker font)'** 스타일로 묘사하십시오.
         - 글자는 최소화하되, 필요한 단어(예: 'TAX', 'WAR')는 그림 옆에 툭 던져놓은 듯 자연스럽게 배치하십시오. ({lang_guide})
+        - **[절대 금지]:** 화면의 네 모서리(Corners)나 가장자리(Edges)에 글자를 배치하지 마십시오. 글자는 반드시 중앙 피사체 주변에만 연출하십시오.
+
 
     4. **[구도]:** 분할 화면 금지. **{target_layout}** 비율.
         - 캐릭터가 화면의 주인공입니다. 배경에 묻히지 않게 중앙에 명확히 배치하십시오.
@@ -639,6 +642,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     대본을 분석하여 **'사물은 적지만 스토리는 명확한 풍자 스틱맨 일러스트'** 프롬프트를 작성하십시오.
     - **필수 키워드 반영:** "History Matters style, OverSimplified style, 2D stick figures, thick black outlines, flat colors, minimal solid background, funny expressions, expressive body language, rough bold handwritten text, marker font"
     - **한글**로만 출력하십시오.
+    - (지문) 같은 부연설명 연출 지시어는 제외한다.
         """
 
     # ---------------------------------------------------------
@@ -1558,6 +1562,7 @@ if st.session_state['generated_results']:
                         with open(item['path'], "rb") as file:
                             st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
                 except: pass
+
 
 
 
