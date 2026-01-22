@@ -600,65 +600,53 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         """
 
     # ---------------------------------------------------------
-    # [모드 5] The Paint Explainer (Modified: Clean Lines & Flat Color)
+    # [모드 5] History/Satire Stickman (History Matters Style) - [수정됨: 말풍선 선택사항]
     # ---------------------------------------------------------
     elif genre_mode == "paint_explainer":
-        # [NEW] The Paint Explainer 스타일 (깔끔한 선 + 스틱맨 + 단순함 + 명확한 사물 표현)
         full_instruction = f"""
     {common_header}
     [역할]
-    당신은 유튜브 'The Paint Explainer' 채널 스타일의 **'깔끔하고 직관적인 스틱맨 디지털 일러스트레이터'**입니다.
-    복잡한 이야기를 **'정돈된 선과 다채로운 플랫 컬러'**를 사용하여 시청자가 직관적으로 이해할 수 있도록 그려야 합니다.
+    당신은 **'History Matters'** 또는 **'OverSimplified'** 유튜브 채널 스타일의 **'역사 풍자 스틱맨 일러스트레이터'**입니다.
+    복잡한 역사나 사회 이슈를 **'굵은 선의 스틱맨'**을 이용해 재치 있고 직관적으로 그려야 합니다.
 
     [전체 영상 주제] "{video_title}"
     [스타일 가이드] {style_instruction}
 
-    [필수 연출 지침]
-    1. **[핵심 - 배경] '단순화된 2D 플랫 배경(Simple 2D Flat Background)'으로 채우십시오.**
-        - 배경을 하얗게 비워두지 마십시오.
-        - 대본 장소에 맞춰 하늘, 땅, 벽, 바닥 등을 단순한 면으로 분할하여 칠하십시오. (예: 파란 하늘과 초록 땅 / 베이지색 벽과 갈색 바닥)
-        - 복잡한 질감이나 그라데이션 없이 **깔끔한 단색 채우기(Flat Color Fill)**로 표현하십시오.
-          
-    2. **[핵심 - 작화 스타일] '깔끔하고 매끄러운 선(Clean & Smooth Lines)':**
-        - **절대 금지:** 마우스로 대충 그린 듯한 삐뚤빼뚤한 선, 거친 스케치 느낌을 배제하십시오.
-        - **지향점:** 벡터 이미지처럼 **선이 매끄럽고 정돈되어 있어야 하며**, 두께가 일정하고 깔끔해야 합니다.
-        - 그림자와 명암을 그리지 않는 **완전한 평면(Flat Design)** 스타일을 유지하십시오.
+    [핵심 비주얼 스타일 가이드 - 절대 준수]
+    1. **[핵심 - 작화 스타일] 'History Matters' 스타일 (Thick Outlines & Flat Colors):**
+        - 모든 캐릭터와 사물에 **'매우 굵고 일정한 검은색 외곽선(Thick Black Outlines, Stroke width 5px)'**을 필수적으로 적용하십시오.
+        - 명암이나 그라데이션, 그림자(Shading)를 **절대 넣지 마십시오.** 완전한 **'플랫 컬러(Flat Color)'** 스타일입니다.
+        - 그림판(MS Paint)으로 그린 듯하지만 깔끔한 벡터 느낌을 유지하십시오.
 
-    3. **[핵심 - 캐릭터] '스틱맨':**
-        - 머리는 하얀색 동그라미, 몸통과 팔다리는 선으로 이루어진 단순한 구조입니다.
-        - 배경에 묻히지 않도록 **굵고 선명한 검은색 외곽선(Bold Black Outline)**을 사용하십시오.
-        - 상황에 따라 캐릭터에게 색깔 있는 단순한 의상을 입혀 가시성을 높여도 좋습니다.
-        - **행동(Body Language):** 정적인 자세를 피하십시오. **온몸을 사용한 역동적인 포즈**로 상황을 설명하십시오.
-        - **가시성 확보:** 감정 표현이 중요한 장면에서는 캐릭터를 화면 중앙에 **크게 배치하거나 약간의 클로즈업**을 사용하여 표정이 잘 보이도록 구도를 잡으십시오.
+    2. **[핵심 - 캐릭터] '둥근 머리 스틱맨 (Round White Head Stickman)':**
+        - **머리:** 완벽한 **'하얀색 동그라미(White Circle)'**입니다.
+        - **몸:** 단순한 검은색 선(Stick body)으로 표현하되, **군복, 정장, 터번, 모자, 수염** 등을 입혀 캐릭터의 역할을 구분하십시오.
+        - **표정(Expression):** 단순한 점 눈(Dot eyes)을 사용하되, **눈 밑의 주름(Eye bags/Dark circles)이나 쳐진 눈썹, 'ㅅ'자 입** 등을 그려 넣어 **피곤함, 억울함, 당황스러움**을 유머러스하게 표현하십시오.
 
-    4. **[핵심 - 소품 및 시각적 은유 (Visual Metaphor) - 강화됨]:**
-        - 대본의 핵심 사물을 아이콘처럼 단순하고 명확하게 과장하여 그리십시오.
-        - 추상적인 개념을 시각화하는 **은유(Metaphor)**를 적극 활용하십시오.
-            - (예: '압박감' -> 스틱맨 머리 위에 거대한 쇳덩이 추가)
-        - 만화적 기호(화살표 →, 물음표 ?, 느낌표 !, 땀방울 💦, 반짝임 ✨, 스피드 선)를 그림 옆에 적극적으로 추가하여 상황 전달력을 극대화하십시오.
-      
-    5. **[색상 사용]:**
-        - 전체적으로 밝고 선명한 플랫 컬러를 다양하게 사용하되, 복잡해 보이지 않게 정돈된 색감을 유지하십시오.
-        - 핵심적인 사물이나 강조점에는 채도가 높은 원색(빨강, 노랑, 파랑)을 사용하여 시선을 집중시키십시오.
+    3. **[텍스트 및 말풍선 (Text & Speech Bubbles) - 선택 사항]:**
+        - **무조건 말풍선을 넣지 마십시오.** 대본에 명확한 '대사'나 '생각'이 있을 때만 말풍선(Speech Bubble)을 사용하십시오.
+        - 상황 설명이 주된 내용이라면 말풍선 없이 캐릭터의 행동과 표정, 또는 배경의 인포그래픽 요소(화살표, 라벨)로만 표현하십시오.
+        - 텍스트가 필요하다면 배경의 사물에 자연스럽게 라벨링(Labeling) 하거나 화살표를 활용하십시오.
+        - **언어:** {lang_guide}
 
-    6. **[텍스트 처리] - '굵고 다양한 손글씨(Bold & Varied Handwriting)':** {lang_guide} {lang_example}
-        - 딱딱한 디지털 폰트 대신, **사람이 마카펜이나 붓으로 꾹꾹 눌러 쓴 듯한 '굵은 손글씨 느낌'**으로 연출하십시오.
-        - 상황에 따라 **귀여운 글씨, 거친 글씨, 흘려 쓴 글씨** 등 다양한 스타일을 적용하여 단조로움을 피하십시오.
-        - 텍스트는 배경 그림의 일부처럼 자연스럽게 어우러져야 합니다.
-        - 텍스트 역시 깔끔한 디지털 폰트 느낌으로 그림 옆에 자연스럽게 배치하십시오.
-        - **[절대 금지]:** 화면의 네 모서리(Corners)나 가장자리(Edges)에 글자를 배치하지 마십시오. 글자는 반드시 중앙 피사체 주변에만 연출하십시오.
+    4. **[배경 (Background)]:**
+        - 복잡한 풍경 묘사를 피하십시오.
+        - **단순한 단색 배경(Simple Solid Background)**이나, 지평선만 있는 아주 단순화된 배경을 사용하십시오.
+        - 지도, 국기, 그래프 등이 필요하다면 단순한 아이콘/실루엣 스타일로 표현하십시오.
 
+    5. **[연출 (Direction)]:**
+        - **측면 구도(Side View):** 캐릭터들이 연극 무대처럼 옆으로 서서 행동하는 2D 구도를 주로 사용하십시오.
+        - **군중 씬:** 군인이나 사람들이 떼로 나올 때는 복사+붙여넣기 한 듯이 똑같이 생긴 스틱맨들을 나열하여(Ctrl+C, Ctrl+V 느낌) 유머러스함을 주십시오.
 
-    7. **[구도]:** 분할 화면 금지. **{target_layout}** 비율의 화면을 꽉 채우는 하나의 완결된 장면(Full Scene Illustration)으로 연출하십시오.
+    6. **[구도]:** 분할 화면 금지. **{target_layout}** 비율의 화면을 꽉 채우는 하나의 완결된 장면.
 
     [9:16 세로 모드 지침]
-    - **스틱맨을 매우 크게 그리십시오.** 화면의 2/3를 차지해도 좋습니다.
-    - 말풍선이나 기호(?, !)를 캐릭터 머리 위(수직 방향)에 배치하여 세로 공간을 활용하십시오.
+    - 스틱맨 1~2명을 **크게 확대(Zoom-in)**하여 배치하십시오.
+    - 배경보다는 캐릭터의 표정과 상체 위주로 그리면 효과적입니다.
 
     [임무]
-    대본을 분석하여 AI가 그릴 수 있는 **'깔끔한 The Paint Explainer 스타일'의 프롬프트**를 작성하십시오.
-    - **필수 키워드 반영:** "Clean digital line art, smooth lines, minimal vector style, flat design aesthetic, colorful flat background, no shading, bold outlines, infographic elements (arrows, symbols), visual metaphor"
-    - **금지 키워드:** "crude drawing, rough sketch, ms paint style, wobbly lines, sketchy"
+    대본을 분석하여 **'History Matters 스타일의 굵은 선 스틱맨 일러스트'** 프롬프트를 작성하십시오.
+    - **필수 키워드 반영:** "History Matters style, OverSimplified style, 2D stick figures, round white heads, thick black outlines, flat colors, no shading, minimal vector style, funny expressions, simple solid background"
     - **한글**로만 출력하십시오.
         """
 
@@ -1094,13 +1082,13 @@ with st.sidebar:
 분위기: 깔끔하고, 교육적이며, 명확함(Clear & Educational). 과도한 그림자 배제.
 대본의 상황을 잘 나타내게 분활화면으로 말고 하나의 장면으로 연출."""
 
-    PRESET_PAINT = """'The Paint Explainer' 유튜브 채널 스타일 (Expressive Clean Stickman).
-화풍: '깔끔하고 매끄러운 디지털 선화(Clean Smooth Lines)'와 '굵은 손글씨(Bold Handwriting)' 텍스트.
-배경: 흰색 여백 금지. 하늘, 땅, 벽, 바닥 등이 단순하게 면으로 구분된 '플랫한 2D 배경'.
-캐릭터: 하얀색 얼굴이 둥근 2d 스틱맨. **핵심은 과장된 표정과 역동적인 행동으로 감정을 극적으로 연출하는 것.** 캐릭터가 크게 잘 보이게 배치.
-채색: 명암 없는 '다채로운 플랫 컬러'를 사용하여 생동감 부여.
-연출: 직관적인 사물 표현과 만화적 기호 적극 활용.
-대본의 상황을 잘 나타내게 분활화면으로 말고 하나의 장면으로 연출."""
+    PRESET_PAINT = """'History Matters' & 'OverSimplified' 유튜브 채널 스타일 (Satirical History Stickman).
+화풍: '굵은 검은색 외곽선(Thick Black Outlines)'과 '둥근 하얀색 머리(Round White Head)'를 가진 스틱맨.
+캐릭터: 기본은 스틱맨이지만, 역사적 모자(철모, 터번 등)나 의상, 수염 등으로 특징을 부여.
+표정: 단순한 점 눈(Dot eyes)이지만, 눈 밑 주름(다크서클), 찡그린 입 등으로 억울함/피곤함/화남을 재치있게 표현.
+연출: 말풍선(Speech Bubble)과 화살표, 라벨(텍스트)을 적극적으로 사용하여 상황을 설명.
+배경: 매우 단순한 단색 또는 그라데이션 없는 플랫한 배경.
+대본의 상황을 역사 풍자 애니메이션의 한 장면처럼 연출."""
 
     PRESET_COMIC_REAL = """Hyper-Realistic Environment with Comic Elements.
 배경과 사물, 사람/동물의 몸체: '언리얼 엔진 5' 수준의 8K 실사(Photorealistic). 털, 피부 질감, 조명 완벽 구현.
@@ -1579,3 +1567,4 @@ if st.session_state['generated_results']:
                         with open(item['path'], "rb") as file:
                             st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
                 except: pass
+
