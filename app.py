@@ -638,7 +638,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     3. **[텍스트 - 손글씨]:**
         - 마카펜으로 쓴 듯한 **'투박한 굵은 손글씨'**.
         - **[언어 엄수]:** {lang_guide}
-            - **(매우 중요: 지정된 언어가 아닌 다른 언어(영어 등)가 섞여 나오면 절대 안 됩니다. 무조건 위 언어로만 표기하십시오.)**
+            - **(매우 중요: 지정된 언어({lang_guide})가 아닌 다른 언어가 섞여 나오면 절대 안 됩니다. 무조건 위 언어({lang_guide})로만 표기하십시오.)**
         - 텍스트는 핵심 키워드 라벨링 용도로만 정말 최소한으로 사용.
         - **[절대 금지]:** 화면의 네 모서리(Corners)나 가장자리(Edges)에 글자를 배치하지 마십시오. 글자는 반드시 중앙 피사체 주변에만 연출하십시오.
 
@@ -1579,6 +1579,7 @@ if st.session_state['generated_results']:
                         with open(item['path'], "rb") as file:
                             st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
                 except: pass
+
 
 
 
