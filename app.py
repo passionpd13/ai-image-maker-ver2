@@ -600,47 +600,43 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         """
 
     # ---------------------------------------------------------
-    # [모드 5] History/Satire Stickman (History Matters Style) - [수정됨: 스토리텔링 강화]
+    # [모드 5] History/Satire Stickman (History Matters Style) - [수정됨: 미니멀 스토리텔링]
     # ---------------------------------------------------------
     elif genre_mode == "paint_explainer":
         full_instruction = f"""
     {common_header}
     [역할]
-    당신은 'History Matters' 또는 'OverSimplified' 유튜브 채널 스타일의 **'역사 풍자 애니메이션 감독'**입니다.
-    단순히 정보를 나열하는 것이 아니라, **'굵은 선의 스틱맨'**들이 펼치는 **'한편의 역사 드라마'**처럼 흥미진진하고 재치 있게 연출해야 합니다.
+    당신은 'History Matters' 또는 'OverSimplified' 스타일의 **'미니멀한 역사 풍자 애니메이션 감독'**입니다.
+    화면을 가득 채우지 마십시오. **불필요한 배경과 사물을 과감히 삭제**하고, 오직 **'캐릭터의 행동(연기)'**만으로 스토리를 전달해야 합니다.
 
     [전체 영상 주제] "{video_title}"
     [스타일 가이드] {style_instruction}
 
     [핵심 비주얼 스타일 가이드 - 절대 준수]
-    1. **[작화 스타일] 'History Matters' 스타일 (Thick Outlines & Flat Colors):**
-        - 모든 요소에 **'매우 굵고 일정한 검은색 외곽선'**을 필수로 적용하십시오.
-        - 명암, 그림자 절대 금지. 완전한 **'플랫 컬러(Flat Color)'** 스타일입니다.
-        - 깔끔한 벡터 그림판 느낌을 유지하십시오.
+    1. **[작화 - 미니멀리즘 (Extreme Minimalism)]:**
+        - **화면 구성:** 화면을 꽉 채우려 하지 말고 **여백(Negative Space)**을 살리십시오.
+        - **배경:** 복잡한 풍경 묘사를 **절대 금지**합니다. 오직 **'단색 배경(Solid Color Background)'** 또는 **'아주 단순한 지평선'** 하나만 그리십시오.
+        - **사물(Props):** 상황 설명에 없어서는 안 될 **핵심 소품 1~2개**만 남기고, 나머지는 전부 생략하십시오. (예: 전쟁터라고 참호를 다 그리지 말고, 총 들고 있는 군인만 그리십시오.)
+        - **외곽선:** 모든 캐릭터와 소품에 **'매우 굵은 검은색 외곽선'** 필수. 명암/그림자 금지(Flat Color).
 
-    2. **[캐릭터] '감정이 풍부한 둥근 머리 스틱맨':**
-        - **머리:** 하얀색 동그라미.
-        - **표정 & 행동 (가장 중요):** 단순한 점 눈이지만, **과장된 표정(눈물 콧물 흘리며 우는, 화가 나 얼굴이 빨개진, 당황해 땀 흘리는 등)**과 **역동적인 몸짓(무릎 꿇고 절규, 삿대질하며 싸움, 도망가는 모습)**으로 극적인 상황을 표현하십시오.
-        - **복장:** 시대 상황을 명확히 보여주는 의상(왕관, 군복, 누더기 옷)과 특징적인 수염/모자를 반드시 착용시키십시오.
+    2. **[캐릭터 - 스토리 연기 (Storytelling through Acting)]:**
+        - **디자인:** 하얀색 동그라미 머리의 스틱맨.
+        - **연기(Acting):** 캐릭터가 차렷 자세로 서 있는 것은 금지입니다. 대본의 상황(갈등, 도망, 좌절, 환호)을 **'온몸'으로 연기**해야 합니다.
+        - **표정:** 점 눈(Dot eyes)이지만, **눈 밑의 짙은 다크서클, 삐질 흘리는 땀방울, 찡그린 입** 등으로 캐릭터의 '심정'을 유머러스하게 보여주십시오.
 
-    3. **[스토리텔링 연출 (Storytelling Direction)]:**
-        - **극적인 순간 포착:** 정보 설명도가 아닌, 대본 속 가장 **극적이고 감정적인 순간(갈등, 해결, 좌절, 환희)**을 포착하여 한 장의 그림으로 표현하십시오.
-        - **관계성 묘사:** 여러 캐릭터가 나올 경우, 서로 **상호작용(대립, 협력, 지시, 무시)**하는 관계를 명확히 보여주십시오.
-        - **분위기(Mood) 암시:** 단순한 배경이지만, 색감이나 소품으로 분위기를 암시하십시오. (예: 전쟁=붉은 하늘과 불타는 배경, 평화=파란 하늘과 꽃)
+    3. **[텍스트 - 최소화 (Minimize Text)]:**
+        - **글자는 최대한 줄이십시오.** 그림만으로 상황이 이해되는 것이 베스트입니다.
+        - 꼭 필요한 경우에만 핵심 단어(예: 'TAX', 'WAR', 'FAIL')를 짧게 라벨링 하십시오. ({lang_guide})
 
-    4. **[텍스트 및 말풍선 - 선택 사항]:**
-        - 핵심 대사나 생각이 있을 때만 말풍선을 사용하십시오.
-        - 텍스트가 너무 많으면 드라마 몰입에 방해가 됩니다. 꼭 필요한 경우에만 화살표와 라벨로 표시하십시오. ({lang_guide})
-
-    5. **[구도]:** 분할 화면 금지. **{target_layout}** 비율의 화면을 꽉 채우는 하나의 완결된 장면.
+    4. **[구도]:** 분할 화면 금지. **{target_layout}** 비율.
+        - 캐릭터가 화면의 주인공입니다. 배경에 묻히지 않게 중앙에 명확히 배치하십시오.
 
     [9:16 세로 모드 지침]
-    - 주인공 스틱맨의 **표정과 상반신 행동**이 잘 보이도록 클로즈업(Close-up) 하십시오.
-    - 세로 구도를 활용하여 캐릭터 사이의 위계질서(위에서 내려다보는 왕, 아래에서 올려다보는 신하)를 표현해도 좋습니다.
+    - 불필요한 배경을 자르고, 연기하고 있는 **스틱맨 캐릭터를 클로즈업**하여 화면에 가득 차게 담으십시오.
 
     [임무]
-    대본을 분석하여 **'스토리가 느껴지는 History Matters 스타일의 스틱맨 일러스트'** 프롬프트를 작성하십시오.
-    - **필수 키워드 반영:** "History Matters style, OverSimplified style, 2D stick figures, round white heads, thick black outlines, flat colors, funny expressions, dramatic storytelling scene, expressive body language"
+    대본을 분석하여 **'사물은 적지만 스토리는 명확한 풍자 스틱맨 일러스트'** 프롬프트를 작성하십시오.
+    - **필수 키워드 반영:** "History Matters style, OverSimplified style, 2D stick figures, thick black outlines, flat colors, minimal solid background, few objects, funny expressions, expressive body language"
     - **한글**로만 출력하십시오.
         """
 
@@ -1077,12 +1073,12 @@ with st.sidebar:
 대본의 상황을 잘 나타내게 분활화면으로 말고 하나의 장면으로 연출."""
 
     PRESET_PAINT = """'History Matters' & 'OverSimplified' 유튜브 채널 스타일 (Satirical History Stickman).
-화풍: '굵은 검은색 외곽선(Thick Black Outlines)'과 '둥근 하얀색 머리(Round White Head)'를 가진 스틱맨.
-캐릭터: 기본은 스틱맨이지만, 역사적 모자(철모, 터번 등)나 의상, 수염 등으로 특징을 부여.
-표정: 단순한 점 눈(Dot eyes)이지만, 눈 밑 주름(다크서클), 찡그린 입 등으로 억울함/피곤함/화남을 재치있게 표현.
-연출: 말풍선(Speech Bubble)과 화살표, 라벨(텍스트)을 적극적으로 사용하여 상황을 설명.
-배경: 매우 단순한 단색 또는 그라데이션 없는 플랫한 배경.
-대본의 상황을 역사 풍자 애니메이션의 한 장면처럼 연출."""
+화풍: '굵은 검은색 외곽선(Thick Black Outlines)'과 '둥근 하얀색 머리'를 가진 스틱맨. 명암 없는 플랫 컬러.
+연출 핵심: 불필요한 사물과 배경을 과감히 없애고, **캐릭터의 '행동'과 '표정 연기'로 스토리를 전달.**
+캐릭터: 단순한 점 눈이지만 다크서클, 땀방울, 입 모양 등으로 억울함/황당함/분노 같은 감정을 극적으로 연기.
+구성: 복잡한 설명보다는 **한 눈에 이해되는 '상황극(Drama)'** 위주. 여백의 미 살리기.
+텍스트/사물: 글자와 소품은 최소화. 꼭 필요한 핵심 키워드 1~2개만 남기고 그림으로 승부.
+대본의 흐름을 끊지 않는 간결하고 임팩트 있는 장면 연출."""
 
     PRESET_COMIC_REAL = """Hyper-Realistic Environment with Comic Elements.
 배경과 사물, 사람/동물의 몸체: '언리얼 엔진 5' 수준의 8K 실사(Photorealistic). 털, 피부 질감, 조명 완벽 구현.
@@ -1561,5 +1557,6 @@ if st.session_state['generated_results']:
                         with open(item['path'], "rb") as file:
                             st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
                 except: pass
+
 
 
