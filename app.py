@@ -831,7 +831,8 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
 
     [임무]
     대본을 분석하여 AI가 그릴 수 있는 **최상급 귀여운 지브리풍 퀄리티의 애니메이션 프롬프트**를 작성하십시오.
-    - "Masterpiece, best quality, ultra-detailed, intricate background, dynamic pose, expressive face" 등의 키워드가 반영되도록 하십시오.
+    - "지브리 풍 Masterpiece, best quality, ultra-detailed, intricate background, dynamic pose, expressive face" 등의 키워드가 반영되도록 하십시오.
+    - '대작 귀여운 지브리풍 애니메이션' 필수로 키워드 반영.
     - **한글**로만 출력하십시오.
         """
 
@@ -1083,7 +1084,7 @@ with st.sidebar:
 
     PRESET_MANGA = """일본 대작 귀여운 지브리풍 애니메이션 스타일 (High-Budget Anime Style).
 서정적인 느낌보다는 '정보량이 많고 치밀한' 고밀도 배경 작화 (High Detail Backgrounds).
-캐릭터의 표정과 행동을 '순간 포착'하듯 역동적으로 묘사.
+지브리 캐릭터의 표정과 행동을 '순간 포착'하듯 역동적으로 묘사.
 대본의 지문을 하나도 놓치지 않고 시각화하는 '철저한 디테일' 위주. (16:9)
 전체 대본에 어울리는 하나의 장면으로 연출."""
 
@@ -1513,3 +1514,4 @@ if st.session_state['generated_results']:
                         with open(item['path'], "rb") as file:
                             st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
                 except: pass
+
