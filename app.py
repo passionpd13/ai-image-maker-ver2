@@ -600,53 +600,47 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         """
 
     # ---------------------------------------------------------
-    # [모드 5] History/Satire Stickman (History Matters Style) - [수정됨: 말풍선 선택사항]
+    # [모드 5] History/Satire Stickman (History Matters Style) - [수정됨: 스토리텔링 강화]
     # ---------------------------------------------------------
     elif genre_mode == "paint_explainer":
         full_instruction = f"""
     {common_header}
     [역할]
-    당신은 **'History Matters'** 또는 **'OverSimplified'** 유튜브 채널 스타일의 **'역사 풍자 스틱맨 일러스트레이터'**입니다.
-    복잡한 역사나 사회 이슈를 **'굵은 선의 스틱맨'**을 이용해 재치 있고 직관적으로 그려야 합니다.
+    당신은 'History Matters' 또는 'OverSimplified' 유튜브 채널 스타일의 **'역사 풍자 애니메이션 감독'**입니다.
+    단순히 정보를 나열하는 것이 아니라, **'굵은 선의 스틱맨'**들이 펼치는 **'한편의 역사 드라마'**처럼 흥미진진하고 재치 있게 연출해야 합니다.
 
     [전체 영상 주제] "{video_title}"
     [스타일 가이드] {style_instruction}
 
     [핵심 비주얼 스타일 가이드 - 절대 준수]
-    1. **[핵심 - 작화 스타일] 'History Matters' 스타일 (Thick Outlines & Flat Colors):**
-        - 모든 캐릭터와 사물에 **'매우 굵고 일정한 검은색 외곽선(Thick Black Outlines, Stroke width 5px)'**을 필수적으로 적용하십시오.
-        - 명암이나 그라데이션, 그림자(Shading)를 **절대 넣지 마십시오.** 완전한 **'플랫 컬러(Flat Color)'** 스타일입니다.
-        - 그림판(MS Paint)으로 그린 듯하지만 깔끔한 벡터 느낌을 유지하십시오.
+    1. **[작화 스타일] 'History Matters' 스타일 (Thick Outlines & Flat Colors):**
+        - 모든 요소에 **'매우 굵고 일정한 검은색 외곽선'**을 필수로 적용하십시오.
+        - 명암, 그림자 절대 금지. 완전한 **'플랫 컬러(Flat Color)'** 스타일입니다.
+        - 깔끔한 벡터 그림판 느낌을 유지하십시오.
 
-    2. **[핵심 - 캐릭터] '둥근 머리 스틱맨 (Round White Head Stickman)':**
-        - **머리:** 완벽한 **'하얀색 동그라미(White Circle)'**입니다.
-        - **몸:** 단순한 검은색 선(Stick body)으로 표현하되, **군복, 정장, 터번, 모자, 수염** 등을 입혀 캐릭터의 역할을 구분하십시오.
-        - **표정(Expression):** 단순한 점 눈(Dot eyes)을 사용하되, **눈 밑의 주름(Eye bags/Dark circles)이나 쳐진 눈썹, 'ㅅ'자 입** 등을 그려 넣어 **피곤함, 억울함, 당황스러움**을 유머러스하게 표현하십시오.
+    2. **[캐릭터] '감정이 풍부한 둥근 머리 스틱맨':**
+        - **머리:** 하얀색 동그라미.
+        - **표정 & 행동 (가장 중요):** 단순한 점 눈이지만, **과장된 표정(눈물 콧물 흘리며 우는, 화가 나 얼굴이 빨개진, 당황해 땀 흘리는 등)**과 **역동적인 몸짓(무릎 꿇고 절규, 삿대질하며 싸움, 도망가는 모습)**으로 극적인 상황을 표현하십시오.
+        - **복장:** 시대 상황을 명확히 보여주는 의상(왕관, 군복, 누더기 옷)과 특징적인 수염/모자를 반드시 착용시키십시오.
 
-    3. **[텍스트 및 말풍선 (Text & Speech Bubbles) - 선택 사항]:**
-        - **무조건 말풍선을 넣지 마십시오.** 대본에 명확한 '대사'나 '생각'이 있을 때만 말풍선(Speech Bubble)을 사용하십시오.
-        - 상황 설명이 주된 내용이라면 말풍선 없이 캐릭터의 행동과 표정, 또는 배경의 인포그래픽 요소(화살표, 라벨)로만 표현하십시오.
-        - 텍스트가 필요하다면 배경의 사물에 자연스럽게 라벨링(Labeling) 하거나 화살표를 활용하십시오.
-        - **언어:** {lang_guide}
+    3. **[스토리텔링 연출 (Storytelling Direction)]:**
+        - **극적인 순간 포착:** 정보 설명도가 아닌, 대본 속 가장 **극적이고 감정적인 순간(갈등, 해결, 좌절, 환희)**을 포착하여 한 장의 그림으로 표현하십시오.
+        - **관계성 묘사:** 여러 캐릭터가 나올 경우, 서로 **상호작용(대립, 협력, 지시, 무시)**하는 관계를 명확히 보여주십시오.
+        - **분위기(Mood) 암시:** 단순한 배경이지만, 색감이나 소품으로 분위기를 암시하십시오. (예: 전쟁=붉은 하늘과 불타는 배경, 평화=파란 하늘과 꽃)
 
-    4. **[배경 (Background)]:**
-        - 복잡한 풍경 묘사를 피하십시오.
-        - **단순한 단색 배경(Simple Solid Background)**이나, 지평선만 있는 아주 단순화된 배경을 사용하십시오.
-        - 지도, 국기, 그래프 등이 필요하다면 단순한 아이콘/실루엣 스타일로 표현하십시오.
+    4. **[텍스트 및 말풍선 - 선택 사항]:**
+        - 핵심 대사나 생각이 있을 때만 말풍선을 사용하십시오.
+        - 텍스트가 너무 많으면 드라마 몰입에 방해가 됩니다. 꼭 필요한 경우에만 화살표와 라벨로 표시하십시오. ({lang_guide})
 
-    5. **[연출 (Direction)]:**
-        - **측면 구도(Side View):** 캐릭터들이 연극 무대처럼 옆으로 서서 행동하는 2D 구도를 주로 사용하십시오.
-        - **군중 씬:** 군인이나 사람들이 떼로 나올 때는 복사+붙여넣기 한 듯이 똑같이 생긴 스틱맨들을 나열하여(Ctrl+C, Ctrl+V 느낌) 유머러스함을 주십시오.
-
-    6. **[구도]:** 분할 화면 금지. **{target_layout}** 비율의 화면을 꽉 채우는 하나의 완결된 장면.
+    5. **[구도]:** 분할 화면 금지. **{target_layout}** 비율의 화면을 꽉 채우는 하나의 완결된 장면.
 
     [9:16 세로 모드 지침]
-    - 스틱맨 1~2명을 **크게 확대(Zoom-in)**하여 배치하십시오.
-    - 배경보다는 캐릭터의 표정과 상체 위주로 그리면 효과적입니다.
+    - 주인공 스틱맨의 **표정과 상반신 행동**이 잘 보이도록 클로즈업(Close-up) 하십시오.
+    - 세로 구도를 활용하여 캐릭터 사이의 위계질서(위에서 내려다보는 왕, 아래에서 올려다보는 신하)를 표현해도 좋습니다.
 
     [임무]
-    대본을 분석하여 **'History Matters 스타일의 굵은 선 스틱맨 일러스트'** 프롬프트를 작성하십시오.
-    - **필수 키워드 반영:** "History Matters style, OverSimplified style, 2D stick figures, round white heads, thick black outlines, flat colors, no shading, minimal vector style, funny expressions, simple solid background"
+    대본을 분석하여 **'스토리가 느껴지는 History Matters 스타일의 스틱맨 일러스트'** 프롬프트를 작성하십시오.
+    - **필수 키워드 반영:** "History Matters style, OverSimplified style, 2D stick figures, round white heads, thick black outlines, flat colors, funny expressions, dramatic storytelling scene, expressive body language"
     - **한글**로만 출력하십시오.
         """
 
@@ -1567,4 +1561,5 @@ if st.session_state['generated_results']:
                         with open(item['path'], "rb") as file:
                             st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
                 except: pass
+
 
