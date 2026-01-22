@@ -600,7 +600,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         """
 
     # ---------------------------------------------------------
-    # [모드 5] History/Satire Stickman (History Matters Style) - [수정됨: 미니멀 스토리텔링]
+    # [모드 5] History/Satire Stickman (History Matters Style) - [수정됨: 손글씨 스타일 적용]
     # ---------------------------------------------------------
     elif genre_mode == "paint_explainer":
         full_instruction = f"""
@@ -616,7 +616,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     1. **[작화 - 미니멀리즘 (Extreme Minimalism)]:**
         - **화면 구성:** 화면을 꽉 채우려 하지 말고 **여백(Negative Space)**을 살리십시오.
         - **배경:** 복잡한 풍경 묘사를 **절대 금지**합니다. 오직 **'단색 배경(Solid Color Background)'** 또는 **'아주 단순한 지평선'** 하나만 그리십시오.
-        - **사물(Props):** 상황 설명에 없어서는 안 될 **핵심 소품 1~2개**만 남기고, 나머지는 전부 생략하십시오. (예: 전쟁터라고 참호를 다 그리지 말고, 총 들고 있는 군인만 그리십시오.)
+        - **사물(Props):** 상황 설명에 없어서는 안 될 **핵심 소품 1~2개**만 남기고, 나머지는 전부 생략하십시오.
         - **외곽선:** 모든 캐릭터와 소품에 **'매우 굵은 검은색 외곽선'** 필수. 명암/그림자 금지(Flat Color).
 
     2. **[캐릭터 - 스토리 연기 (Storytelling through Acting)]:**
@@ -624,9 +624,10 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         - **연기(Acting):** 캐릭터가 차렷 자세로 서 있는 것은 금지입니다. 대본의 상황(갈등, 도망, 좌절, 환호)을 **'온몸'으로 연기**해야 합니다.
         - **표정:** 점 눈(Dot eyes)이지만, **눈 밑의 짙은 다크서클, 삐질 흘리는 땀방울, 찡그린 입** 등으로 캐릭터의 '심정'을 유머러스하게 보여주십시오.
 
-    3. **[텍스트 - 최소화 (Minimize Text)]:**
-        - **글자는 최대한 줄이십시오.** 그림만으로 상황이 이해되는 것이 베스트입니다.
-        - 꼭 필요한 경우에만 핵심 단어(예: 'TAX', 'WAR', 'FAIL')를 짧게 라벨링 하십시오. ({lang_guide})
+    3. **[텍스트 - 굵은 손글씨 (Bold Handwriting) - 중요]:**
+        - **딱딱한 디지털 폰트(Arial, 고딕 등) 절대 금지.**
+        - 사람이 마카펜으로 꾹꾹 눌러 쓴 듯한 **'삐뚤빼뚤하고 굵은 손글씨(Rough Bold Handwriting, Marker font)'** 스타일로 묘사하십시오.
+        - 글자는 최소화하되, 필요한 단어(예: 'TAX', 'WAR')는 그림 옆에 툭 던져놓은 듯 자연스럽게 배치하십시오. ({lang_guide})
 
     4. **[구도]:** 분할 화면 금지. **{target_layout}** 비율.
         - 캐릭터가 화면의 주인공입니다. 배경에 묻히지 않게 중앙에 명확히 배치하십시오.
@@ -636,7 +637,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
 
     [임무]
     대본을 분석하여 **'사물은 적지만 스토리는 명확한 풍자 스틱맨 일러스트'** 프롬프트를 작성하십시오.
-    - **필수 키워드 반영:** "History Matters style, OverSimplified style, 2D stick figures, thick black outlines, flat colors, minimal solid background, few objects, funny expressions, expressive body language"
+    - **필수 키워드 반영:** "History Matters style, OverSimplified style, 2D stick figures, thick black outlines, flat colors, minimal solid background, funny expressions, expressive body language, rough bold handwritten text, marker font"
     - **한글**로만 출력하십시오.
         """
 
@@ -1557,6 +1558,7 @@ if st.session_state['generated_results']:
                         with open(item['path'], "rb") as file:
                             st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
                 except: pass
+
 
 
 
