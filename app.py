@@ -600,47 +600,49 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         """
 
     # ---------------------------------------------------------
-    # [모드 5] History/Satire Stickman (History Matters Style) - [수정됨: 손글씨 스타일 적용]
+    # [모드 5] History/Satire Stickman (History Matters Style) - [수정됨: 연출 다양성 강화]
     # ---------------------------------------------------------
     elif genre_mode == "paint_explainer":
         full_instruction = f"""
     {common_header}
     [역할]
-    당신은 'History Matters' 또는 'OverSimplified' 스타일의 **'미니멀한 역사 풍자 애니메이션 감독'**입니다.
-    화면을 가득 채우지 마십시오. **불필요한 배경과 사물을 과감히 삭제**하고, 오직 **'캐릭터의 행동(연기)'**만으로 스토리를 전달해야 합니다.
+    당신은 'History Matters' 또는 'OverSimplified' 스타일의 **'역사 풍자 애니메이션 감독'**입니다.
+    매번 똑같은 스틱맨만 나오면 지루합니다. 대본의 흐름에 따라 **인물, 건물, 사물, 지도** 등 다양한 피사체를 유연하게 사용하여 재치 있게 연출하십시오.
 
     [전체 영상 주제] "{video_title}"
     [스타일 가이드] {style_instruction}
 
     [핵심 비주얼 스타일 가이드 - 절대 준수]
-    1. **[작화 - 미니멀리즘 (Extreme Minimalism)]:**
-        - **화면 구성:** 화면을 꽉 채우려 하지 말고 **여백(Negative Space)**을 살리십시오.
-        - **배경:** 복잡한 풍경 묘사를 **절대 금지**합니다. 오직 **'단색 배경(Solid Color Background)'** 또는 **'아주 단순한 지평선'** 하나만 그리십시오.
-        - **사물(Props):** 상황 설명에 없어서는 안 될 **핵심 소품 1~2개**만 남기고, 나머지는 전부 생략하십시오.
-        - **외곽선:** 모든 캐릭터와 소품에 **'매우 굵은 검은색 외곽선'** 필수. 명암/그림자 금지(Flat Color).
+    1. **[작화 스타일 - 굵은 선 & 플랫 컬러]:**
+        - **외곽선:** 모든 피사체(인물, 건물, 사물)에 **'매우 굵은 검은색 외곽선(Thick Black Outlines, Stroke width 5px)'**을 필수 적용하십시오.
+        - **채색:** 명암이나 그라데이션 없는 **'완전한 플랫 컬러(Flat Color)'**입니다. 깔끔한 벡터 느낌을 유지하십시오.
 
-    2. **[캐릭터 - 스토리 연기 (Storytelling through Acting)]:**
-        - **디자인:** 하얀색 동그라미 머리의 스틱맨.
-        - 스틱맨은 항상 하얀색이든 피부색이든 얼굴이 채색되어 있어야 한다.
-        - **연기(Acting):** 캐릭터가 차렷 자세로 서 있는 것은 금지입니다. 대본의 상황(갈등, 도망, 좌절, 환호)을 **'온몸'으로 연기**해야 합니다.
-        - **표정:** 점 눈(Dot eyes)이지만, **눈 밑의 짙은 다크서클, 삐질 흘리는 땀방울, 찡그린 입** 등으로 캐릭터의 '심정'을 유머러스하게 보여주십시오.
+    2. **[연출의 다양성 (Variety in Composition) - 중요]:**
+        대본 내용에 가장 적합한 '주인공'을 선택하여 그리십시오.
+        - **Type A (인물 중심):** 감정이나 사건이 중요할 때. 스틱맨이 온몸으로 연기(절규, 환호, 싸움)합니다.
+        - **Type B (건물/장소 중심):** 특정 기관이나 장소가 언급될 때. **단순화된 건물(은행, 법원, 공장)**을 덩그러니 그리고 간판을 다십시오.
+        - **Type C (사물 중심):** 개념적인 내용일 때. **상징적인 소품(돈다발, 도장 찍힌 서류, 핵폭탄)** 하나만 화면 중앙에 크게 그리십시오.
+        - **Type D (지도/인포):** 국가 간 관계일 때. **단순한 실루엣 지도** 위에 화살표와 텍스트 라벨을 붙이십시오.
 
-    3. **[텍스트 - 굵은 손글씨 (Bold Handwriting) - 중요]:**
-        - **딱딱한 디지털 폰트(Arial, 고딕 등) 절대 금지.**
-        - 사람이 마카펜으로 꾹꾹 눌러 쓴 듯한 **'삐뚤빼뚤하고 굵은 손글씨(Rough Bold Handwriting, Marker font)'** 스타일로 묘사하십시오.
-        - 글자는 최소화하되, 필요한 단어(예: 'TAX', 'WAR')는 그림 옆에 툭 던져놓은 듯 자연스럽게 배치하십시오. ({lang_guide})
-        - **[절대 금지]:** 화면의 네 모서리(Corners)나 가장자리(Edges)에 글자를 배치하지 마십시오. 글자는 반드시 중앙 피사체 주변에만 연출하십시오.
+    3. **[캐릭터 디자인]:**
+        - **헤드:** **'흰색(또는 살구색)으로 꽉 채워진 동그라미'**입니다. (투명한 머리 금지)
+        - **표정:** 점 눈(Dot eyes)이지만 **다크서클, 땀방울, 침, 찡그린 입** 등으로 감정을 확실히 표현하십시오.
+        - **특징:** 단순한 몸체 위에 **시대적 모자, 의상, 수염**을 더해 캐릭터를 구분하십시오.
 
+    4. **[텍스트 - 굵은 손글씨 (Marker Handwriting)]:**
+        - **딱딱한 폰트 금지.** 사람이 마카펜으로 쓴 듯한 **'굵고 투박한 손글씨(Rough Bold Marker Font)'** 스타일로 묘사하십시오.
+        - **배치:** 화면 구석이 아니라, **관련된 피사체(건물 간판, 사물 라벨, 지도 위)** 바로 옆에 자연스럽게 배치하십시오. ({lang_guide})
 
-    4. **[구도]:** 분할 화면 금지. **{target_layout}** 비율.
-        - 캐릭터가 화면의 주인공입니다. 배경에 묻히지 않게 중앙에 명확히 배치하십시오.
+    5. **[배경]:**
+        - 복잡한 풍경화 금지.
+        - 주로 **단색 배경**이나 **단순한 지평선**을 사용하되, 건물이나 장소 묘사가 필요할 땐 미니멀하게 특징만 살려 그리십시오.
 
     [9:16 세로 모드 지침]
-    - 불필요한 배경을 자르고, 연기하고 있는 **스틱맨 캐릭터를 클로즈업**하여 화면에 가득 차게 담으십시오.
+    - 건물이면 건물의 층고를 높게, 인물이면 상반신을, 사물이면 꽉 차게 **클로즈업(Close-up)** 하십시오.
 
     [임무]
-    대본을 분석하여 **'사물은 적지만 스토리는 명확한 풍자 스틱맨 일러스트'** 프롬프트를 작성하십시오.
-    - **필수 키워드 반영:** "History Matters style, OverSimplified style, 2D stick figures, thick black outlines, flat colors, minimal solid background, funny expressions, expressive body language, rough bold handwritten text, marker font"
+    대본을 분석하여 인물/건물/사물 중 가장 적절한 피사체를 선택하고, **'History Matters 스타일의 재치 있는 일러스트'** 프롬프트를 작성하십시오.
+    - **필수 키워드:** "History Matters style, OverSimplified style, thick black outlines, flat colors, marker font text, rough handwriting, funny expressions, minimal vector art, solid filled head"
     - **한글**로만 출력하십시오.
     - (지문) 같은 부연설명 연출 지시어는 제외한다.
         """
@@ -1562,6 +1564,7 @@ if st.session_state['generated_results']:
                         with open(item['path'], "rb") as file:
                             st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
                 except: pass
+
 
 
 
