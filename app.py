@@ -604,7 +604,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         """
 
     # ---------------------------------------------------------
-    # [모드 5] 심플 그림판 (기본 버전)
+    # [모드 5] History/Satire Stickman (History Matters Style) - [수정됨: 밝고 명확한 대비]
     # ---------------------------------------------------------
     elif genre_mode == "paint_explainer":
         full_instruction = f"""
@@ -620,20 +620,21 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     대본을 보고 아래 두 가지 연출 중 하나를 선택하여 그리십시오. (무조건 섞여 있어야 합니다.)
 
     **옵션 A. [극강의 심플함 (Focus on Subject)]: (비중 60%)**
-    - 배경을 **완전한 단색(Solid Color)**으로 처리하고, 오직 **'인물(표정 연기)'** 또는 **'사물(아이콘)'** 하나만 큼직하게 그립니다.
-    - 예: 스틱맨이 절규하는 모습만 클로즈업, 혹은 돈다발만 화면 중앙에 배치.
-    -배경은 기본은 하얀색이지만 상황에 따라 다른색으로 표현.
+    - **배경(Background):** 기본적으로 **'완전한 하얀색 배경(Solid White Background)'**을 사용하십시오.
+        - 예외: 대본의 분위기가 특정 색(예: 밤=어두운 파랑, 충격=빨강)을 강하게 요구할 때만 해당 단색 배경을 사용하되, 칙칙하지 않은 선명한 색을 쓰십시오.
+    - **연출:** 오직 **'인물(표정 연기)'** 또는 **'사물(아이콘)'** 하나만 큼직하게 그립니다.
 
     **옵션 B. [미니멀한 공간 연출 (Minimal Context)]: (비중 40%)**
-    - 대본에서 '장소'가 중요할 때는 **단순화된 배경**을 그립니다.
-    -배경은 기본은 하얀색이지만 상황에 따라 다른색으로 표현.
+    - **배경(Background):** 기본적으로 하얀색 배경을 유지하거나, 아주 밝은 파스텔 톤으로 공간을 암시하십시오.
     - **인물 + 실내:** 인물이 서 있는데 뒤에 **'창문 하나', '책상 하나', '감옥 창살'** 등을 그려 여기가 어디인지 암시하십시오. (벽지 무늬 등 복잡한 디테일은 생략)
     - **장소 중심:** 건물을 그릴 때는 주변 풍경을 다 그리지 말고, **'건물(하나 또는 두개) 와 바닥(지평선)'** 정도만 깔끔하게 그리십시오.
+    - **[중요] 대비(Contrast):** 건물과 바닥의 색상은 배경색과 명확히 구분되어야 합니다. (예: 하얀 배경에 회색 건물과 갈색 바닥)
 
     [공통 작화 스타일 가이드]
-    1. **[굵은 선 & 플랫 컬러]:**
+    1. **[굵은 선 & 플랫 컬러 & 대비]:**
         - 모든 요소에 **'매우 굵은 검은색 외곽선(Thick Black Outlines)'** 필수.
         - 명암/그림자 없는 **'완전한 플랫 컬러'**. 깔끔한 벡터 일러스트 느낌.
+        - **[핵심] 색상 대비:** 인물과 사물은 배경(주로 하얀색)과 섞이지 않도록 **선명하고 밝은 색상**을 사용하여 명확히 분리되어야 합니다. 칙칙한 톤온톤 배색 금지.
 
     2. **[복잡함 금지 (No Clutter)]:**
         - 배경을 그리더라도 **'종합 선물 세트'**처럼 사람, 건물, 지도, 비행기를 한 화면에 다 넣지 마십시오.
@@ -648,7 +649,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
 
     4. 공간 암시 컷 (Contextual Hint):**
     - **상황:** 사건의 장소가 중요할 때.
-    - **연출:** 화면을 꽉 채우는 배경 그림은 금지입니다. 대신, 그 장소를 상징하는 **'최소한의 랜드마크'**나 **'구조적 요소(기둥, 창문, 지평선)'** 하나만을 캐릭터 뒤에 배치하여 공간감을 **'암시'**만 하십시오. (예: 실내라면 벽 전체가 아니라 창문 하나만 그리기)
+    - **연출:** 화면을 꽉 채우는 배경 그림은 금지입니다. 대신, 그 장소를 상징하는 **'최소한의 랜드마크'**나 **'구조적 요소(기둥, 창문, 지평선)'** 하나만을 캐릭터 뒤에 배치하여 공간감을 **'암시'**만 하십시오.
 
     5. **[구도]:** 분할 화면 금지. **{target_layout}**.
 
@@ -659,7 +660,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     [임무]
     - **분량:** 최소 7문장 이상으로 상세하게 묘사.
     대본을 보고 **'인물/사물만 강조할지'** 아니면 **'심플한 배경을 넣어줄지'** 판단하여 **History Matters 스타일의 프롬프트**를 작성하십시오.
-    - **필수 키워드:** "History Matters style, OverSimplified style, minimalism, thick black outlines, flat colors, simple background context, funny expressions, vector art"
+    - **필수 키워드:** "History Matters style, OverSimplified style, minimalism, thick black outlines, flat colors, Solid White background (or distinct solid color), high contrast between subject and background, funny expressions, vector art"
     - **한글**로만 출력하십시오.
     - (지문) 같은 부연설명 연출 지시어는 제외한다.
         """
@@ -1152,9 +1153,9 @@ with st.sidebar:
     PRESET_PAINT = """'History Matters' & 'OverSimplified' 스타일 (Clean & Focused Minimalism).
 핵심 원칙: **"한 장면에 오직 하나의 주제만(Single Focus)"** 담백하게 연출. 복잡한 합성 금지.
 화풍: 굵은 검은색 외곽선, 명암 없는 플랫 컬러, 둥근 머리 스틱맨.
+배경: 기본은 **하얀색(White) 배경**. 상황에 따라 다른 단색 배경을 사용할 수 있으나, 피사체와 명확히 구분되는 밝고 선명한 톤을 사용 (칙칙함 금지).
 연출: 인물 중심일 땐 인물 연기에만, 장소 중심일 땐 건물만, 사물 중심일 땐 물건만 **큼직하고 단순하게** 묘사.
 텍스트: 굵은 마카펜 손글씨 느낌. 꼭 필요한 라벨링만 최소화하여 배치. 화면 모서리 주변에 텍스트 연출하지 않는다.
-배경: 단색 배경이나 여백을 최대한 살려 피사체 하나에만 집중되도록 구성.
 전체 대본에 어울리는 하나의 장면으로 연출.
 (지문) 같은 부연설명 연출 지시어는 제외한다."""
 
@@ -1648,3 +1649,4 @@ if st.session_state['generated_results']:
                         with open(item['path'], "rb") as file:
                             st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
                 except: pass
+
