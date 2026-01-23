@@ -1108,7 +1108,7 @@ with st.sidebar:
 화풍: 굵은 검은색 외곽선, 명암 없는 플랫 컬러, 둥근 머리 스틱맨.
 연출: 인물 중심일 땐 인물 연기에만, 장소 중심일 땐 건물만, 사물 중심일 땐 물건만 **큼직하고 단순하게** 묘사.
 텍스트: 굵은 마카펜 손글씨 느낌. 꼭 필요한 라벨링만 최소화하여 배치. 화면 모서리 주변에 텍스트 연출하지 않는다.
-배경: 단색 배경이나 여백을 최대한 살려 피사체 하나에만 집중되도록 구성.
+배경: 단색 배경이나 여백을 최대한 살려 피사체 하나에만 집중되도록 구성. 배경은 기본적으로 하얀색 이지만 상황에 따라 다른색 이용.
 전체 대본에 어울리는 하나의 장면으로 연출.
 (지문) 같은 부연설명 연출 지시어는 제외한다."""
 
@@ -1590,3 +1590,4 @@ if st.session_state['generated_results']:
                         with open(item['path'], "rb") as file:
                             st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
                 except: pass
+
