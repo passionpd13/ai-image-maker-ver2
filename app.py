@@ -7,7 +7,7 @@ import os
 import re
 import shutil
 import zipfile
-import uuid  # [수정] 고유 세션 ID 생성을 위한 라이브러리 추가
+import uuid  # 고유 세션 ID 생성
 from io import BytesIO
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from PIL import Image
@@ -25,7 +25,7 @@ st.set_page_config(
 )
 
 # ==========================================
-# [디자인] 다크모드 & CSS 스타일 (원본 100% 유지)
+# [디자인] 다크모드 & CSS 스타일
 # ==========================================
 st.markdown("""
     <style>
@@ -194,15 +194,13 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# [중요 수정] 멀티 유저 세션 분리 로직
+# [중요] 멀티 유저 세션 분리 로직
 # ==========================================
-# 각 사용자(브라우저 탭)마다 고유한 세션 ID를 생성하여 폴더가 겹치지 않게 합니다.
 if 'user_session_id' not in st.session_state:
     st.session_state['user_session_id'] = str(uuid.uuid4())
 
 # 파일 저장 경로 설정 (사용자별 고유 경로 사용)
 BASE_PATH = "./web_result_files"
-# 예: ./web_result_files/a1b2-c3d4.../output_images 형태로 저장됨
 IMAGE_OUTPUT_DIR = os.path.join(BASE_PATH, st.session_state['user_session_id'], "output_images")
 
 # 텍스트 모델 설정
@@ -212,12 +210,10 @@ GEMINI_TEXT_MODEL_NAME = "gemini-2.5-pro"
 # [함수] 1. 유틸리티 함수
 # ==========================================
 def init_folders():
-    # [수정] 전체 폴더 삭제가 아니라, 현재 유저의 폴더만 관리
     if not os.path.exists(IMAGE_OUTPUT_DIR):
         os.makedirs(IMAGE_OUTPUT_DIR, exist_ok=True)
 
 def split_script_by_time(script, chars_per_chunk=100):
-    # 일본어 구두점 및 줄바꿈(\n)도 확실하게 분리하도록 개선
     temp_script = script.replace(".", ".|").replace("?", "?|").replace("!", "!|") \
                         .replace("。", "。|").replace("？", "？|").replace("！", "！|") \
                         .replace("\n", "\n|")
@@ -369,7 +365,6 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     8. 특정 국가에 대한 내용일시 배경에 국가 분위기가 연출 잘되게 한다.
     9. 배경 현실감(Background Realism): 배경은 단순한 평면이 아닌, **깊이감(Depth)**과 **질감(Texture)**이 살아있는 입체적인 공간으로 연출하십시오. 추상적이거나 흐릿한 배경 대신, 실제 장소에 있는 듯한 **구체적인 환경 디테일(건축 양식, 자연물, 소품 배치, 거리, 공간간 등)을 선명하게 묘사하여 2d이지만 현장감을 극대화하십시오.
 
-
     [임무]
     제공된 대본 조각(Script Segment)을 바탕으로, 이미지 생성 AI가 그릴 수 있는 **구체적인 묘사 프롬프트**를 작성하십시오.
       
@@ -382,7 +377,6 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         - **시각적 은유:** 추상적인 내용일 경우, 이를 설명할 수 있는 시각적 아이디어 (예: 돈이 날아가는 모습, 그래프가 하락하는 모습 등).
           한글 뒤에 (영어)를 넣어서 프롬프트에 쓰지 않는다. ex) 색감(Colors) x ,구성(Composition) x
 
-      
     [출력 형식]
     - **무조건 한국어(한글)**로만 작성하십시오.
     - 부가적인 설명 없이 **오직 프롬프트 텍스트만** 출력하십시오.
@@ -449,7 +443,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         """
 
     # ---------------------------------------------------------
-    # [모드 2] 역사/다큐 (수정됨: else -> elif)
+    # [모드 2] 역사/다큐
     # ---------------------------------------------------------
     elif genre_mode == "history":
         full_instruction = f"""
@@ -567,7 +561,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         """
       
     # ---------------------------------------------------------
-    # [모드 4] 과학/엔지니어링 (Clean Technical + Characters) - [NEW! 재수정됨]
+    # [모드 4] 과학/엔지니어링 (Clean Technical + Characters)
     # ---------------------------------------------------------
     elif genre_mode == "scifi":
         full_instruction = f"""
@@ -610,7 +604,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         """
 
     # ---------------------------------------------------------
-    # [모드 5] History/Satire Stickman (History Matters Style) - [수정됨: 밝고 명확한 대비]
+    # [모드 5] 심플 그림판 (기본 버전)
     # ---------------------------------------------------------
     elif genre_mode == "paint_explainer":
         full_instruction = f"""
@@ -626,21 +620,20 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     대본을 보고 아래 두 가지 연출 중 하나를 선택하여 그리십시오. (무조건 섞여 있어야 합니다.)
 
     **옵션 A. [극강의 심플함 (Focus on Subject)]: (비중 60%)**
-    - **배경(Background):** 기본적으로 **'완전한 하얀색 배경(Solid White Background)'**을 사용하십시오.
-        - 예외: 대본의 분위기가 특정 색(예: 밤=어두운 파랑, 충격=빨강)을 강하게 요구할 때만 해당 단색 배경을 사용하되, 칙칙하지 않은 선명한 색을 쓰십시오.
-    - **연출:** 오직 **'인물(표정 연기)'** 또는 **'사물(아이콘)'** 하나만 큼직하게 그립니다.
+    - 배경을 **완전한 단색(Solid Color)**으로 처리하고, 오직 **'인물(표정 연기)'** 또는 **'사물(아이콘)'** 하나만 큼직하게 그립니다.
+    - 예: 스틱맨이 절규하는 모습만 클로즈업, 혹은 돈다발만 화면 중앙에 배치.
+    -배경은 기본은 하얀색이지만 상황에 따라 다른색으로 표현.
 
     **옵션 B. [미니멀한 공간 연출 (Minimal Context)]: (비중 40%)**
-    - **배경(Background):** 기본적으로 하얀색 배경을 유지하거나, 아주 밝은 파스텔 톤으로 공간을 암시하십시오.
+    - 대본에서 '장소'가 중요할 때는 **단순화된 배경**을 그립니다.
+    -배경은 기본은 하얀색이지만 상황에 따라 다른색으로 표현.
     - **인물 + 실내:** 인물이 서 있는데 뒤에 **'창문 하나', '책상 하나', '감옥 창살'** 등을 그려 여기가 어디인지 암시하십시오. (벽지 무늬 등 복잡한 디테일은 생략)
     - **장소 중심:** 건물을 그릴 때는 주변 풍경을 다 그리지 말고, **'건물(하나 또는 두개) 와 바닥(지평선)'** 정도만 깔끔하게 그리십시오.
-    - **[중요] 대비(Contrast):** 건물과 바닥의 색상은 배경색과 명확히 구분되어야 합니다. (예: 하얀 배경에 회색 건물과 갈색 바닥)
 
     [공통 작화 스타일 가이드]
-    1. **[굵은 선 & 플랫 컬러 & 대비]:**
+    1. **[굵은 선 & 플랫 컬러]:**
         - 모든 요소에 **'매우 굵은 검은색 외곽선(Thick Black Outlines)'** 필수.
         - 명암/그림자 없는 **'완전한 플랫 컬러'**. 깔끔한 벡터 일러스트 느낌.
-        - **[핵심] 색상 대비:** 인물과 사물은 배경(주로 하얀색)과 섞이지 않도록 **선명하고 밝은 색상**을 사용하여 명확히 분리되어야 합니다. 칙칙한 톤온톤 배색 금지.
 
     2. **[복잡함 금지 (No Clutter)]:**
         - 배경을 그리더라도 **'종합 선물 세트'**처럼 사람, 건물, 지도, 비행기를 한 화면에 다 넣지 마십시오.
@@ -655,7 +648,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
 
     4. 공간 암시 컷 (Contextual Hint):**
     - **상황:** 사건의 장소가 중요할 때.
-    - **연출:** 화면을 꽉 채우는 배경 그림은 금지입니다. 대신, 그 장소를 상징하는 **'최소한의 랜드마크'**나 **'구조적 요소(기둥, 창문, 지평선)'** 하나만을 캐릭터 뒤에 배치하여 공간감을 **'암시'**만 하십시오.
+    - **연출:** 화면을 꽉 채우는 배경 그림은 금지입니다. 대신, 그 장소를 상징하는 **'최소한의 랜드마크'**나 **'구조적 요소(기둥, 창문, 지평선)'** 하나만을 캐릭터 뒤에 배치하여 공간감을 **'암시'**만 하십시오. (예: 실내라면 벽 전체가 아니라 창문 하나만 그리기)
 
     5. **[구도]:** 분할 화면 금지. **{target_layout}**.
 
@@ -666,13 +659,66 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     [임무]
     - **분량:** 최소 7문장 이상으로 상세하게 묘사.
     대본을 보고 **'인물/사물만 강조할지'** 아니면 **'심플한 배경을 넣어줄지'** 판단하여 **History Matters 스타일의 프롬프트**를 작성하십시오.
-    - **필수 키워드:** "History Matters style, OverSimplified style, minimalism, thick black outlines, flat colors, Solid White background (or distinct solid color), high contrast between subject and background, funny expressions, vector art"
+    - **필수 키워드:** "History Matters style, OverSimplified style, minimalism, thick black outlines, flat colors, simple background context, funny expressions, vector art"
     - **한글**로만 출력하십시오.
     - (지문) 같은 부연설명 연출 지시어는 제외한다.
         """
 
     # ---------------------------------------------------------
-    # [모드 6] 실사 + 코믹 페이스 (Hyper Realism + Comic Face) - [NEW! 수정됨]
+    # [모드 NEW] 심플 그림판 (스토리형/배경강화)
+    # ---------------------------------------------------------
+    elif genre_mode == "paint_story":
+        full_instruction = f"""
+    {common_header}
+    [역할]
+    당신은 'History Matters' 또는 'OverSimplified' 스타일의 **'말 없는 무성 애니메이션 감독'**입니다.
+    글자 없이 오직 **캐릭터의 행동과 단순한 시각적 상황(Visual Storytelling)**만으로 대본의 내용을 전달해야 합니다.
+
+    [전체 영상 주제] "{video_title}"
+    [스타일 가이드] {style_instruction}
+
+    [핵심 비주얼 전략: '행동으로 보여주기 (Show, Don't Tell)']
+    대본의 내용을 설명하는 것이 아니라, **캐릭터가 그 상황을 겪고 있는 '장면(Scene)'**을 연출하십시오.
+
+    **[배경 및 공간 연출 (Minimal Stage Setting)]:**
+    - **기본 배경:** 무조건 **'완전한 하얀색 배경(Solid White Background)'**을 베이스로 사용하십시오.
+    - **공간 암시:** 캐릭터가 있는 장소가 중요하다면, **최소한의 '무대 소품'이나 '배경 요소'를 1~2개만 추가**하여 공간을 암시하십시오.
+        - 예: 감옥 -> 캐릭터 뒤에 단순한 '창살 문' 하나.
+        - 예: 사무실 -> 캐릭터 앞에 단순한 '책상' 하나.
+        - 예: 전쟁터 -> 캐릭터 주변에 단순한 '참호 구덩이'나 '연기 구름' 한두 개.
+    - **스타일 유지:** 추가되는 배경 요소들도 반드시 **굵은 외곽선과 단순한 플랫 컬러**로 그려져야 하며, 복잡해서는 안 됩니다.
+
+    [공통 작화 스타일 가이드]
+    1. **[굵은 선 & 플랫 컬러 & 대비]:**
+        - 모든 요소에 **'매우 굵은 검은색 외곽선(Thick Black Outlines)'** 필수.
+        - 명암/그림자 없는 **'완전한 플랫 컬러'**. 깔끔한 벡터 일러스트 느낌.
+        - **[핵심] 색상 대비:** 인물과 소품은 하얀 배경과 명확히 구분되는 **선명한 색상**을 사용하십시오.
+
+    2. **[텍스트 절대 금지 (No Text Generation)]:**
+        - **이미지 내에 어떠한 글자, 숫자, 기호, 말풍선, 라벨도 절대로 넣지 마십시오.**
+        - 정보는 오직 시각적 상황으로만 전달해야 합니다.
+
+    3. **[캐릭터 연기 (Character Acting)]:**
+        - 둥근 머리 스틱맨의 **표정과 과장된 몸짓(Body Language)**에 집중하십시오. 대본의 감정(당황, 분노, 슬픔, 기쁨)을 행동으로 극대화하여 표현하십시오.
+
+    4. **[복잡함 금지 (No Clutter)]:**
+        - 배경 요소를 추가하더라도 화면이 복잡해져서는 안 됩니다. **여백의 미**를 살려 캐릭터에게 시선이 집중되도록 하십시오.
+
+    5. **[구도]:** 분할 화면 금지. **{target_layout}**.
+
+    [9:16 세로 모드 지침]
+    - 인물과 그 주변의 핵심 소품(책상, 창살 등)을 중심으로 위아래로 꽉 차게 구도를 잡으십시오.
+
+    [임무]
+    - **분량:** 최소 7문장 이상으로 상세하게 묘사.
+    대본의 내용을 글자 없이 행동과 상황으로 보여주는 **'무성 애니메이션 스틸컷 프롬프트'**를 작성하십시오.
+    - **필수 키워드:** "History Matters style, OverSimplified style, minimalism, thick black outlines, flat colors, Solid White background, minimal background elements (stage props), funny expressions, vector art, no text"
+    - **한글**로만 출력하십시오.
+    - (지문) 같은 부연설명 연출 지시어는 제외한다.
+        """
+
+    # ---------------------------------------------------------
+    # [모드 6] 실사 + 코믹 페이스
     # ---------------------------------------------------------
     elif genre_mode == "comic_realism":
         full_instruction = f"""
@@ -728,7 +774,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         """
 
     # ---------------------------------------------------------
-    # [모드 7] 핑크 3D 해골 (Pink Translucent Skull) - [UPDATED!]
+    # [모드 7] 핑크 3D 해골
     # ---------------------------------------------------------
     elif genre_mode == "pink_skull":
         full_instruction = f"""
@@ -779,7 +825,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         """
 
     # ---------------------------------------------------------
-    # [모드 8] 웹툰 (K-Webtoon Style) - [NEW!]
+    # [모드 8] 웹툰 (K-Webtoon Style)
     # ---------------------------------------------------------
     elif genre_mode == "webtoon":
         full_instruction = f"""
@@ -810,7 +856,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         """
 
     # ---------------------------------------------------------
-    # [모드 9] 만화 (High-Budget Anime) - [NEW!]
+    # [모드 9] 만화 (High-Budget Anime)
     # ---------------------------------------------------------
     elif genre_mode == "manga":
         full_instruction = f"""
@@ -846,7 +892,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         """
 
     # ---------------------------------------------------------
-    # [모드 10] AI Reconstruction (건축/복원/시대재현) - [NEW!]
+    # [모드 10] AI Reconstruction (건축/복원/시대재현)
     # ---------------------------------------------------------
     elif genre_mode == "reconstruction":
         full_instruction = f"""
@@ -1106,11 +1152,19 @@ with st.sidebar:
     PRESET_PAINT = """'History Matters' & 'OverSimplified' 스타일 (Clean & Focused Minimalism).
 핵심 원칙: **"한 장면에 오직 하나의 주제만(Single Focus)"** 담백하게 연출. 복잡한 합성 금지.
 화풍: 굵은 검은색 외곽선, 명암 없는 플랫 컬러, 둥근 머리 스틱맨.
-배경: 기본은 **하얀색(White) 배경**. 상황에 따라 다른 단색 배경을 사용할 수 있으나, 피사체와 명확히 구분되는 밝고 선명한 톤을 사용 (칙칙함 금지).
 연출: 인물 중심일 땐 인물 연기에만, 장소 중심일 땐 건물만, 사물 중심일 땐 물건만 **큼직하고 단순하게** 묘사.
 텍스트: 굵은 마카펜 손글씨 느낌. 꼭 필요한 라벨링만 최소화하여 배치. 화면 모서리 주변에 텍스트 연출하지 않는다.
+배경: 단색 배경이나 여백을 최대한 살려 피사체 하나에만 집중되도록 구성.
 전체 대본에 어울리는 하나의 장면으로 연출.
 (지문) 같은 부연설명 연출 지시어는 제외한다."""
+
+    # [NEW] 스토리형 프리셋 텍스트
+    PRESET_PAINT_STORY = """'History Matters' & 'OverSimplified' 스타일 (Story Mode).
+핵심: "텍스트 없는 시각적 스토리텔링".
+배경: 기본 하얀색 + 상황을 설명하는 '무대 소품(Stage Props)' 추가.
+(예: 감옥 -> 창살, 사무실 -> 책상, 전쟁 -> 참호).
+화려하지 않게, 굵은 선과 단색으로 깔끔하게 연출.
+글자 금지. 캐릭터의 행동과 배경 소품의 상호작용으로 내용 전달."""
 
     PRESET_COMIC_REAL = """Hyper-Realistic Environment with Comic Elements.
 배경과 사물, 사람/동물의 몸체: '언리얼 엔진 5' 수준의 8K 실사(Photorealistic). 털, 피부 질감, 조명 완벽 구현.
@@ -1165,6 +1219,7 @@ with st.sidebar:
     OPT_3D = "3D 다큐멘터리 (Realistic 3D Game Style)"
     OPT_SCIFI = "과학/엔지니어링 (3D Tech & Character)"
     OPT_PAINT = "심플 그림판/졸라맨 (The Paint Explainer Style)"
+    OPT_PAINT_STORY = "심플 그림판/졸라맨 (무성 스토리/배경강화)" # [NEW] 모드 추가
     OPT_COMIC_REAL = "실사 + 코믹 페이스 (Hyper Realism + Comic Face)"
     OPT_CUSTOM = "직접 입력 (Custom Style)"
     OPT_SKULL = "핑크 3D 해골 (Helix Style Pink Skeleton)"
@@ -1188,6 +1243,8 @@ with st.sidebar:
             st.session_state['style_prompt_area'] = PRESET_SCIFI
         elif selection == OPT_PAINT:
             st.session_state['style_prompt_area'] = PRESET_PAINT
+        elif selection == OPT_PAINT_STORY: # [NEW] 처리 추가
+            st.session_state['style_prompt_area'] = PRESET_PAINT_STORY
         elif selection == OPT_COMIC_REAL:
             st.session_state['style_prompt_area'] = PRESET_COMIC_REAL
         elif selection == OPT_SKULL:
@@ -1206,7 +1263,7 @@ with st.sidebar:
     genre_select = st.radio(
         "콘텐츠 성격 선택:",
         # [NEW] 리스트에 OPT_RECONSTRUCTION 추가
-        (OPT_INFO, OPT_REALISTIC, OPT_HISTORY, OPT_3D, OPT_SCIFI, OPT_PAINT, OPT_COMIC_REAL, OPT_SKULL, OPT_WEBTOON, OPT_MANGA, OPT_RECONSTRUCTION, OPT_CUSTOM),
+        (OPT_INFO, OPT_REALISTIC, OPT_HISTORY, OPT_3D, OPT_SCIFI, OPT_PAINT, OPT_PAINT_STORY, OPT_COMIC_REAL, OPT_SKULL, OPT_WEBTOON, OPT_MANGA, OPT_RECONSTRUCTION, OPT_CUSTOM),
         index=0,
         key="genre_radio_key",
         on_change=update_text_from_radio,
@@ -1219,6 +1276,7 @@ with st.sidebar:
     elif genre_select == OPT_3D: SELECTED_GENRE_MODE = "3d_docu"
     elif genre_select == OPT_SCIFI: SELECTED_GENRE_MODE = "scifi"
     elif genre_select == OPT_PAINT: SELECTED_GENRE_MODE = "paint_explainer"
+    elif genre_select == OPT_PAINT_STORY: SELECTED_GENRE_MODE = "paint_story" # [NEW] 모드 매핑
     elif genre_select == OPT_COMIC_REAL: SELECTED_GENRE_MODE = "comic_realism"
     elif genre_select == OPT_SKULL: SELECTED_GENRE_MODE = "pink_skull"
     elif genre_select == OPT_WEBTOON: SELECTED_GENRE_MODE = "webtoon"
@@ -1590,5 +1648,3 @@ if st.session_state['generated_results']:
                         with open(item['path'], "rb") as file:
                             st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
                 except: pass
-
-
