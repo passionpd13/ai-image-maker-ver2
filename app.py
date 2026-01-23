@@ -7,6 +7,7 @@ import os
 import re
 import shutil
 import zipfile
+import uuid  # [수정] 고유 세션 ID 생성을 위한 라이브러리 추가
 from io import BytesIO
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from PIL import Image
@@ -192,9 +193,17 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 파일 저장 경로 설정
+# ==========================================
+# [중요 수정] 멀티 유저 세션 분리 로직
+# ==========================================
+# 각 사용자(브라우저 탭)마다 고유한 세션 ID를 생성하여 폴더가 겹치지 않게 합니다.
+if 'user_session_id' not in st.session_state:
+    st.session_state['user_session_id'] = str(uuid.uuid4())
+
+# 파일 저장 경로 설정 (사용자별 고유 경로 사용)
 BASE_PATH = "./web_result_files"
-IMAGE_OUTPUT_DIR = os.path.join(BASE_PATH, "output_images")
+# 예: ./web_result_files/a1b2-c3d4.../output_images 형태로 저장됨
+IMAGE_OUTPUT_DIR = os.path.join(BASE_PATH, st.session_state['user_session_id'], "output_images")
 
 # 텍스트 모델 설정
 GEMINI_TEXT_MODEL_NAME = "gemini-2.5-pro" 
@@ -203,6 +212,7 @@ GEMINI_TEXT_MODEL_NAME = "gemini-2.5-pro"
 # [함수] 1. 유틸리티 함수
 # ==========================================
 def init_folders():
+    # [수정] 전체 폴더 삭제가 아니라, 현재 유저의 폴더만 관리
     if not os.path.exists(IMAGE_OUTPUT_DIR):
         os.makedirs(IMAGE_OUTPUT_DIR, exist_ok=True)
 
@@ -851,7 +861,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     [핵심 비주얼 스타일 가이드 - 절대 준수]
     1. **화풍 (Art Style):** - 무조건 **'실사(Photorealistic)', '8K Resolution', 'Unreal Engine 5 Lumen Render'**.
         - 그림, 만화, 일러스트 느낌이 나면 안 됩니다. **완벽한 사진**이어야 합니다.
-    
+     
     2. **건축 및 환경 (Architecture & Environment):**
         - 이 모드의 주인공은 **'장소(Place)'**입니다.
         - 건물의 재질(벽돌의 깨짐, 나무의 결, 금속의 녹슴), 도로의 상태(포장도로, 흙길, 빗물 고인 웅덩이), 하늘의 날씨 등을 집요하게 묘사하십시오.
@@ -861,7 +871,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     3. **인물 및 군중 (People & Crowd):**
         - 인물은 **'자연스러운 배경'**처럼 연출하십시오. 카메라를 의식하고 포즈를 취하는 것이 아니라, 그 시대의 옷을 입고 **일상을 살아가는 모습(Walking, Talking, Working)**이어야 합니다.
         - 인물보다는 **'인물이 있는 풍경'**이 중요합니다.
-    
+     
     4. **카메라 앵글 (Camera Angle):**
         - 웅장함을 보여주는 **'광각(Wide Angle)'**, 거리의 깊이감을 주는 **'소실점 구도(Vanishing Point)'**, 혹은 전체를 조망하는 **'드론 샷(Drone Shot)'**을 적극 활용하십시오.
 
@@ -1359,6 +1369,7 @@ if start_btn:
         st.session_state['generated_results'] = [] 
         st.session_state['is_processing'] = True
         
+        # [수정] 폴더 초기화 (현재 사용자 폴더만)
         if os.path.exists(IMAGE_OUTPUT_DIR):
             try:
                 shutil.rmtree(IMAGE_OUTPUT_DIR)
@@ -1579,15 +1590,3 @@ if st.session_state['generated_results']:
                         with open(item['path'], "rb") as file:
                             st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
                 except: pass
-
-
-
-
-
-
-
-
-
-
-
-
