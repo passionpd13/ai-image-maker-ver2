@@ -56,7 +56,7 @@ st.markdown("""
     [data-testid="stExpander"] summary {
         color: #FFFFFF !important;
     }
-    
+      
     [data-testid="stExpander"] summary:hover {
         color: #FF4B2B !important; /* 호버 시 주황색 포인트 */
     }
@@ -672,7 +672,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
         - 예: 감옥 -> 캐릭터 뒤에 '감옥 창살 문'과 '단순한 돌벽 패턴'.
         - 예: 사무실 -> '책상과 의자' 뒤로 '서류 캐비닛'과 '창문틀' 정도 배치.
         - 예: 거리시위 -> 캐릭터들이 서 있는 '단순한 도로 바닥'과 뒤편의 '건물 실루엣 한두 개'.
-    - **스타일 유지:** 모든 배경 요소는 반드시 **굵은 검은색 외곽선과 명암 없는 단순한 플랫 컬러**로 그려져야 합니다.
+    - **스타일 유지:** 모든 배경 요소는 반드시 굵은 검은색 외곽선과 명암 없는 단순한 플랫 컬러로 그려져야 합니다.
 
     [공통 작화 스타일 가이드]
     1. **[굵은 선 & 플랫 컬러 & 대비]:**
@@ -891,7 +891,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     [핵심 비주얼 스타일 가이드 - 절대 준수]
     1. **화풍 (Art Style):** - 무조건 **'실사(Photorealistic)', '8K Resolution', 'Unreal Engine 5 Lumen Render'**.
         - 그림, 만화, 일러스트 느낌이 나면 안 됩니다. **완벽한 사진**이어야 합니다.
-     
+      
     2. **건축 및 환경 (Architecture & Environment):**
         - 이 모드의 주인공은 **'장소(Place)'**입니다.
         - 건물의 재질(벽돌의 깨짐, 나무의 결, 금속의 녹슴), 도로의 상태(포장도로, 흙길, 빗물 고인 웅덩이), 하늘의 날씨 등을 집요하게 묘사하십시오.
@@ -901,7 +901,7 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     3. **인물 및 군중 (People & Crowd):**
         - 인물은 **'자연스러운 배경'**처럼 연출하십시오. 카메라를 의식하고 포즈를 취하는 것이 아니라, 그 시대의 옷을 입고 **일상을 살아가는 모습(Walking, Talking, Working)**이어야 합니다.
         - 인물보다는 **'인물이 있는 풍경'**이 중요합니다.
-     
+      
     4. **카메라 앵글 (Camera Angle):**
         - 웅장함을 보여주는 **'광각(Wide Angle)'**, 거리의 깊이감을 주는 **'소실점 구도(Vanishing Point)'**, 혹은 전체를 조망하는 **'드론 샷(Drone Shot)'**을 적극 활용하십시오.
 
@@ -920,6 +920,72 @@ def generate_prompt(api_key, index, text_chunk, style_instruction, video_title, 
     대본을 분석하여, 그 시대와 장소를 완벽하게 복원하는 **'초고화질 건축 시각화 프롬프트'**를 작성하십시오.
     - **필수 키워드:** "Hyper-realistic, 8k, Unreal Engine 5 render, Architectural visualization, Historical reconstruction, Detailed texture, Volumetric lighting"
     - **한글**로만 작성하십시오.
+        """
+
+    # ---------------------------------------------------------
+    # [모드 11] 컨트리볼 (Countryball)
+    # ---------------------------------------------------------
+    elif genre_mode == "countryball":
+        full_instruction = f"""
+    {common_header}
+    [역할]
+    당신은 국제 정세와 역사를 유머러스하게 풍자하는 **'컨트리볼(Countryball) 애니메이션 감독'**입니다.
+    대본의 내용을 **'국기 무늬를 가진 둥근 공 캐릭터(Countryballs)'**들의 대화와 연기로 재구성합니다.
+
+    [전체 영상 주제] "{video_title}"
+    [그림 스타일 가이드 - 유저 지정 (최우선 준수)] {style_instruction}
+
+    [핵심 레이아웃 - 절대 준수]
+    1. **[화면 구성] 상하단 블랙 레터박스 (Black Letterbox):**
+      - 9:16 세로 화면 비율을 기준으로 합니다.
+      - **화면의 상단 20%와 하단 20%는 무조건 '완벽한 검은색(Solid Black)'으로 칠해져야 합니다.**
+      - 오직 **화면 중앙의 50% 영역(정사각형에 가까운 직사각형)만 '순수한 흰색(Solid White)' 배경**으로 남겨두십시오.
+      - 모든 캐릭터와 텍스트, 그림은 이 **중앙 흰색 배경 안에서만** 존재해야 합니다. 검은색 영역 침범 금지.
+
+    2. **[캐릭터] 컨트리볼 스타일 (Countryball Style):**
+      - 모든 등장인물은 **'팔과 다리가 없는 완벽한 원형의 공(Sphere)'** 형태여야 합니다. (상황에 따라 간단한 스틱맨 손/발 허용하지만, 기본은 공 형태)
+      - **피부:** 해당 국가의 **'국기(Flag)'** 텍스처가 공 전체를 감싸야 합니다. (예: 한국-태극기 볼, 미국-성조기 볼)
+      - **얼굴:** 입과 코는 그리지 마십시오. 오직 **'크고 과장된 흰색 눈(Large White Eyes)'**만으로 감정을 표현합니다. (선글라스, 우는 눈, 화난 눈 등)
+      - **소품(Accessories):** 국가나 역할의 특징을 나타내는 **'모자나 소품'**을 반드시 머리 위에 씌우십시오.
+          - 예: 한국(조선) -> 갓(Gat, Korean traditional hat) 또는 안전모
+          - 예: 미국 -> 금발 머리 가발 또는 카우보이 모자
+          - 예: 러시아 -> 우샨카(털모자)
+
+    3. **[텍스트 연출] 손글씨 대사 (Handwritten Dialogue):**
+      - 대본에 있는 **대사(Dialogue)**가 이미지 내에 말풍선이나 텍스트로 **정확히 적혀 있어야 합니다.**
+      - 폰트 스타일: **'검은색 손글씨(Handwritten Marker Font)'** 느낌으로, 대충 쓴 듯하지만 가독성 있게 연출하십시오.
+      - 위치: 중앙 흰색 배경 내부, 캐릭터의 머리 위나 옆 여백에 배치.
+
+    4. **텍스트 처리:** {lang_guide} {lang_example}
+
+    5. **[선택 사항 - 필요할 때만] 실제 자료 사진 삽입 (Optional Photo Insert):**
+    - **[주의]:** 모든 장면에 넣지 마십시오. **너무 자주 사용하면 안 됩니다.**
+    - **조건:** 대본이 **'구체적인 증거', '통계 그래프', '현미경 사진', '뉴스 기사 화면', '복잡한 기계 장치'** 등을 직접적으로 언급하여 **"이것 좀 봐!"** 하는 상황일 때만 사용하십시오.
+    - **연출:** 해당 실사 자료를 **'작은 직사각형 사진(Small Real Photo)'** 형태로 캐릭터의 머리 위나 옆 빈 공간에 띄우십시오. 
+    - **일반적인 대화 상황에서는 실사 사진을 넣지 말고 캐릭터 연기만 보여주십시오.**
+
+
+    [임무]
+    제공된 대본 조각(Script Segment)을 분석하여, 위 레이아웃과 스타일이 적용된 **구체적인 묘사 프롬프트**를 작성하십시오.
+
+    [작성 요구사항]
+    - **분량:** 최소 5문장 이상.
+    - **필수 포함 요소:**
+      1. **레이아웃 정의:** "Top and bottom 30% solid black bars, Center middle solid white background."
+      2. **국가 정의:** 등장하는 국가가 어디인지, 어떤 국기 디자인인지 명시 (예: South Korea ball with Taegukgi pattern).
+      3. **소품 지정:** 상황에 맞는 모자나 아이템 (예: Korean Gat hat, Construction helmet).
+      4. **감정/표정:** 눈 모양을 통한 감정 묘사 (예: Crying eyes, Angry squinting eyes).
+      5. **텍스트:** 대본의 핵심 대사를 이미지 안에 포함하라는 지시. ("Text: '으악!'" written in black marker style inside the white area).
+      6. **(조건부) 자료 사진:** 대본에 '증거/자료' 언급이 있을 때만 실사 사진 삽입 지시. 없으면 생략.
+      
+    - **주의사항:**
+      - 컨트리볼 규칙을 지키십시오 (입 그리기 금지, 국기 왜곡 금지).
+      - 중앙 흰색 영역 밖(검은색 영역)에는 절대 아무것도 그리지 마십시오.
+
+    [출력 형식]
+    - **무조건 한국어**로만 작성하십시오.
+    - 부가적인 설명 없이 **오직 프롬프트 텍스트만** 출력하십시오.
+    - **필수 키워드 포함:** "Countryball style, Sphere shaped character with flag texture, No mouth, Big expressive eyes, Top and bottom 30% solid black background, Center white background, Simple vector illustration"
         """
 
     else: # Fallback
@@ -1191,6 +1257,15 @@ with st.sidebar:
 조명: 자연광(Sunlight), 날씨 표현, 건물의 질감(벽돌, 나무, 콘크리트)을 극대화하는 라이팅.
 대본의 시대와 장소를 완벽하게 시각화하여, 마치 그 장소에 실제로 와 있는 듯한 현장감 부여."""
 
+    # [NEW] 컨트리볼 프리셋 추가
+    PRESET_COUNTRYBALL = """'Polandball' & 'Webtoon' 스타일 (Humorous & Simple).
+핵심 원칙: **"상하단 검은 여백 + 중앙 흰 캔버스 + 국기 공 캐릭터"** (자료 사진은 꼭 필요할 때만).
+화풍: 굵은 외곽선, 플랫한 채색, 인터넷 밈(Meme) 스타일.
+캐릭터: 팔다리 없는 둥근 공, 커다란 눈, 국기 텍스처, 특징적인 모자.
+배경: 위아래는 꽉 찬 검은색, 가운데는 텅 빈 흰색.
+텍스트: 삐뚤빼뚤한 검은색 매직/마카 폰트.
+특수 효과: 대본에서 '증거'나 '자료'를 언급할 때만 제한적으로 작은 실사 사진을 삽입."""
+
     # 세션 상태 초기화
     if 'style_prompt_area' not in st.session_state:
         st.session_state['style_prompt_area'] = PRESET_INFO
@@ -1211,6 +1286,7 @@ with st.sidebar:
     
     # [NEW] 옵션 이름 추가
     OPT_RECONSTRUCTION = "AI 복원/건축 (AI Reconstruction)" 
+    OPT_COUNTRYBALL = "컨트리볼 (Countryball Satire)"
 
     def update_text_from_radio():
         selection = st.session_state.genre_radio_key
@@ -1239,14 +1315,16 @@ with st.sidebar:
         # [NEW] 라디오 버튼 선택 시 텍스트 업데이트 로직 추가
         elif selection == OPT_RECONSTRUCTION:
             st.session_state['style_prompt_area'] = PRESET_RECONSTRUCTION
+        elif selection == OPT_COUNTRYBALL:
+            st.session_state['style_prompt_area'] = PRESET_COUNTRYBALL
 
     def set_radio_to_custom():
         st.session_state.genre_radio_key = OPT_CUSTOM
 
     genre_select = st.radio(
         "콘텐츠 성격 선택:",
-        # [NEW] 리스트에 OPT_RECONSTRUCTION 추가
-        (OPT_INFO, OPT_REALISTIC, OPT_HISTORY, OPT_3D, OPT_SCIFI, OPT_PAINT, OPT_PAINT_STORY, OPT_COMIC_REAL, OPT_SKULL, OPT_WEBTOON, OPT_MANGA, OPT_RECONSTRUCTION, OPT_CUSTOM),
+        # [NEW] 리스트에 OPT_RECONSTRUCTION, OPT_COUNTRYBALL 추가
+        (OPT_INFO, OPT_REALISTIC, OPT_HISTORY, OPT_3D, OPT_SCIFI, OPT_PAINT, OPT_PAINT_STORY, OPT_COMIC_REAL, OPT_SKULL, OPT_WEBTOON, OPT_MANGA, OPT_RECONSTRUCTION, OPT_COUNTRYBALL, OPT_CUSTOM),
         index=0,
         key="genre_radio_key",
         on_change=update_text_from_radio,
@@ -1266,6 +1344,7 @@ with st.sidebar:
     elif genre_select == OPT_MANGA: SELECTED_GENRE_MODE = "manga"
     # [NEW] 모드 매핑 추가
     elif genre_select == OPT_RECONSTRUCTION: SELECTED_GENRE_MODE = "reconstruction"
+    elif genre_select == OPT_COUNTRYBALL: SELECTED_GENRE_MODE = "countryball"
     else: SELECTED_GENRE_MODE = "info" # 기본값
 
     st.markdown("---")
@@ -1631,8 +1710,3 @@ if st.session_state['generated_results']:
                         with open(item['path'], "rb") as file:
                             st.download_button("⬇️ 이미지 저장", data=file, file_name=item['filename'], mime="image/png", key=f"btn_down_{item['scene']}")
                 except: pass
-
-
-
-
-
